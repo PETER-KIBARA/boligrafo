@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../Api/api_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -16,6 +17,8 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
   final _emergencyNameController = TextEditingController();
   final _emergencyPhoneController = TextEditingController();
   final _emergencyRelationController = TextEditingController();
@@ -27,7 +30,7 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
   String? _selectedGender;
   int? _calculatedAge;
 
-  final List<String> _genders = ['Male', 'Female', 'Other', 'Prefer not to say'];
+  final List<String> _genders = ['Male', 'Female'];
 
   // Animation controllers
   late AnimationController _particleController;
@@ -35,13 +38,45 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
   late Animation<double> _particleAnimation;
   late Animation<double> _gradientAnimation;
 
-  
+final ApiService _apiService = ApiService();
+
+  Future<void> signup() async {
+    setState(() => _isLoading = true);
+
+    final response = await _apiService.signup(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+      confirmPassword: _confirmPasswordController.text.trim(),
+      phone: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+      dob: _dobController.text.trim(),
+      gender: _genderController.text.trim(),
+      emergencyName: _emergencyNameController.text.trim(),
+      emergencyPhone: _emergencyPhoneController.text.trim(),
+      emergencyRelation: _emergencyRelationController.text.trim(),
+    );
+
+    setState(() => _isLoading = false);
+
+    if (response["success"] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ ${response["message"]}")),
+      );
+      // Navigate to login or home
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ ${response["message"]}")),
+      );
+    }
+  }
+
 
   @override
   void initState() {
     super.initState();
     
-    // Initialize animation controllers
+    
     _particleController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
@@ -51,7 +86,7 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
       duration: const Duration(seconds: 8),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,

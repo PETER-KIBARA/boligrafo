@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from postd.models import UserProfile  # assuming you create this model
+from postd.models import UserProfile  
 from postd.serializers import UserProfileSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -16,20 +16,19 @@ def apisignup(request):
     """
     data = request.data
 
-    # ✅ Extract fields
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
     confirm_password = data.get("confirm_password")
     phone = data.get("phone")
     address = data.get("address")
-    dob = data.get("dob")   # Expecting "YYYY-MM-DD" string
+    dob = data.get("dob")   
     gender = data.get("gender")
     emergency_name = data.get("emergency_name")
     emergency_phone = data.get("emergency_phone")
     emergency_relation = data.get("emergency_relation")
 
-    # ✅ Basic validation
+    
     if not name or not email or not password or not confirm_password:
         return Response({"error": "Required fields missing"}, status=400)
 
@@ -44,7 +43,7 @@ def apisignup(request):
     if User.objects.filter(username=email).exists():
         return Response({"error": "Email already registered"}, status=400)
 
-    # ✅ Create Django User
+    
     user = User.objects.create(
         username=email,
         email=email,
@@ -52,7 +51,7 @@ def apisignup(request):
         password=make_password(password),
     )
 
-    # ✅ Create UserProfile (custom model holding extra fields)
+    
     profile = UserProfile.objects.create(
         user=user,
         phone=phone,
