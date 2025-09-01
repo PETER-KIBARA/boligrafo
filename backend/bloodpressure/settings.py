@@ -40,11 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'postd',
 ]
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ]
-}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -108,7 +104,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = "postd.CustomUser"
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

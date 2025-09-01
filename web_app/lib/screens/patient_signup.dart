@@ -35,6 +35,8 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
   late Animation<double> _particleAnimation;
   late Animation<double> _gradientAnimation;
 
+  
+
   @override
   void initState() {
     super.initState();
