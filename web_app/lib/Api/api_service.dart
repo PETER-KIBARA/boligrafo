@@ -17,7 +17,7 @@ class ApiService {
     String? emergencyPhone,
     String? emergencyRelation,
   }) async {
-    final url = Uri.parse("$baseUrl/api/signup/");
+    final url = Uri.parse("$baseUrl/apisignup");
 
     final body = {
       "name": name,

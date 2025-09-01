@@ -39,10 +39,11 @@ class _SignupScreenState extends State<SignupScreen> with TickerProviderStateMix
   late Animation<double> _gradientAnimation;
 
 final ApiService _apiService = ApiService();
-
-  Future<void> signup() async {
+Future<void> _submitForm() async {
+  if (_formKey.currentState!.validate()) {
     setState(() => _isLoading = true);
 
+    // Call your API
     final response = await _apiService.signup(
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
@@ -50,7 +51,7 @@ final ApiService _apiService = ApiService();
       confirmPassword: _confirmPasswordController.text.trim(),
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
-      dob: _dobController.text.trim(),
+      dob: _dobController.text.trim(),   // Format: "YYYY-MM-DD"
       gender: _genderController.text.trim(),
       emergencyName: _emergencyNameController.text.trim(),
       emergencyPhone: _emergencyPhoneController.text.trim(),
@@ -59,19 +60,22 @@ final ApiService _apiService = ApiService();
 
     setState(() => _isLoading = false);
 
-    if (response["success"] == true) {
+    if (response["success"]) {
+      // ✅ Show success and navigate
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ ${response["message"]}")),
+        const SnackBar(content: Text("Account created successfully!")),
       );
-      // Navigate to login or home
+      Navigator.of(context).pop(); // Go back to login or previous screen
     } else {
+      // ❌ Show error
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ ${response["message"]}")),
+        SnackBar(content: Text(response["message"] ?? "Signup failed")),
       );
     }
   }
+}
 
-
+   
   @override
   void initState() {
     super.initState();
@@ -132,22 +136,7 @@ final ApiService _apiService = ApiService();
     }
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
-
-        // Just show success message (no backend)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
-        );
-
-        Navigator.of(context).pop(); // Go back to previous screen
-      });
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
