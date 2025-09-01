@@ -52,7 +52,7 @@ class ApiService {
         };
       }
     } catch (e) {
-      
+      print(e);
       return {"error": true, "message": e.toString()};
     }
   }

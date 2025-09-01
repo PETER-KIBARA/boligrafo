@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dashboard_screen.dart'; // Make sure to import your dashboard screen
+import 'dashboard_screen.dart';
+ import '../Api/api_service.dart';
+ import 'dart:math' as math;
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +19,35 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
+final ApiService _apiService = ApiService();
+  Future <void>_login() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() => _isLoading = true);
+
+    final response = await _apiService.signup(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    setState(() => _isLoading = false);
+
+    if (response["error"] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response["message"])),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Login successful!")),
+      );
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
+    }
+  }
+}
+
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -23,22 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      // Simulate login process
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      // Navigate to dashboard screen automatically after successful login
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
-    }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

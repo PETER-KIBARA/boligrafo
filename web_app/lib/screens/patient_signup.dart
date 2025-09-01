@@ -61,8 +61,9 @@ Future<void> _submitForm() async {
     setState(() => _isLoading = false);
 
     if (response["success"]) {
-      // ✅ Show success and navigate
+      
       ScaffoldMessenger.of(context).showSnackBar(
+        
         const SnackBar(content: Text("Account created successfully!")),
       );
       Navigator.of(context).pop(); // Go back to login or previous screen
@@ -264,7 +265,7 @@ Future<void> _submitForm() async {
                     ),
                     child: Text(
                       _selectedDate != null
-                          ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                          ? '${_selectedDate!.year}/${_selectedDate!.month}/${_selectedDate!.day}'
                           : 'Select date',
                       style: TextStyle(
                         color: _selectedDate != null ? Colors.black : Colors.grey.shade500,
