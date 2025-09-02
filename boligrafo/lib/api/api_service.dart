@@ -18,7 +18,7 @@ class ApiService {
           "Content-Type": "application/json",
         },
         body: jsonEncode({
-          "email": email,
+          "username": email,
           "password": password,
         }),
       );

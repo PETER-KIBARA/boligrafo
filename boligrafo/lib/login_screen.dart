@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
  import '../Api/api_service.dart';
- import 'dart:math' as math;
 
 
 class LoginScreen extends StatefulWidget {
@@ -19,16 +18,17 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
-final ApiService _apiService = ApiService();
-  Future <void>_login() async {
+  Future<void>_login() async {
   if (_formKey.currentState!.validate()) {
     setState(() => _isLoading = true);
 
-    final response = await _apiService.signup(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
+final response = await ApiService.login(
+  email: _emailController.text.trim(),
+  password: _passwordController.text.trim(),
+);
 
+
+   
     setState(() => _isLoading = false);
 
     if (response["error"] == true) {

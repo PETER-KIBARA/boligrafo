@@ -265,7 +265,7 @@ Future<void> _submitForm() async {
                     ),
                     child: Text(
                       _selectedDate != null
-                          ? '${_selectedDate!.year}/${_selectedDate!.month}/${_selectedDate!.day}'
+                          ? '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}'
                           : 'Select date',
                       style: TextStyle(
                         color: _selectedDate != null ? Colors.black : Colors.grey.shade500,
