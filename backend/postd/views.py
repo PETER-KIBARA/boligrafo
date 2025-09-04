@@ -7,6 +7,7 @@ from postd.models import UserProfile
 from postd.serializers import UserProfileSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.contrib.auth import authenticate
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -69,3 +70,29 @@ def apisignup(request):
         "message": "Account created successfully",
         "user": serializer.data
     }, status=201)
+
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def apilogin(request):
+    data = request.data
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return Response({"error": "Email and password are required"}, status=400)
+
+    # Authenticate using Django
+    user = authenticate(username=email, password=password)
+
+    if user is None:
+        return Response({"error": "Invalid credentials"}, status=401)
+
+    return Response({
+        "message": "Login successful",
+        "user": {
+            "id": user.id,
+            "name": user.first_name,
+            "email": user.email,
+        }
+    }, status=200)

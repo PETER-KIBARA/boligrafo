@@ -10,7 +10,7 @@ class ApiService {
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse("$baseUrl/apisignup");
+    final url = Uri.parse("$baseUrl/apilogin");
     try {
       final response = await http.post(
         url,
@@ -18,7 +18,7 @@ class ApiService {
           "Content-Type": "application/json",
         },
         body: jsonEncode({
-          "username": email,
+          "email": email,
           "password": password,
         }),
       );
