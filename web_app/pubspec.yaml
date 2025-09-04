@@ -11,11 +11,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.2   
-
-
-  
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.5.0
   cupertino_icons: ^1.0.8
+  http: ^1.1.0
+
 
 dev_dependencies:
   flutter_test:
