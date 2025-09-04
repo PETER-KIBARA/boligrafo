@@ -6,4 +6,4 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-settings/firebase_admin.py
+/settings/firebase_admin.py
