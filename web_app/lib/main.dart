@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/patient_signup.dart';
+import 'package:web_app/screens/doctors_login.dart';
 
 void main() {
   runApp(const PatientSignupApp());
@@ -11,7 +11,7 @@ class PatientSignupApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Patient Signup',
+      title: 'Hypertension department',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -34,7 +34,7 @@ class PatientSignupApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SignupScreen(),
+      home: const DoctorsLoginScreen(),
     );
   }
 }

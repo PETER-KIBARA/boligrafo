@@ -512,14 +512,14 @@ class ParticlePainter extends CustomPainter {
       ..color = Colors.blue.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
-    final random = math.Random(42); // Fixed seed for consistent animation
+    final random = math.Random(42); 
     
     for (int i = 0; i < 50; i++) {
       final x = (random.nextDouble() * size.width);
       final y = (random.nextDouble() * size.height);
       final radius = 2 + (random.nextDouble() * 3);
       
-      // Animate particles with different speeds
+      
       final offsetX = math.sin(animation.value * 2 * math.pi + i * 0.5) * 20;
       final offsetY = math.cos(animation.value * 2 * math.pi + i * 0.3) * 15;
       
@@ -530,13 +530,13 @@ class ParticlePainter extends CustomPainter {
       );
     }
 
-    // Add some floating geometric shapes
+    
     final shapePaint = Paint()
       ..color = Colors.blue.withOpacity(0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Animated circles
+    
     for (int i = 0; i < 8; i++) {
       final centerX = size.width * (0.1 + i * 0.1);
       final centerY = size.height * (0.2 + i * 0.15);
@@ -549,7 +549,7 @@ class ParticlePainter extends CustomPainter {
       );
     }
 
-    // Animated rectangles
+    
     for (int i = 0; i < 5; i++) {
       final left = size.width * (0.05 + i * 0.2);
       final top = size.height * (0.1 + i * 0.25);
