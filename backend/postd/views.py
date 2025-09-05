@@ -7,7 +7,10 @@ from postd.models import UserProfile
 from postd.serializers import UserProfileSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from postd.models import DoctorProfile  
+from postd.serializers import DoctorProfileSerializer
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -96,3 +99,34 @@ def apilogin(request):
             "email": user.email,
         }
     }, status=200)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def doctor_login(request):
+    """
+    Doctor Login API
+    """
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if not email or not password:
+        return Response({"error": "Email and password are required"}, status=400)
+
+    user = authenticate(username=email, password=password)
+    if user is None:
+        return Response({"error": "Invalid credentials"}, status=400)
+
+    
+    if not hasattr(user, "doctor_profile"):
+        return Response({"error": "Not authorized as doctor"}, status=403)
+
+    
+    token, _ = Token.objects.get_or_create(user=user)
+    doctor = user.doctor_profile
+
+    serializer = DoctorProfileSerializer(doctor)
+    return Response({
+        "message": "Login successful",
+        "token": token.key,
+        "doctor": serializer.data
+    })

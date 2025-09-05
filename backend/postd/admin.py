@@ -1,7 +1,29 @@
 from django.contrib import admin
 from .models import UserProfile
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from .models import DoctorProfile
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "phone", "gender", "dob")
     search_fields = ("user__username", "phone", "gender")
+
+@admin.register(DoctorProfile)
+class DoctorProfileAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "specialty", "employee_id", "national_id", "title")
+
+class DoctorProfileInline(admin.StackedInline):
+    model = DoctorProfile
+    can_delete = False
+    verbose_name_plural = "Doctor Profile"
+    fk_name = "user"
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (DoctorProfileInline,)
+    list_display = ("username", "email", "first_name", "last_name", "is_staff")
+
+# Unregister the default User admin
+admin.site.unregister(User)
+# Register User with our custom admin
+admin.site.register(User, UserAdmin)

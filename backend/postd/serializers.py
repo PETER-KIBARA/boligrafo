@@ -2,6 +2,7 @@ from rest_framework import serializers
 from  .models import UserProfile
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
+from .models import DoctorProfile
 
 
 
@@ -18,7 +19,18 @@ class LoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
-        
+
+
+class DoctorProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = DoctorProfile
+        fields = [
+            "id", "full_name", "phone", "national_id",
+            "employee_id", "specialty", "title", "email", "username"
+        ]
 
         
 

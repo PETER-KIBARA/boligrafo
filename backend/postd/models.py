@@ -13,3 +13,15 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+class DoctorProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="doctor_profile")
+    full_name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    national_id = models.CharField(max_length=50, unique=True)
+    employee_id = models.CharField(max_length=50, unique=True)
+    specialty = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)  # e.g. Consultant, Resident, Specialist
+
+    def __str__(self):
+        return f"Dr. {self.full_name} - {self.specialty}"
