@@ -6,6 +6,8 @@
   <title>Doctor Dashboard</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
 
@@ -28,24 +30,16 @@
         <div class="position-sticky pt-3">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link active" href="#" id="patientsLink">
-                <i class="bi bi-people"></i> Patients
-              </a>
+              <a class="nav-link active" href="#" id="patientsLink"><i class="bi bi-people"></i> Patients</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" id="alertsLink">
-                <i class="bi bi-bell"></i> Alerts
-              </a>
+              <a class="nav-link" href="#" id="alertsLink"><i class="bi bi-bell"></i> Alerts</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" id="reportsLink">
-                <i class="bi bi-bar-chart"></i> Reports
-              </a>
+              <a class="nav-link" href="#" id="reportsLink"><i class="bi bi-bar-chart"></i> Reports</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" id="profileLink">
-                <i class="bi bi-person"></i> Profile
-              </a>
+              <a class="nav-link" href="#" id="profileLink"><i class="bi bi-person"></i> Profile</a>
             </li>
           </ul>
         </div>
@@ -54,13 +48,20 @@
       <!-- Main Content -->
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <h2 class="mb-4" id="sectionTitle">Dashboard</h2>
+<br>
+       
+<button class="btn btn-primary" id="redirectBtn">Register Patient</button>
 
+<script>
+  document.getElementById("redirectBtn").addEventListener("click", function() {
+    window.location.href = "patient_signup.html";
+  });
+</script>
+</br>
         <!-- Patients List -->
         <div id="patientsSection">
           <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-              Patients
-            </div>
+            <div class="card-header bg-primary text-white">Patients</div>
             <div class="card-body">
               <input type="text" id="searchPatient" class="form-control mb-3" placeholder="Search patients...">
               <table class="table table-striped">
@@ -68,13 +69,13 @@
                   <tr>
                     <th>Name</th>
                     <th>Patient ID</th>
-                    <th>Last Reading</th>
+                    <th>Phone</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="patientsTable">
-                  <!-- Dynamically filled from API -->
+                  <!-- Filled dynamically -->
                 </tbody>
               </table>
             </div>
@@ -84,29 +85,21 @@
         <!-- Alerts Section -->
         <div id="alertsSection" class="d-none">
           <div class="alert alert-warning">No alerts yet.</div>
-          <ul id="alertsList" class="list-group">
-            <!-- Dynamically filled from API -->
-          </ul>
+          <ul id="alertsList" class="list-group"></ul>
         </div>
 
         <!-- Reports Section -->
         <div id="reportsSection" class="d-none">
           <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-              Patient Reports
-            </div>
-            <div class="card-body" id="reportsContent">
-              <!-- Chart/Report placeholders -->
-            </div>
+            <div class="card-header bg-primary text-white">Patient Reports</div>
+            <div class="card-body" id="reportsContent"></div>
           </div>
         </div>
 
         <!-- Profile Section -->
         <div id="profileSection" class="d-none">
           <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-              My Profile
-            </div>
+            <div class="card-header bg-primary text-white">My Profile</div>
             <div class="card-body">
               <p><strong>Name:</strong> <span id="profileName">[Doctor Name]</span></p>
               <p><strong>Email:</strong> <span id="profileEmail">[Doctor Email]</span></p>
@@ -115,34 +108,97 @@
             </div>
           </div>
         </div>
-
       </main>
     </div>
   </div>
 
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Placeholder JS (switching between sections, to be replaced with API calls) -->
+  <!-- API Integration -->
   <script>
+    const API_BASE = "http://192.168.100.93:8000"; // Django backend
+    const token = localStorage.getItem("doctorToken"); // saved after login
+
+    // Switch between dashboard sections
     document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
     document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
     document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
     document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
 
     function showSection(section) {
-      document.getElementById("patientsSection").classList.add("d-none");
-      document.getElementById("alertsSection").classList.add("d-none");
-      document.getElementById("reportsSection").classList.add("d-none");
-      document.getElementById("profileSection").classList.add("d-none");
-
+      ["patients", "alerts", "reports", "profile"].forEach(sec => {
+        document.getElementById(sec + "Section").classList.add("d-none");
+      });
       document.getElementById(section + "Section").classList.remove("d-none");
-      document.getElementById("sectionTitle").innerText =
-        section.charAt(0).toUpperCase() + section.slice(1);
+      document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
     }
+    // Fetch doctor profile info
+async function loadDoctorProfile() {
+  try {
+    const response = await fetch(`${API_BASE}/doctor/profile`, {
+      headers: {
+        "Authorization": `Token ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch doctor profile");
+
+    const doctor = await response.json();
+
+    // Update navbar + profile section
+    document.getElementById("doctorName").innerText = doctor.full_name;
+    document.getElementById("profileName").innerText = doctor.full_name;
+    document.getElementById("profileEmail").innerText = doctor.email;
+    document.getElementById("profileSpecialty").innerText = doctor.specialty;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Load both profile and patients on startup
+loadDoctorProfile();
+
+
+
+    // 🔹 Fetch patients from backend
+    async function loadPatients() {
+      try {
+        const response = await fetch(`${API_BASE}/doctor/patients`, {
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch patients");
+        }
+
+        const patients = await response.json();
+        const tableBody = document.getElementById("patientsTable");
+        tableBody.innerHTML = "";
+
+        patients.forEach(patient => {
+          const row = `
+            <tr>
+              <td>${patient.user.first_name}</td>
+              <td>${patient.id}</td>
+              <td>${patient.phone || "-"}</td>
+              <td><span class="badge bg-success">Active</span></td>
+              <td><button class="btn btn-sm btn-primary">View</button></td>
+            </tr>
+          `;
+          tableBody.innerHTML += row;
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Load on startup
+    loadPatients();
   </script>
 </body>
 </html>

@@ -10,6 +10,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = "__all__"
+        depth = 1
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

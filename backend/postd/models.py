@@ -11,6 +11,15 @@ class UserProfile(models.Model):
     emergency_phone = models.CharField(max_length=20, blank=True, null=True)
     emergency_relation = models.CharField(max_length=50, blank=True, null=True)
 
+    doctor = models.ForeignKey(
+        "DoctorProfile",
+        on_delete=models.CASCADE,
+        related_name="patients",
+        null=True,
+        blank=True,
+    )
+
+
     def __str__(self):
         return self.user.username
 

@@ -7,17 +7,22 @@ from postd.models import UserProfile
 from postd.serializers import UserProfileSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from postd.models import DoctorProfile  
 from postd.serializers import DoctorProfileSerializer
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@login_required 
 def apisignup(request):
     """
     API endpoint for user signup (matches Flutter SignupScreen).
     """
+    if not hasattr(request.user, "doctor_profile"):
+         return Response({"error": "Only doctors can register patients"}, status=403)
+
     data = request.data
 
     name = data.get("name")
@@ -65,6 +70,7 @@ def apisignup(request):
         emergency_name=emergency_name,
         emergency_phone=emergency_phone,
         emergency_relation=emergency_relation,
+        doctor=request.user.doctor_profile, 
     )
 
     serializer = UserProfileSerializer(profile)
@@ -130,3 +136,39 @@ def doctor_login(request):
         "token": token.key,
         "doctor": serializer.data
     })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def doctor_patients(request):
+    """
+    Fetch patients assigned to the logged-in doctor
+    """
+    
+    if not hasattr(request.user, "doctor_profile"):
+        return Response({"error": "Not authorized"}, status=403)
+
+    doctor = request.user.doctor_profile
+    patients = UserProfile.objects.filter(doctor=doctor)  # 🔹 fetch from DB
+
+    serializer = UserProfileSerializer(patients, many=True)
+    return Response(serializer.data, status=200)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def doctor_profile(request):
+    """
+    Return logged-in doctor's profile info
+    """
+    if not hasattr(request.user, "doctor_profile"):
+        return Response({"error": "Not authorized"}, status=403)
+
+    doctor = request.user.doctor_profile
+    data = {
+        "id": doctor.id,
+        "full_name": doctor.full_name,
+        "email": request.user.email,
+        "specialty": doctor.specialty,
+        "employee_id": doctor.employee_id,
+        "title": doctor.title,
+    }
+    return Response(data, status=200)
