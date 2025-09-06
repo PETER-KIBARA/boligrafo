@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../Api/api_service.dart';
+
 
 class LogVitalsScreen extends StatefulWidget {
   const LogVitalsScreen({super.key});
@@ -21,25 +24,35 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     super.dispose();
   }
 
-  void _saveReading() {
-    if (_formKey.currentState!.validate()) {
-      // Process data
-      final systolic = _systolicController.text;
-      final diastolic = _diastolicController.text;
-      final symptoms = _symptomsController.text;
+  Future<void> _saveReading() async {
+  if (_formKey.currentState!.validate()) {
+    final systolic = int.parse(_systolicController.text);
+    final diastolic = int.parse(_diastolicController.text);
+    final symptoms = _symptomsController.text;
 
-      // TODO: Save the data (e.g., to local storage or send to API)
-      print('Systolic: $systolic, Diastolic: $diastolic, Symptoms: $symptoms');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("doctorToken") ?? ""; // or patient token
 
-      // Show a confirmation message
+    final result = await ApiService.saveVital(
+      token: token,
+      systolic: systolic,
+      diastolic: diastolic,
+      symptoms: symptoms,
+    );
+
+    if (result["error"] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vitals saved successfully!')),
+        SnackBar(content: Text("Error: ${result['message']}")),
       );
-
-      // Optionally navigate back
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vitals saved successfully!")),
+      );
       Navigator.pop(context);
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

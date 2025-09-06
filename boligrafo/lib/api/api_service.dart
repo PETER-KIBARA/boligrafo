@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-
 class ApiService {
   static const String baseUrl = "http://192.168.100.93:8000";
 
-  
+  // ---------- LOGIN ----------
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -14,28 +13,61 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); 
+        return jsonDecode(response.body); // should include token
       } else {
-        return {
-          "error": true,
-          "message": "Login failed: ${response.body}"
-        };
+        return {"error": true, "message": "Login failed: ${response.body}"};
       }
     } catch (e) {
-      return {
-        "error": true,
-        "message": "Something went wrong: $e"
-      };
+      return {"error": true, "message": "Something went wrong: $e"};
+    }
+  }
+
+  // ---------- SAVE VITAL (CREATE) ----------
+ static Future<Map<String, dynamic>> saveVital({
+  required String token,
+  required int systolic,
+  required int diastolic,
+  String? symptoms,
+}) async {
+    final url = Uri.parse("$baseUrl/vitals");
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+        body: jsonEncode({
+          "systolic": systolic,
+          "diastolic": diastolic,
+          "symptoms": symptoms ?? "",
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body); // created vital
+      } else {
+        return {"error": true, "message": "Save failed: ${response.body}"};
+      }
+    } catch (e) {
+      return {"error": true, "message": "Something went wrong: $e"};
+    }
+  }
+
+  // ---------- LIST VITALS (READ) ----------
+  static Future<List<dynamic>> fetchVitals(String token) async {
+    final url = Uri.parse("$baseUrl/vitals");
+    final response = await http.get(url, headers: {"Authorization": "Token $token"});
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw Exception("Failed to load vitals: ${response.body}");
     }
   }
 }

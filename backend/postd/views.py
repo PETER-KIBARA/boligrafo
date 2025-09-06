@@ -14,13 +14,14 @@ from django.contrib.auth import authenticate
 from postd.models import DoctorProfile  
 from django.db import transaction
 from postd.serializers import DoctorProfileSerializer
+from rest_framework import generics, permissions
+from .models import VitalReading
+from .serializers import VitalReadingSerializer
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  
 def patient_signup(request):
     data = request.data
-
-
     password = data.get("password")
     confirm_password = data.get("confirm_password")
     if password != confirm_password:
@@ -151,3 +152,21 @@ def doctor_profile(request):
         "title": doctor.title,
     }
     return Response(data, status=200)
+
+
+
+
+
+class VitalReadingListCreateView(generics.ListCreateAPIView):
+    serializer_class = VitalReadingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        
+        user = self.request.user
+        if user.is_staff:  # doctor
+            return VitalReading.objects.all()
+        return VitalReading.objects.filter(patient=user)
+
+    def perform_create(self, serializer):
+        serializer.save(patient=self.request.user)

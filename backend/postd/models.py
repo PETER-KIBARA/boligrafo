@@ -1,5 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model 
+  
+User = get_user_model()  
+
+
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
@@ -23,6 +29,8 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+
+
 class DoctorProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="doctor_profile")
     full_name = models.CharField(max_length=200)
@@ -34,3 +42,18 @@ class DoctorProfile(models.Model):
 
     def __str__(self):
         return f"Dr. {self.full_name} - {self.specialty}"
+
+
+
+class VitalReading(models.Model):
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vitals")
+    systolic = models.IntegerField()
+    diastolic = models.IntegerField()
+    symptoms = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.patient.username} - {self.systolic}/{self.diastolic} mmHg"
