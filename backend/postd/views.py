@@ -158,17 +158,12 @@ def doctor_profile(request):
 
 
 
-
 class VitalReadingListCreateView(generics.ListCreateAPIView):
     serializer_class = VitalReadingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        
-        user = self.request.user
-        if user.is_staff:  # doctor
-            return VitalReading.objects.all()
-        return VitalReading.objects.filter(patient=user)
+        return VitalReading.objects.filter(patient=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user)
