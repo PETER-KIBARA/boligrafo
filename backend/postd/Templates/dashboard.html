@@ -117,10 +117,9 @@
 
   <!-- API Integration -->
   <script>
-    const API_BASE = "http://192.168.100.93:8000"; // Django backend
-    const token = localStorage.getItem("doctorToken"); // saved after login
+    const API_BASE = "http://192.168.100.93:8000"; 
+    const token = localStorage.getItem("doctorToken"); 
 
-    // Switch between dashboard sections
     document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
     document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
     document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
@@ -133,8 +132,7 @@
       document.getElementById(section + "Section").classList.remove("d-none");
       document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
     }
-    //baadae
-    // Fetch doctor profile info
+    
 async function loadDoctorProfile() {
   try {
     const response = await fetch(`${API_BASE}/doctor/profile`, {
@@ -148,58 +146,77 @@ async function loadDoctorProfile() {
 
     const doctor = await response.json();
 
-    // Update navbar + profile section
+    
     document.getElementById("doctorName").innerText = doctor.full_name;
     document.getElementById("profileName").innerText = doctor.full_name;
     document.getElementById("profileEmail").innerText = doctor.email;
     document.getElementById("profileSpecialty").innerText = doctor.specialty;
   } catch (error) {
     console.error(error);
+    alert("Session expired. Please login again.");
+    localStorage.removeItem("doctorToken");
+    window.location.href = "login.html";
   }
 }
 
-// Load both profile and patients on startup
-loadDoctorProfile();
-
-
-
-    // 🔹 Fetch patients from backend
-    async function loadPatients() {
-      try {
-        const response = await fetch(`${API_BASE}/doctor/patients`, {
-          headers: {
-            "Authorization": `Token ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch patients");
-        }
-
-        const patients = await response.json();
-        const tableBody = document.getElementById("patientsTable");
-        tableBody.innerHTML = "";
-
-        patients.forEach(patient => {
-          const row = `
-            <tr>
-              <td>${patient.user.first_name}</td>
-              <td>${patient.id}</td>
-              <td>${patient.phone || "-"}</td>
-              <td><span class="badge bg-success">Active</span></td>
-              <td><button class="btn btn-sm btn-primary">View</button></td>
-            </tr>
-          `;
-          tableBody.innerHTML += row;
-        });
-      } catch (error) {
-        console.error(error);
+ async function loadPatients() {
+  try {
+    const response = await fetch(`${API_BASE}/doctor/patients`, {
+      headers: {
+        "Authorization": `Token ${token}`,
+        "Content-Type": "application/json"
       }
-    }
+    });
 
-    // Load on startup
-    loadPatients();
-  </script>
+    if (!response.ok) throw new Error("Failed to fetch patients");
+
+    const patients = await response.json();
+    const tableBody = document.getElementById("patientsTable");
+    tableBody.innerHTML = "";
+
+    patients.forEach(patient => {
+      const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
+      const row = `
+        <tr>
+          <td>${fullName}</td>
+          <td>${patient.id}</td>
+          <td>${patient.phone || "-"}</td>
+          <td><span class="badge bg-success">Active</span></td>
+          <td><button class="btn btn-sm btn-primary">View</button></td>
+        </tr>
+      `;
+      tableBody.innerHTML += row;
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+
+loadDoctorProfile();
+loadPatients();
+
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const doctorName = localStorage.getItem("doctorName");
+    const doctorEmail = localStorage.getItem("doctorEmail");
+    const doctorSpecialty = localStorage.getItem("doctorSpecialty");
+
+    if (doctorName) {
+      document.getElementById("doctorName").textContent = doctorName;
+      document.getElementById("profileName").textContent = doctorName;
+      document.getElementById("profileEmail").textContent = doctorEmail;
+      document.getElementById("profileSpecialty").textContent = doctorSpecialty;
+    } else {
+      // If not found, redirect back to login
+      window.location.href = "login.html";
+    }
+  });
+</script>
+
+
 </body>
 </html>

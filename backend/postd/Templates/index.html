@@ -55,36 +55,43 @@
 
   <!-- Login Script -->
   <script>
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+  document.getElementById("loginForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const errorBox = document.getElementById("loginError");
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const errorBox = document.getElementById("loginError");
 
-      try {
-        // Example: Call Django login API
-        const response = await fetch("http://192.168.100.93:8000/doctor/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
+    try {
+      const response = await fetch("http://192.168.100.93:8000/doctor/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (response.ok) {
-          // Store token/session (depends on your API)
-          localStorage.setItem("doctorToken", data.token);
-          window.location.href = "dashboard.html"; // redirect after login
-        } else {
-          errorBox.textContent = data.error || "Login failed!";
-          errorBox.classList.remove("d-none");
-        }
-      } catch (err) {
-        errorBox.textContent = "Server error. Try again later.";
+      if (response.ok) {
+        // ✅ Store token for API requests
+        localStorage.setItem("doctorToken", data.token);
+
+        // ✅ Store doctor details for quick dashboard use
+        localStorage.setItem("doctorName", data.doctor.full_name);
+        localStorage.setItem("doctorEmail", data.doctor.email);
+        localStorage.setItem("doctorSpecialty", data.doctor.specialty);
+
+        // Redirect to dashboard
+        window.location.href = "dashboard.html";
+      } else {
+        errorBox.textContent = data.error || "Login failed!";
         errorBox.classList.remove("d-none");
       }
-    });
-  </script>
+    } catch (err) {
+      errorBox.textContent = "Server error. Try again later.";
+      errorBox.classList.remove("d-none");
+    }
+  });
+</script>
+
 </body>
 </html>

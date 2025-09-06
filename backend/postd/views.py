@@ -149,10 +149,12 @@ def doctor_patients(request):
         return Response({"error": "Not authorized"}, status=403)
 
     doctor = request.user.doctor_profile
-    patients = UserProfile.objects.filter(doctor=doctor)  # 🔹 fetch from DB
+    patients = UserProfile.objects.filter(doctor=doctor)  
 
     serializer = UserProfileSerializer(patients, many=True)
     return Response(serializer.data, status=200)
+
+    
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def doctor_profile(request):
