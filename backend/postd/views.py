@@ -12,74 +12,51 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from postd.models import DoctorProfile  
+from django.db import transaction
 from postd.serializers import DoctorProfileSerializer
 
-@api_view(['POST'])
-@login_required 
-def apisignup(request):
-    """
-    API endpoint for user signup (matches Flutter SignupScreen).
-    """
-    if not hasattr(request.user, "doctor_profile"):
-         return Response({"error": "Only doctors can register patients"}, status=403)
-
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])  
+def patient_signup(request):
     data = request.data
 
-    name = data.get("name")
-    email = data.get("email")
+
     password = data.get("password")
     confirm_password = data.get("confirm_password")
-    phone = data.get("phone")
-    address = data.get("address")
-    dob = data.get("dob")   
-    gender = data.get("gender")
-    emergency_name = data.get("emergency_name")
-    emergency_phone = data.get("emergency_phone")
-    emergency_relation = data.get("emergency_relation")
-
-    
-    if not name or not email or not password or not confirm_password:
-        return Response({"error": "Required fields missing"}, status=400)
-
-    try:
-        validate_email(email)
-    except ValidationError:
-        return Response({"error": "Invalid email format"}, status=400)
-
     if password != confirm_password:
         return Response({"error": "Passwords do not match"}, status=400)
 
-    if User.objects.filter(username=email).exists():
+
+    if User.objects.filter(username=data.get("email")).exists():
         return Response({"error": "Email already registered"}, status=400)
 
-    
-    user = User.objects.create(
-        username=email,
-        email=email,
-        first_name=name,
-        password=make_password(password),
-    )
+    try:
+        with transaction.atomic():
+            
+            user = User.objects.create_user(
+                username=data.get("email"),
+                email=data.get("email"),
+                password=password,
+                first_name=data.get("name"),
+            )
 
-    
-    profile = UserProfile.objects.create(
-        user=user,
-        phone=phone,
-        address=address,
-        dob=dob,
-        gender=gender,
-        emergency_name=emergency_name,
-        emergency_phone=emergency_phone,
-        emergency_relation=emergency_relation,
-        doctor=request.user.doctor_profile, 
-    )
+            
+            profile = UserProfile.objects.create(
+                user=user,
+                phone=data.get("phone"),
+                address=data.get("address"),
+                dob=data.get("dob") or None,
+                gender=data.get("gender"),
+                emergency_name=data.get("emergency_name"),
+                emergency_phone=data.get("emergency_phone"),
+                emergency_relation=data.get("emergency_relation"),
+                doctor=request.user.doctor_profile,  
+            )
 
-    serializer = UserProfileSerializer(profile)
+        return Response({"message": "Patient registered successfully"}, status=201)
 
-    return Response({
-        "message": "Account created successfully",
-        "user": serializer.data
-    }, status=201)
-
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
     
 @api_view(['POST'])
 @permission_classes([AllowAny])
