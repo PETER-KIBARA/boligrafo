@@ -75,15 +75,17 @@ def apilogin(request):
     if user is None:
         return Response({"error": "Invalid credentials"}, status=401)
 
-    return Response({
-        "message": "Login successful",
-        "user": {
-            "id": user.id,
-            "name": user.first_name,
-            "email": user.email,
-        }
-    }, status=200)
+    token, created = Token.objects.get_or_create(user=user)
 
+    return Response({
+    "message": "Login successful",
+    "token": token.key,
+    "user": {
+        "id": user.id,
+        "name": user.first_name or "",
+        "email": user.email or "",
+    }
+}, status=200)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def doctor_login(request):

@@ -9,20 +9,6 @@ Future<void> main() async {
   // Ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
- await Supabase.initialize(
-  url: 'https://swuauknwvdmxhjwlesbc.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3dWF1a253dmRteGhqd2xlc2JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MDYwNTksImV4cCI6MjA3MTk4MjA1OX0.8z_XllBGl6vcBKBPqU7Uu1-CzhqarRl7yPRliFv30Fc',
-  authOptions: const FlutterAuthClientOptions(
-    authFlowType: AuthFlowType.pkce,
-  ),
-  realtimeClientOptions: const RealtimeClientOptions(
-    logLevel: RealtimeLogLevel.info,
-  ),
-  storageOptions: const StorageClientOptions(
-    retryAttempts: 10,
-  ),
-);
 
   runApp(const MyApp());
 }

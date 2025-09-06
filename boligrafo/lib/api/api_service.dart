@@ -1,31 +1,39 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.100.93:8000";
 
   // ---------- LOGIN ----------
-  static Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
-    final url = Uri.parse("$baseUrl/apilogin");
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
-      );
+static Future<Map<String, dynamic>> login({
+  required String email,
+  required String password,
+}) async {
+  final url = Uri.parse("$baseUrl/apilogin");
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "password": password}),
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body); // should include token
-      } else {
-        return {"error": true, "message": "Login failed: ${response.body}"};
-      }
-    } catch (e) {
-      return {"error": true, "message": "Something went wrong: $e"};
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString("patientToken", data["token"]);
+
+      return data;
+    } else {
+      return {"error": true, "message": "Login failed: ${response.body}"};
     }
+  } catch (e) {
+    return {"error": true, "message": "Something went wrong: $e"};
   }
+}
+
 
   // ---------- SAVE VITAL (CREATE) ----------
  static Future<Map<String, dynamic>> saveVital({

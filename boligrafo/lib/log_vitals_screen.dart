@@ -31,7 +31,7 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     final symptoms = _symptomsController.text;
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("doctorToken") ?? ""; // or patient token
+    final token = prefs.getString("patientToken") ?? ""; // ✅ always patient
 
     final result = await ApiService.saveVital(
       token: token,
@@ -40,9 +40,9 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
       symptoms: symptoms,
     );
 
-    if (result["error"] == true) {
+    if (result.containsKey("error")) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${result['message']}")),
+        SnackBar(content: Text(result["message"])),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -52,6 +52,7 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     }
   }
 }
+
 
 
   @override
