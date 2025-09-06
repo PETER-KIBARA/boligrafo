@@ -1,7 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from django.utils import timezone
 from django.contrib.auth.models import User
+from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
 from postd.models import UserProfile  
 from postd.serializers import UserProfileSerializer
@@ -167,3 +169,22 @@ class VitalReadingListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user)
+
+
+
+class DoctorPatientDailyReportsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        # Ensure only doctors can access
+        if not hasattr(request.user, "doctor_profile"):
+            return Response({"error": "Not authorized"}, status=403)
+
+        today = timezone.now().date()
+        readings = VitalReading.objects.filter(patient_id=patient_id, created_at__date=today).order_by('-created_at')
+
+        serializer = VitalReadingSerializer(readings, many=True)
+        return Response({
+            "date": str(today),
+            "readings": serializer.data
+        })

@@ -174,32 +174,35 @@ async function loadDoctorProfile() {
     const tableBody = document.getElementById("patientsTable");
     tableBody.innerHTML = "";
 
-    patients.forEach(patient => {
-      const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
-      const row = `
-        <tr>
-          <td>${fullName}</td>
-          <td>${patient.id}</td>
-          <td>${patient.phone || "-"}</td>
-          <td><span class="badge bg-success">Active</span></td>
-          <td><button class="btn btn-sm btn-primary">View</button></td>
-        </tr>
-      `;
-      tableBody.innerHTML += row;
-    });
+  patients.forEach(patient => {
+  const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
+  const row = `
+    <tr>
+      <td>${fullName}</td>
+      <td>${patient.id}</td>
+      <td>${patient.phone || "-"}</td>
+      <td><span class="badge bg-success">Active</span></td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
+      </td>
+    </tr>
+  `;
+  tableBody.innerHTML += row;
+});
+
   } catch (error) {
     console.error(error);
+    alert("Failed to load patients.");
   }
 }
-
 
 loadDoctorProfile();
 loadPatients();
 
-
 </script>
 
 <script>
+
   document.addEventListener("DOMContentLoaded", () => {
     const doctorName = localStorage.getItem("doctorName");
     const doctorEmail = localStorage.getItem("doctorEmail");
@@ -215,8 +218,68 @@ loadPatients();
       window.location.href = "login.html";
     }
   });
+
+  async function viewPatientReports(patientId, patientName) {
+  try {
+    const response = await fetch(`${API_BASE}view_patient/<int:patient_id>/daily-reports`, {
+      headers: {
+        "Authorization": `Token ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch patient reports");
+
+    const data = await response.json();
+    const reportsContent = document.getElementById("reportsContent");
+
+    // Clear previous content
+    reportsContent.innerHTML = `<h5>Reports for ${patientName} - ${data.date}</h5>`;
+
+    if (data.readings.length === 0) {
+      reportsContent.innerHTML += "<p>No readings for today.</p>";
+      showSection("reports");
+      return;
+    }
+
+    // Build table
+    let table = `<table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Systolic</th>
+          <th>Diastolic</th>
+          <th>Symptoms</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    data.readings.forEach(reading => {
+      const time = new Date(reading.created_at).toLocaleTimeString();
+      table += `
+        <tr>
+          <td>${reading.systolic}</td>
+          <td>${reading.diastolic}</td>
+          <td>${reading.symptoms || "-"}</td>
+          <td>${time}</td>
+        </tr>
+      `;
+    });
+
+    table += "</tbody></table>";
+    reportsContent.innerHTML += table;
+
+    // Switch to Reports section
+    showSection("reports");
+
+  } catch (error) {
+    console.error(error);
+    alert("Failed to load patient reports.");
+  }
+}
+
 </script>
 
-
+  
 </body>
 </html>

@@ -36,12 +36,12 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
 
         
 
-
-
 class VitalReadingSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.username", read_only=True)
+    patient_email = serializers.CharField(source="patient.email", read_only=True)
 
     class Meta:
         model = VitalReading
-        fields = ["id", "patient", "patient_name", "systolic", "diastolic", "symptoms", "created_at"]
-        read_only_fields = ["id", "patient_name", "created_at", "patient"]  
+        fields = ["id", "patient", "patient_name", "patient_email", "systolic", "diastolic", "symptoms", "created_at"]
+        read_only_fields = ["id", "patient_name", "patient_email", "created_at", "patient"]
+
