@@ -218,10 +218,9 @@ loadPatients();
       window.location.href = "login.html";
     }
   });
-
-  async function viewPatientReports(patientId, patientName) {
+async function viewPatientReports(patientId, patientName) {
   try {
-    const response = await fetch(`${API_BASE}view_patient/<int:patient_id>/daily-reports`, {
+    const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, {
       headers: {
         "Authorization": `Token ${token}`,
         "Content-Type": "application/json"
@@ -242,42 +241,33 @@ loadPatients();
       return;
     }
 
-    // Build table
-    let table = `<table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Systolic</th>
-          <th>Diastolic</th>
-          <th>Symptoms</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-    data.readings.forEach(reading => {
-      const time = new Date(reading.created_at).toLocaleTimeString();
-      table += `
-        <tr>
-          <td>${reading.systolic}</td>
-          <td>${reading.diastolic}</td>
-          <td>${reading.symptoms || "-"}</td>
-          <td>${time}</td>
-        </tr>
+    // Render each reading
+    data.readings.forEach(r => {
+      reportsContent.innerHTML += `
+        <div class="report-card">
+          <p><b>Systolic:</b> ${r.systolic}</p>
+          <p><b>Diastolic:</b> ${r.diastolic}</p>
+          <p><b>Symptoms:</b> ${r.symptoms || "None"}</p>
+          <p><b>Recorded at:</b> ${new Date(r.created_at).toLocaleString()}</p>
+        </div>
       `;
     });
 
-    table += "</tbody></table>";
-    reportsContent.innerHTML += table;
-
-    // Switch to Reports section
     showSection("reports");
-
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
     alert("Failed to load patient reports.");
+    console.error(err);
   }
 }
 
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("doctorToken");
+      localStorage.removeItem("doctorName");
+      localStorage.removeItem("doctorEmail");
+      localStorage.removeItem("doctorSpecialty");
+      window.location.href = "login.html";
+    });
 </script>
 
   
