@@ -4,61 +4,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Dashboard</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #f7f9fc; }
+    .sidebar { height: 100vh; background: #fff; border-right: 1px solid #e0e0e0; }
+    .sidebar a { display: block; padding: 12px 20px; color: #333; text-decoration: none; border-radius: 6px; margin: 4px 0; }
+    .sidebar a.active, .sidebar a:hover { background: #007bff; color: white; }
+    .card { border-radius: 15px; box-shadow: 0px 3px 10px rgba(0,0,0,0.05); }
+    .chart-container { height: 250px; }
+  </style>
 </head>
-<body class="bg-light">
-
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="#">Hypertension Management</a>
-      <div class="d-flex">
-        <span class="text-white me-3">Dr. <span id="doctorName">[Doctor Name]</span></span>
-        <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
-      </div>
-    </div>
-  </nav>
-
+<body>
   <div class="container-fluid">
     <div class="row">
-      
       <!-- Sidebar -->
-      <nav class="col-md-3 col-lg-2 d-md-block bg-white sidebar shadow-sm min-vh-100">
-        <div class="position-sticky pt-3">
-          <ul class="nav flex-column">
-            <li class="nav-item">
-              <a class="nav-link active" href="#" id="patientsLink"><i class="bi bi-people"></i> Patients</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#" id="alertsLink"><i class="bi bi-bell"></i> Alerts</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#" id="reportsLink"><i class="bi bi-bar-chart"></i> Reports</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#" id="profileLink"><i class="bi bi-person"></i> Profile</a>
-            </li>
-          </ul>
+      <div class="col-2 sidebar p-3">
+        <h5 class="mb-4">Doctor Dashboard</h5>
+        <a href="#" class="active" id="patientsLink"><i class="bi bi-people"></i> Patients</a>
+        <a href="#" id="alertsLink"><i class="bi bi-bell"></i> Alerts</a>
+        <a href="#" id="reportsLink"><i class="bi bi-bar-chart"></i> Reports</a>
+        <a href="#" id="profileLink"><i class="bi bi-person"></i> Profile</a>
+        <a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </div>
+
+      <!-- Main -->
+      <div class="col-10 p-4">
+        <h3 class="mb-4" id="sectionTitle">Dashboard</h3>
+
+        <!-- Top Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="card p-3 text-center">
+              <h6>Total Patients</h6>
+              <h2 id="totalPatients">--</h2>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 text-center">
+              <h6>Critical Alerts</h6>
+              <h2 id="criticalAlerts" class="text-danger">--</h2>
+            </div>
+          </div>
         </div>
-      </nav>
+        <div class="mb-4 text-end">
+  <button class="btn btn-success" id="patientregisterBtn">
+    <i class="bi bi-patientregister"></i> 
+  </button>
+</div>
 
-      <!-- Main Content -->
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-        <h2 class="mb-4" id="sectionTitle">Dashboard</h2>
-<br>
-       
-<button class="btn btn-primary" id="redirectBtn">Register Patient</button>
+        <!-- Chart -->
+        <div class="card p-3 mb-4">
+          <h6>Patient Readings Overview</h6>
+          <div class="chart-container">
+            <canvas id="bpChart"></canvas>
+          </div>
+        </div>
 
-<script>
-  document.getElementById("redirectBtn").addEventListener("click", function() {
-    window.location.href = "patient_signup.html";
-  });
-</script>
-</br>
-        <!-- Patients List -->
+        <!-- Patients Section -->
         <div id="patientsSection">
           <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white">Patients</div>
@@ -74,9 +78,7 @@
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="patientsTable">
-                  <!-- Filled dynamically -->
-                </tbody>
+                <tbody id="patientsTable"></tbody>
               </table>
             </div>
           </div>
@@ -101,29 +103,32 @@
           <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">My Profile</div>
             <div class="card-body">
-              <p><strong>Name:</strong> <span id="profileName">[Doctor Name]</span></p>
-              <p><strong>Email:</strong> <span id="profileEmail">[Doctor Email]</span></p>
-              <p><strong>Specialty:</strong> <span id="profileSpecialty">[Specialty]</span></p>
+              <p><strong>Name:</strong> <span id="profileName"></span></p>
+              <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+              <p><strong>Specialty:</strong> <span id="profileSpecialty"></span></p>
               <button class="btn btn-sm btn-primary">Edit Profile</button>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- API Integration -->
   <script>
     const API_BASE = "http://192.168.100.93:8000"; 
     const token = localStorage.getItem("doctorToken"); 
 
+    // Sidebar navigation
     document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
     document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
     document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
     document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
+    document.getElementById("cupBtn").addEventListener("click", () => {
+  window.location.href = "patient_signup.html";
+});
+
 
     function showSection(section) {
       ["patients", "alerts", "reports", "profile"].forEach(sec => {
@@ -132,144 +137,82 @@
       document.getElementById(section + "Section").classList.remove("d-none");
       document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
     }
-    
-async function loadDoctorProfile() {
-  try {
-    const response = await fetch(`${API_BASE}/doctor/profile`, {
-      headers: {
-        "Authorization": `Token ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
 
-    if (!response.ok) throw new Error("Failed to fetch doctor profile");
 
-    const doctor = await response.json();
-
-    
-    document.getElementById("doctorName").innerText = doctor.full_name;
-    document.getElementById("profileName").innerText = doctor.full_name;
-    document.getElementById("profileEmail").innerText = doctor.email;
-    document.getElementById("profileSpecialty").innerText = doctor.specialty;
-  } catch (error) {
-    console.error(error);
-    alert("Session expired. Please login again.");
-    localStorage.removeItem("doctorToken");
-    window.location.href = "login.html";
-  }
-}
-
- async function loadPatients() {
-  try {
-    const response = await fetch(`${API_BASE}/doctor/patients`, {
-      headers: {
-        "Authorization": `Token ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) throw new Error("Failed to fetch patients");
-
-    const patients = await response.json();
-    const tableBody = document.getElementById("patientsTable");
-    tableBody.innerHTML = "";
-
-  patients.forEach(patient => {
-  const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
-  const row = `
-    <tr>
-      <td>${fullName}</td>
-      <td>${patient.id}</td>
-      <td>${patient.phone || "-"}</td>
-      <td><span class="badge bg-success">Active</span></td>
-      <td>
-        <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
-      </td>
-    </tr>
-  `;
-  tableBody.innerHTML += row;
-});
-
-  } catch (error) {
-    console.error(error);
-    alert("Failed to load patients.");
-  }
-}
-
-loadDoctorProfile();
-loadPatients();
-
-</script>
-
-<script>
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const doctorName = localStorage.getItem("doctorName");
-    const doctorEmail = localStorage.getItem("doctorEmail");
-    const doctorSpecialty = localStorage.getItem("doctorSpecialty");
-
-    if (doctorName) {
-      document.getElementById("doctorName").textContent = doctorName;
-      document.getElementById("profileName").textContent = doctorName;
-      document.getElementById("profileEmail").textContent = doctorEmail;
-      document.getElementById("profileSpecialty").textContent = doctorSpecialty;
-    } else {
-      // If not found, redirect back to login
-      window.location.href = "login.html";
+    // Fetch doctor profile
+    async function loadDoctorProfile() {
+      const response = await fetch(`${API_BASE}/doctor/profile`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!response.ok) return logout();
+      const doctor = await response.json();
+      document.getElementById("profileName").innerText = doctor.full_name;
+      document.getElementById("profileEmail").innerText = doctor.email;
+      document.getElementById("profileSpecialty").innerText = doctor.specialty;
     }
-  });
-async function viewPatientReports(patientId, patientName) {
-  try {
-    const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, {
-      headers: {
-        "Authorization": `Token ${token}`,
-        "Content-Type": "application/json"
+
+    // Fetch patients
+    async function loadPatients() {
+      const response = await fetch(`${API_BASE}/doctor/patients`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!response.ok) return;
+      const patients = await response.json();
+      document.getElementById("totalPatients").innerText = patients.length;
+      const tableBody = document.getElementById("patientsTable");
+      tableBody.innerHTML = "";
+      patients.forEach(patient => {
+        const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
+        const row = `
+          <tr>
+            <td>${fullName}</td>
+            <td>${patient.id}</td>
+            <td>${patient.phone || "-"}</td>
+            <td><span class="badge bg-success">Active</span></td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
+            </td>
+          </tr>`;
+        tableBody.innerHTML += row;
+      });
+    }
+
+    // Fetch patient reports and chart
+    async function viewPatientReports(patientId, patientName) {
+      const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      const reportsContent = document.getElementById("reportsContent");
+      reportsContent.innerHTML = `<h5>Reports for ${patientName}</h5>`;
+      if (data.readings.length === 0) {
+        reportsContent.innerHTML += "<p>No readings for today.</p>";
+        return;
       }
-    });
+      const systolic = data.readings.map(r => r.systolic);
+      const diastolic = data.readings.map(r => r.diastolic);
 
-    if (!response.ok) throw new Error("Failed to fetch patient reports");
-
-    const data = await response.json();
-    const reportsContent = document.getElementById("reportsContent");
-
-    // Clear previous content
-    reportsContent.innerHTML = `<h5>Reports for ${patientName} - ${data.date}</h5>`;
-
-    if (data.readings.length === 0) {
-      reportsContent.innerHTML += "<p>No readings for today.</p>";
+      new Chart(document.getElementById('bpChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: data.readings.map((r,i)=> `#${i+1}`),
+          datasets: [
+            { label: 'Systolic', data: systolic, borderColor: '#007bff', fill: false },
+            { label: 'Diastolic', data: diastolic, borderColor: '#ff4d4d', fill: false }
+          ]
+        }
+      });
       showSection("reports");
-      return;
     }
 
-    // Render each reading
-    data.readings.forEach(r => {
-      reportsContent.innerHTML += `
-        <div class="report-card">
-          <p><b>Systolic:</b> ${r.systolic}</p>
-          <p><b>Diastolic:</b> ${r.diastolic}</p>
-          <p><b>Symptoms:</b> ${r.symptoms || "None"}</p>
-          <p><b>Recorded at:</b> ${new Date(r.created_at).toLocaleString()}</p>
-        </div>
-      `;
-    });
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
 
-    showSection("reports");
-  } catch (err) {
-    alert("Failed to load patient reports.");
-    console.error(err);
-  }
-}
-
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("doctorToken");
-      localStorage.removeItem("doctorName");
-      localStorage.removeItem("doctorEmail");
-      localStorage.removeItem("doctorSpecialty");
-      window.location.href = "login.html";
-    });
-</script>
-
-  
+    loadDoctorProfile();
+    loadPatients();
+  </script>
 </body>
 </html>
