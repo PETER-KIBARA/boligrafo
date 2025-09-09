@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import UserProfile
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+from .models import VitalReading
 from .models import DoctorProfile
 
 @admin.register(UserProfile)
@@ -19,11 +20,23 @@ class DoctorProfileInline(admin.StackedInline):
     verbose_name_plural = "Doctor Profile"
     fk_name = "user"
 
+
+
 class UserAdmin(BaseUserAdmin):
     inlines = (DoctorProfileInline,)
     list_display = ("username", "email", "first_name", "last_name", "is_staff")
+
+class VitalReadingInline(admin.TabularInline):
+    model = VitalReading   # <-- Fix here
+    extra = 0
+    readonly_fields = ("systolic", "diastolic", "symptoms", "created_at")
+    can_delete = False
+    verbose_name_plural = "Vital Readings"
+    fk_name = "patient" 
 
 # Unregister the default User admin
 admin.site.unregister(User)
 # Register User with our custom admin
 admin.site.register(User, UserAdmin)
+
+admin.site.register(VitalReading)
