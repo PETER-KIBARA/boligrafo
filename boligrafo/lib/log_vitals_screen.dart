@@ -14,13 +14,19 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _systolicController = TextEditingController();
   final TextEditingController _diastolicController = TextEditingController();
+  final TextEditingController _heartRateController = TextEditingController();
   final TextEditingController _symptomsController = TextEditingController();
+  final TextEditingController _dietController = TextEditingController();
+  final TextEditingController _exerciseController = TextEditingController();
 
   @override
   void dispose() {
     _systolicController.dispose();
     _diastolicController.dispose();
+    _heartRateController.dispose();
     _symptomsController.dispose();
+    _dietController.dispose();
+    _exerciseController.dispose();
     super.dispose();
   }
 
@@ -29,6 +35,9 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     final systolic = int.parse(_systolicController.text);
     final diastolic = int.parse(_diastolicController.text);
     final symptoms = _symptomsController.text;
+    final heartRate = _heartRateController.text.isEmpty ? null : int.parse(_heartRateController.text);
+    final diet = _dietController.text.isEmpty ? null : _dietController.text;
+    final exercise = _exerciseController.text.isEmpty ? null : _exerciseController.text;
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("patientToken") ?? ""; // ✅ always patient
@@ -37,7 +46,10 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
       token: token,
       systolic: systolic,
       diastolic: diastolic,
+      heartRate: heartRate,
       symptoms: symptoms,
+      diet: diet,
+      exercise: exercise,
     );
 
     if (result.containsKey("error")) {
@@ -102,6 +114,21 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
                   return null;
                 },
               ),
+            const SizedBox(height: 16.0),
+            TextFormField(
+              controller: _heartRateController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Heart Rate (bpm) - Optional',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value != null && value.isNotEmpty && int.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+            ),
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _symptomsController,
@@ -113,6 +140,28 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
                 ),
                 maxLines: 3,
               ),
+            const SizedBox(height: 16.0),
+            TextFormField(
+              controller: _dietController,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                labelText: 'Diet (Optional)',
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16.0),
+            TextFormField(
+              controller: _exerciseController,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                labelText: 'Exercise (Optional)',
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+              ),
+              maxLines: 2,
+            ),
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: _saveReading,

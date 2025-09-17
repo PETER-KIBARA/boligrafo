@@ -40,7 +40,10 @@ static Future<Map<String, dynamic>> login({
   required String token,
   required int systolic,
   required int diastolic,
+  int? heartRate,
   String? symptoms,
+  String? diet,
+  String? exercise,
 }) async {
     final url = Uri.parse("$baseUrl/vitals");
     try {
@@ -53,7 +56,10 @@ static Future<Map<String, dynamic>> login({
         body: jsonEncode({
           "systolic": systolic,
           "diastolic": diastolic,
+          "heart_rate": heartRate,
           "symptoms": symptoms ?? "",
+          "diet": diet ?? "",
+          "exercise": exercise ?? "",
         }),
       );
 

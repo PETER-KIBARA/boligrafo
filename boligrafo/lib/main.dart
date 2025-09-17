@@ -1,58 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:myapp/login_screen.dart';
-
-// Make Supabase client available globally
-final supabase = Supabase.instance.client;
+import 'notifications_service.dart'; 
+import 'dart:async';
 
 Future<void> main() async {
-  // Ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details); 
+    debugPrint("Flutter error caught: ${details.exceptionAsString()}");
+  };
 
-  runApp(const MyApp());
+  runZonedGuarded<Future<void>>(() async {
+    await NotificationsService.initialize();
+
+    final prefs = await SharedPreferences.getInstance();
+    final loggedIn = prefs.getBool('loggedIn') ?? false;
+
+    runApp(MyApp(loggedIn: loggedIn));
+  }, (error, stack) {
+    debugPrint("Uncaught async error: $error");
+    debugPrint("Stack trace: $stack");
+  });
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool loggedIn;
+
+  const MyApp({Key? key, required this.loggedIn}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hypertension Management App',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        cardTheme: const CardThemeData(
-          elevation: 2.0,
-          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-          ),
-        ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400),
-          displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400),
-          displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w400),
-          headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400),
-          headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
-          titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: 0.15),
-          titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-          bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.15),
-          bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
-          bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
-          labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-          labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-          labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 1.5),
-        ),
-      ),
-      home: const LoginScreen(),
+      title: 'My App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: loggedIn ? const HomeScreen() : const LoginScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home')),
+      body: const Center(child: Text('Welcome!')),
     );
   }
 }
