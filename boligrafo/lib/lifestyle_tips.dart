@@ -24,16 +24,15 @@ class LifestyleTipsScreen extends StatelessWidget {
             child: ListTile(
   leading: CircleAvatar(
     backgroundColor: Colors.greenAccent,
-    child: Text(tip.id.toString()),  // shows the ID inside a circle
+    child: Text(tip.id.toString()),  
   ),
-  title: Text(tip.title),  // short title of the tip
+  title: Text(tip.title),  
   subtitle: Text(
-    tip.description,   // small preview of the description
-    maxLines: 2,       // only show 2 lines
-    overflow: TextOverflow.ellipsis, // add "..." if text is too long
+    tip.description,   
+    maxLines: 10,       
+    overflow: TextOverflow.ellipsis, 
   ),
   onTap: () {
-    // when user taps the tile -> navigate to detail screen
     Navigator.push(
       context,
       MaterialPageRoute(

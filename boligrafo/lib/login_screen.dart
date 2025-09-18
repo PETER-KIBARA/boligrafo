@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dashboard_screen.dart';
-import 'main_screen.dart';
+import 'api/ai_service.dart';
 import '../Api/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,6 +39,14 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("patientToken", response["token"]);
         await prefs.setString("patientName", response["name"] ?? "Patient");
+
+        // Generate AI lifestyle tips after login (fire-and-forget)
+        final patientName = prefs.getString("patientName") ?? "Patient";
+        // If you want to pass a key explicitly, store and read it from prefs or a secure source
+       // await AiService.generateAndSaveTips(apiKey: 'AIzaSyAX60KjZOFx1J0l6uCFc89mWVpEas0d9go', patientName: patientName);
+        // Uses --dart-define=GEMINI_API_KEY at build/run time if not provided
+        // ignore: unawaited_futures
+        AiService.generateAndSaveTips(patientName: patientName);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login successful!")),

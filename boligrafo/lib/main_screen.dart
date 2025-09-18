@@ -35,7 +35,7 @@ Widget build(BuildContext context) {
       currentIndex: _selectedIndex,
       selectedItemColor: Colors.green,
       unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true, // keep labels visible for clarity
+      showUnselectedLabels: true, 
       onTap: _onItemTapped,
       items: const [
         BottomNavigationBarItem(
@@ -49,7 +49,7 @@ Widget build(BuildContext context) {
           label: 'Reports',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.favorite_border),
+          icon: Icon(Icons.add_circle_outline),
           activeIcon: Icon(Icons.favorite, color: Colors.green),
           label: 'Log Vitals',
         ),

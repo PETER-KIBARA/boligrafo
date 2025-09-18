@@ -40,7 +40,7 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     final exercise = _exerciseController.text.isEmpty ? null : _exerciseController.text;
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("patientToken") ?? ""; // ✅ always patient
+    final token = prefs.getString("patientToken") ?? ""; 
 
     final result = await ApiService.saveVital(
       token: token,

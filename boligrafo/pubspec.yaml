@@ -16,6 +16,7 @@ dependencies:
   shared_preferences: ^2.2.2
   fl_chart: ^0.69.0
   flutter_local_notifications: ^17.2.3
+  google_generative_ai: ^0.4.6
     
 
   
