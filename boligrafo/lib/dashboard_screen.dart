@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'log_vitals_screen.dart';
-import 'detailed_report_screen.dart';
 import 'emergency_guidance_screen.dart';
 import 'tips_details.dart';
 import 'tips_data.dart';
@@ -254,25 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24.0),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LogVitalsScreen()),
-                  );
-                  _loadData();
-                },
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('Log Blood Pressure or Symptoms'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24.0),
+
             Text(
               'Todays Medications',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -345,20 +325,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: _buildChart(),
               ),
             ),
-            const SizedBox(height: 16.0),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DetailedReportScreen()),
-                  );
-                },
-                child: const Text('View Detailed Reports'),
-              ),
-            ),
-            const SizedBox(height: 24.0),
+
             Text(
               'Lifestyle Tips',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -421,26 +388,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 24.0),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const EmergencyGuidanceScreen()),
-                  );
-                },
-                icon: const Icon(Icons.warning_amber_outlined),
-                label: const Text('Feeling Unwell? Get Guidance'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24.0),
+            
           ],
         ),
       ),
