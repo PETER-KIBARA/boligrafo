@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Generate AI lifestyle tips after login (fire-and-forget)
         final patientName = prefs.getString("patientName") ?? "Patient";
         // If you want to pass a key explicitly, store and read it from prefs or a secure source
-       // await AiService.generateAndSaveTips(apiKey: 'AIzaSyAX60KjZOFx1J0l6uCFc89mWVpEas0d9go', patientName: patientName);
+       // await AiService.generateAndSaveTips(apiKey: '', patientName: patientName);
         // Uses --dart-define=GEMINI_API_KEY at build/run time if not provided
         // ignore: unawaited_futures
         AiService.generateAndSaveTips(patientName: patientName);
