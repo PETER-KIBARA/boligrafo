@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Profile</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #8fafdf; }
+    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0" id="patientName">Patient</h4>
+      <a class="btn btn-outline-secondary btn-sm" href="patients.html">Back to Patients</a>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="mb-3">Contact</h6>
+            <div class="small">
+              <div><strong>Email:</strong> <span id="email">-</span></div>
+              <div><strong>Phone:</strong> <span id="phone">-</span></div>
+              <div><strong>Address:</strong> <span id="address">-</span></div>
+            </div>
+            <hr>
+            <h6 class="mb-2">Medication Adherence</h6>
+            <div class="progress" style="height: 8px;">
+              <div id="adhBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div class="small text-muted mt-1" id="adhText">0%</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">Blood Pressure Trend</h6>
+              <select id="range" class="form-select form-select-sm" style="width:auto">
+                <option value="7">7 days</option>
+                <option value="30" selected>30 days</option>
+                <option value="90">90 days</option>
+              </select>
+            </div>
+            <div style="height:280px"><canvas id="bpChart"></canvas></div>
+          </div>
+        </div>
+        <div class="card mt-3">
+          <div class="card-header bg-light">Medical History</div>
+          <div class="card-body" id="historyList">
+            <div class="text-muted">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://192.168.100.93:8000";
+    const token = localStorage.getItem("doctorToken");
+    const patientId = new URLSearchParams(location.search).get('id');
+
+    async function authFetch(url){
+      return fetch(url, { headers: { 'Authorization': `Token ${token}` } });
+    }
+
+    async function loadProfile(){
+      const res = await authFetch(`${API_BASE}/patient/${patientId}/profile`);
+      if(!res.ok) return;
+      const p = await res.json();
+      document.getElementById('patientName').textContent = `${p.user.first_name} ${p.user.last_name||''}`.trim();
+      document.getElementById('email').textContent = p.user.email||'-';
+      document.getElementById('phone').textContent = p.phone||'-';
+      document.getElementById('address').textContent = p.address||'-';
+    }
+
+    async function loadAdherence(){
+      const res = await authFetch(`${API_BASE}/patient/${patientId}/adherence?days=30`);
+      if(!res.ok) return;
+      const data = await res.json();
+      const pct = Math.round(data.percent||0);
+      document.getElementById('adhBar').style.width = pct+"%";
+      document.getElementById('adhText').textContent = pct+"% over last 30 days";
+    }
+
+    let chart;
+    async function loadTrend(){
+      const days = document.getElementById('range').value;
+      const res = await authFetch(`${API_BASE}/patient/${patientId}/bp-trend?days=${days}`);
+      if(!res.ok) return;
+      const data = await res.json();
+      const labels = data.labels||[];
+      const systolic = data.systolic||[];
+      const diastolic = data.diastolic||[];
+      const ctx = document.getElementById('bpChart').getContext('2d');
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Systolic', data: systolic, borderColor: '#0d6efd', fill: false },
+          { label: 'Diastolic', data: diastolic, borderColor: '#dc3545', fill: false }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    async function loadHistory(){
+      const res = await authFetch(`${API_BASE}/patient/${patientId}/history`);
+      const box = document.getElementById('historyList');
+      if(!res.ok){ box.innerHTML = '<div class="text-muted">No history</div>'; return; }
+      const list = await res.json();
+      if(!list.length){ box.innerHTML = '<div class="text-muted">No history</div>'; return; }
+      box.innerHTML = '<ul class="list-group list-group-flush">'+
+        list.map(h=>`<li class="list-group-item d-flex justify-content-between"><span>${h.title}</span><small class="text-muted">${h.date}</small></li>`).join('')+
+        '</ul>';
+    }
+
+    document.getElementById('range').addEventListener('change', loadTrend);
+
+    loadProfile();
+    loadAdherence();
+    loadTrend();
+    loadHistory();
+  </script>
+</body>
+</html>
+
+

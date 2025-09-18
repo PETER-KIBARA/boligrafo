@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treatments</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #8fafdf; }
+    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Clinic Treatments</h4>
+      <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="mb-3">Create / Update Treatment</h6>
+            <form id="treatForm">
+              <input type="hidden" id="treatId">
+              <div class="mb-2">
+                <label class="form-label">Name</label>
+                <input id="treatName" class="form-control" placeholder="e.g., Hypertension Care Plan">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Description</label>
+                <textarea id="treatDesc" class="form-control" rows="3" placeholder="Treatment description..."></textarea>
+              </div>
+              <div class="d-flex justify-content-end">
+                <button class="btn btn-primary" type="submit">Save</button>
+              </div>
+            </form>
+            <div id="treatMsg" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="mb-3">Treatments</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped" id="treatTable">
+                <thead>
+                  <tr><th>Name</th><th>Description</th><th></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://192.168.100.93:8000";
+    const token = localStorage.getItem("doctorToken");
+
+    async function authFetch(url, opts={}){
+      opts.headers = Object.assign({}, opts.headers||{}, { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' });
+      return fetch(url, opts);
+    }
+
+    async function loadTreatments(){
+      const res = await authFetch(`${API_BASE}/doctor/treatments`);
+      const tbody = document.querySelector('#treatTable tbody');
+      if(!res.ok){ tbody.innerHTML = ''; return; }
+      const list = await res.json();
+      tbody.innerHTML = list.map(t=>`<tr>
+        <td>${t.name}</td>
+        <td>${t.description||''}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-primary" onclick='prefill(${JSON.stringify(JSON.stringify(t))})'>Edit</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function prefill(tStr){
+      const t = JSON.parse(tStr);
+      document.getElementById('treatId').value = t.id;
+      document.getElementById('treatName').value = t.name||'';
+      document.getElementById('treatDesc').value = t.description||'';
+    }
+
+    document.getElementById('treatForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('treatId').value;
+      const payload = { name: document.getElementById('treatName').value, description: document.getElementById('treatDesc').value };
+      const url = id ? `${API_BASE}/doctor/treatments/${id}` : `${API_BASE}/doctor/treatments`;
+      const method = id ? 'PUT' : 'POST';
+      const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+      const msg = document.getElementById('treatMsg');
+      if(res.ok){ msg.innerHTML = '<div class="alert alert-success">Saved</div>'; loadTreatments(); e.target.reset(); document.getElementById('treatId').value=''; }
+      else { const d = await res.json(); msg.innerHTML = `<div class=\"alert alert-danger\">${d.error||'Failed'}</div>`; }
+    });
+
+    loadTreatments();
+  </script>
+</body>
+</html>
+
+

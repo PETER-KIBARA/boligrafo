@@ -22,9 +22,11 @@
       <!-- Sidebar -->
       <div class="col-2 sidebar p-3">
         <h5 class="mb-4">Doctor Dashboard</h5>
-        <a href="#" class="active" id="patientsLink"><i class="bi bi-people"></i> Patients</a>
-        <a href="#" id="alertsLink"><i class="bi bi-bell"></i> Alerts</a>
-        <a href="#" id="reportsLink"><i class="bi bi-bar-chart"></i> Reports</a>
+        <a href="patients.html" id="patientsLink"><i class="bi bi-people"></i> Patients</a>
+        <a href="alerts_list.html" id="alertsLink"><i class="bi bi-bell"></i> Alerts</a>
+        <a href="reports_generator.html" id="reportsLink"><i class="bi bi-bar-chart"></i> Reports</a>
+        <a href="prescriptions.html" id="prescriptionsLink"><i class="bi bi-capsule"></i> Prescriptions</a>
+        <a href="treatments_manage.html" id="treatmentsLink"><i class="bi bi-clipboard2-pulse"></i> Treatments</a>
         <a href="#" id="profileLink"><i class="bi bi-person"></i> Profile</a>
         <a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a>
       </div>
@@ -49,10 +51,19 @@
             </div>
           </div>
         </div>
+        <!-- Quick Actions -->
+        <div class="card p-3 mb-4">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn btn-sm btn-primary" id="redirectBtn"><i class="bi bi-person-plus"></i> Register Patient</button>
+            <a class="btn btn-sm btn-outline-secondary" href="patients.html"><i class="bi bi-people"></i> View Patients</a>
+            <a class="btn btn-sm btn-outline-secondary" href="alerts_list.html"><i class="bi bi-bell"></i> Alerts</a>
+            <a class="btn btn-sm btn-outline-secondary" href="reports_generator.html"><i class="bi bi-bar-chart"></i> Reports</a>
+            <a class="btn btn-sm btn-outline-secondary" href="prescriptions.html"><i class="bi bi-capsule"></i> Prescriptions</a>
+            <a class="btn btn-sm btn-outline-secondary" href="treatments_manage.html"><i class="bi bi-clipboard2-pulse"></i> Treatments</a>
+          </div>
+        </div>
        <script>
-        document.getElementById("redirectBtn").addEventListener("click", function()
-         { window.location.href = "patient_signup.html"; 
-        });
+        document.getElementById("redirectBtn").addEventListener("click", function(){ window.location.href = "patient_signup.html"; });
          </script>
 
         <!-- Chart -->
@@ -206,7 +217,7 @@
 
     function logout() {
       localStorage.clear();
-      window.location.href = "index.html";
+      window.location.href = "doctors_login.html";
     }
 
     loadDoctorProfile();
