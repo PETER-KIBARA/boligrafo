@@ -19,6 +19,9 @@ from postd.serializers import DoctorProfileSerializer
 from rest_framework import generics, permissions
 from .models import VitalReading
 from .serializers import VitalReadingSerializer
+from rest_framework import filters
+from .serializers import PatientSerializer
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  
@@ -189,3 +192,10 @@ class DoctorPatientDailyReportsView(APIView):
             "date": str(today),
             "readings": serializer.data
         })
+
+class PatientListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserProfile.objects.all().select_related("user")
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["user__first_name", "user__last_name", "phone", "id"]

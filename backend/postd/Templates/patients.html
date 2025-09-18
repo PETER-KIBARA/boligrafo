@@ -57,7 +57,7 @@
     let currentQuery = '';
 
     async function loadPatients(){
-      const url = new URL(`${API_BASE}/doctor/patients`);
+      const url = new URL(`${API_BASE}/list_patients`);
       url.searchParams.set('page', currentPage);
       if(currentQuery) url.searchParams.set('q', currentQuery);
       const res = await fetch(url, { headers: { 'Authorization': `Token ${token}` } });

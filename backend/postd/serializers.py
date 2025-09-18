@@ -57,3 +57,14 @@ class VitalReadingSerializer(serializers.ModelSerializer):
         fields = ["id", "patient", "patient_name", "patient_email", "systolic", "diastolic", "heartrate", "symptoms", "diet", "exercise","created_at"]
         read_only_fields = ["id", "patient_name", "patient_email", "created_at", "patient"]
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ["id", "first_name", "last_name", "email"]
+
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ["id", "user", "phone", "last_reading_at"]
