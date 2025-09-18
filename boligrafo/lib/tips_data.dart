@@ -7,7 +7,7 @@ final List<LifestyleTip> lifestyleTips = [
     description: "Drink at least 8 glasses of water daily to keep your body hydrated. "
         "Proper hydration improves digestion, maintains skin health, regulates body temperature, "
         "and helps in detoxification.",
-        imageUrl: "assets/images/watee.jpg",
+        imageUrl: "assets/images/water.jpg",
 
 
     
