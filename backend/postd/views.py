@@ -88,6 +88,7 @@ def apilogin(request):
         "email": user.email or "",
     }
 }, status=200)
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def doctor_login(request):

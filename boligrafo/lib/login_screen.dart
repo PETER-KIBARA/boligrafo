@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_screen.dart';
- import '../Api/api_service.dart';
-
+import '../Api/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,35 +18,37 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
-  Future<void>_login() async {
-  if (_formKey.currentState!.validate()) {
-    setState(() => _isLoading = true);
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
 
-final response = await ApiService.login(
-  email: _emailController.text.trim(),
-  password: _passwordController.text.trim(),
-);
-
-
-   
-    setState(() => _isLoading = false);
-
-    if (response["error"] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response["message"])),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login successful!")),
+      final response = await ApiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
+      setState(() => _isLoading = false);
+
+      if (response["error"] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response["message"])),
+        );
+      } else {
+        // ✅ Save token + patient name
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("patientToken", response["token"]);
+        await prefs.setString("patientName", response["name"] ?? "Patient");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login successful!")),
+        );
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+      }
     }
   }
-}
-
 
   @override
   void dispose() {
@@ -55,7 +57,6 @@ final response = await ApiService.login(
     super.dispose();
   }
 
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,15 +65,10 @@ final response = await ApiService.login(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              // Header with Logo
               _buildHeader(),
               const SizedBox(height: 48),
-              
-              // Login Form
               _buildLoginForm(),
               const SizedBox(height: 32),
-              
-              // Social Login Options (optional - you can remove this too if needed)
               _buildSocialLogin(),
             ],
           ),
@@ -84,7 +80,6 @@ final response = await ApiService.login(
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo using Flutter's built-in icons
         Container(
           width: 100,
           height: 100,
@@ -124,7 +119,6 @@ final response = await ApiService.login(
       key: _formKey,
       child: Column(
         children: [
-          // Email Field
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -141,15 +135,14 @@ final response = await ApiService.login(
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
                 return 'Please enter a valid email';
               }
               return null;
             },
           ),
           const SizedBox(height: 20),
-          
-          // Password Field
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -181,12 +174,9 @@ final response = await ApiService.login(
             },
           ),
           const SizedBox(height: 16),
-          
-          // Remember Me & Forgot Password
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Remember Me
               Row(
                 children: [
                   Checkbox(
@@ -203,13 +193,9 @@ final response = await ApiService.login(
                   ),
                 ],
               ),
-              
-              
             ],
           ),
           const SizedBox(height: 24),
-          
-          // Login Button
           SizedBox(
             width: double.infinity,
             height: 56,
@@ -244,51 +230,18 @@ final response = await ApiService.login(
   Widget _buildSocialLogin() {
     return Column(
       children: [
-        // Divider with text
         Row(
           children: [
             Expanded(
               child: Divider(color: Colors.grey.shade300),
             ),
-            
             Expanded(
               child: Divider(color: Colors.grey.shade300),
             ),
           ],
         ),
         const SizedBox(height: 24),
-        
-        // Social buttons using Flutter icons
-       
       ],
-    );
-  }
-}
-
-class SocialButton extends StatelessWidget {
-  final Widget icon;
-  final VoidCallback onPressed;
-
-  const SocialButton({
-    super.key,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: icon,
-        color: Colors.blue.shade600,
-      ),
     );
   }
 }

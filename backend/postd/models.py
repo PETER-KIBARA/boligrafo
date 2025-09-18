@@ -49,7 +49,10 @@ class VitalReading(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vitals")
     systolic = models.IntegerField()
     diastolic = models.IntegerField()
+    heartrate = models.IntegerField(blank=True, null=True)
     symptoms = models.TextField(blank=True, null=True)
+    diet = models.TextField(blank=True, null=True)
+    exercise = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

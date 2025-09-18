@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'log_vitals_screen.dart'; 
+import 'log_vitals_screen.dart';
 import 'detailed_report_screen.dart';
 import 'emergency_guidance_screen.dart';
 import 'tips_details.dart';
@@ -21,6 +21,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> _vitals = [];
   List<MedicationScheduleItem> _meds = [];
   bool _loading = true;
+  String? _patientName;
 
   @override
   void initState() {
@@ -32,15 +33,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('patientToken') ?? '';
+      final name = prefs.getString('patientName');
       final vitals = await ApiService.fetchVitals(token);
       final meds = await MedicationService.getSchedule();
       setState(() {
+        _patientName = name;
         _vitals = vitals;
         _meds = meds;
         _loading = false;
       });
     } catch (_) {
       setState(() => _loading = false);
+    }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else if (hour < 20) {
+      return "Good evening";
+    } else {
+      return "Good night";
     }
   }
 
@@ -154,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hypertension Management'),
+        title: Text('${_patientName?.isNotEmpty == true ? _patientName : "Dashboard"}'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -164,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             _buildCriticalAlert(),
             Text(
-              'Good morning, Peter!',
+              '${_getGreeting()}, ${_patientName?.isNotEmpty == true ? _patientName : "patint"} 👋',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -299,7 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         Checkbox(
-                          value: medication.takenToday, 
+                          value: medication.takenToday,
                           onChanged: (bool? value) {
                             if (value == null) return;
                             _toggleTaken(medication, value);
@@ -351,7 +367,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 16.0),
             SizedBox(
-              height: 160.0, 
+              height: 160.0,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: lifestyleTips.length,
@@ -380,7 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Tip #${tip.id}', 
+                              'Tip #${tip.id}',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black54,
@@ -388,7 +404,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              tip.title, 
+                              tip.title,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -417,7 +433,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: const Icon(Icons.warning_amber_outlined),
                 label: const Text('Feeling Unwell? Get Guidance'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red, 
+                  backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   textStyle: Theme.of(context).textTheme.titleMedium,

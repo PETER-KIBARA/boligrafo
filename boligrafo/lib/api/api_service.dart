@@ -21,9 +21,13 @@ static Future<Map<String, dynamic>> login({
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
-      
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("patientToken", data["token"]);
+
+      // 👇 Save the patient’s name from response["user"]["name"]
+      if (data["user"] != null) {
+        await prefs.setString("patientName", data["user"]["name"] ?? "Patient");
+      }
 
       return data;
     } else {
@@ -33,6 +37,7 @@ static Future<Map<String, dynamic>> login({
     return {"error": true, "message": "Something went wrong: $e"};
   }
 }
+
 
 
   // ---------- SAVE VITAL (CREATE) ----------
@@ -56,7 +61,7 @@ static Future<Map<String, dynamic>> login({
         body: jsonEncode({
           "systolic": systolic,
           "diastolic": diastolic,
-          "heart_rate": heartRate,
+          "heartrate": heartRate,
           "symptoms": symptoms ?? "",
           "diet": diet ?? "",
           "exercise": exercise ?? "",

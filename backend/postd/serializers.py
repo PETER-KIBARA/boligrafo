@@ -21,6 +21,18 @@ class LoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
+        user = authenticate(username=email, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid email or password")
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return {
+            "error": False,
+            "token": token.key,
+            "name": user.get_full_name() or user.username,  
+            "message": "Login successful"
+        }
 
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
@@ -42,6 +54,6 @@ class VitalReadingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = VitalReading
-        fields = ["id", "patient", "patient_name", "patient_email", "systolic", "diastolic", "symptoms", "created_at"]
+        fields = ["id", "patient", "patient_name", "patient_email", "systolic", "diastolic", "heartrate", "symptoms", "diet", "exercise","created_at"]
         read_only_fields = ["id", "patient_name", "patient_email", "created_at", "patient"]
 
