@@ -5,87 +5,245 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Profile</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { background-color: #eef3fb; }
-    .profile-card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-    .profile-pic {
-      width: 120px; height: 120px;
-      border-radius: 50%; object-fit: cover;
-      border: 3px solid #0d6efd;
+    :root {
+      --primary: #2a6bd0;
+      --primary-light: #e2edff;
+      --secondary: #4e7ac5;
+      --accent: #4caf50;
+      --light: #f8fafc;
+      --dark: #1e293b;
+      --border-radius: 16px;
     }
-    .label { font-weight: 600; color: #0d6efd; }
+    
+    body {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #334155;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 900px;
+    }
+    
+    .profile-card {
+      border-radius: var(--border-radius);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      border: none;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background: white;
+    }
+    
+    .profile-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    }
+    
+    .profile-pic {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--primary);
+      box-shadow: 0 5px 15px rgba(42, 107, 208, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .profile-pic:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 20px rgba(42, 107, 208, 0.3);
+    }
+    
+    .card-title {
+      color: var(--dark);
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 10px;
+    }
+    
+    .card-title:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+    
+    .label {
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+    }
+    
+    .label i {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+    
+    .detail-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.2s;
+    }
+    
+    .detail-item:hover {
+      background-color: #f8fafc;
+      border-radius: 8px;
+    }
+    
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+    
+    .specialty-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    
+    .header-gradient {
+      background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 20px;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+    
+    .profile-content {
+      padding: 25px;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    
+    .loading-placeholder {
+      color: transparent;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
 </head>
 <body>
   <div class="container py-5">
     <!-- Profile Header -->
-    <div class="card profile-card p-4 mb-4">
-      <div class="d-flex align-items-center">
-        <img src="profile_placeholder.jpg" alt="Doctor Photo" class="profile-pic me-4" id="doctorPhoto">
-        <div>
-          <h3 id="doctorName">[Full Name]</h3>
-          <p class="text-muted mb-1" id="doctorTitle">[Title]</p>
-          <p class="small text-secondary" id="doctorSpecialty">[Specialty]</p>
+    <div class="card profile-card mb-4 overflow-hidden fade-in">
+      <div class="header-gradient">
+        <div class="d-flex align-items-center">
+          <img src="profile_placeholder.jpg" alt="Doctor Photo" class="profile-pic me-4" id="doctorPhoto">
+          <div>
+            <h3 class="mb-1" id="doctorName">[Full Name]</h3>
+            <p class="mb-1 opacity-75" id="doctorTitle">[Title]</p>
+            <span class="specialty-badge" id="doctorSpecialty">[Specialty]</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Details -->
-    <div class="card p-4 mb-4">
-      <h5>Profile Details</h5>
-      <div class="row mb-2">
-        <div class="col-sm-3 label">Username:</div>
-        <div class="col-sm-9" id="doctorUsername">—</div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-3 label">Email:</div>
-        <div class="col-sm-9" id="doctorEmail">—</div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-3 label">Phone:</div>
-        <div class="col-sm-9" id="doctorPhone">—</div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-3 label">National ID:</div>
-        <div class="col-sm-9" id="doctorNationalId">—</div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-3 label">Employee ID:</div>
-        <div class="col-sm-9" id="doctorEmployeeId">—</div>
+    <div class="card profile-card p-0 overflow-hidden fade-in delay-1">
+      <div class="profile-content">
+        <h5 class="card-title mb-4">Profile Details</h5>
+        
+        <div class="detail-item row">
+          <div class="col-sm-3 label"><i class="fas fa-user"></i> Username:</div>
+          <div class="col-sm-9" id="doctorUsername"><span class="loading-placeholder">—</span></div>
+        </div>
+        
+        <div class="detail-item row">
+          <div class="col-sm-3 label"><i class="fas fa-envelope"></i> Email:</div>
+          <div class="col-sm-9" id="doctorEmail"><span class="loading-placeholder">—</span></div>
+        </div>
+        
+        <div class="detail-item row">
+          <div class="col-sm-3 label"><i class="fas fa-phone"></i> Phone:</div>
+          <div class="col-sm-9" id="doctorPhone"><span class="loading-placeholder">—</span></div>
+        </div>
+        
+        <div class="detail-item row">
+          <div class="col-sm-3 label"><i class="fas fa-id-card"></i> National ID:</div>
+          <div class="col-sm-9" id="doctorNationalId"><span class="loading-placeholder">—</span></div>
+        </div>
+        
+        <div class="detail-item row">
+          <div class="col-sm-3 label"><i class="fas fa-briefcase-medical"></i> Employee ID:</div>
+          <div class="col-sm-9" id="doctorEmployeeId"><span class="loading-placeholder">—</span></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const API_BASE = "http://192.168.100.93:8000"; // adjust to your Django server
-    const token = localStorage.getItem("doctorToken");
+  const API_BASE = "http://192.168.100.93:8000"; // adjust to your Django server
+  const token = localStorage.getItem("doctorToken");
 
-    async function loadDoctorProfile() {
-      try {
-        const res = await fetch(`${API_BASE}/doctor/profile`, {
-          headers: { 'Authorization': `Token ${token}` }
-        });
-        if (!res.ok) throw new Error("Failed to fetch profile");
-        const data = await res.json();
-        console.log("Doctor profile:", data);
-
-        // Fill in profile fields
-        document.getElementById("doctorName").textContent = data.full_name || "—";
-        document.getElementById("doctorTitle").textContent = data.title || "—";
-        document.getElementById("doctorSpecialty").textContent = data.specialty || "—";
-        document.getElementById("doctorUsername").textContent = data.username || "—";
-        document.getElementById("doctorEmail").textContent = data.email || "—";
-        document.getElementById("doctorPhone").textContent = data.phone || "—";
-        document.getElementById("doctorNationalId").textContent = data.national_id || "—";
-        document.getElementById("doctorEmployeeId").textContent = data.employee_id || "—";
-
-        // Optional: replace placeholder image if you add a photo field later
-      } catch (err) {
-        console.error(err);
-      }
+  async function loadDoctorProfile() {
+    if (!token) {
+      alert("Not authenticated. Redirecting to login...");
+      window.location.href = "/login.html";
+      return;
     }
 
-    loadDoctorProfile();
-  </script>
+    try {
+      const res = await fetch(`${API_BASE}/doctor/profile`, {
+        headers: { 'Authorization': `Token ${token}` }
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      const data = await res.json();
+      console.log("Doctor profile:", data);
+
+      // Fill in profile fields
+      document.getElementById("doctorName").textContent = data.full_name || "—";
+      document.getElementById("doctorTitle").textContent = data.title || "—";
+      document.getElementById("doctorSpecialty").textContent = data.specialty || "—";
+      document.getElementById("doctorUsername").textContent = data.username || "—";
+      document.getElementById("doctorEmail").textContent = data.email || "—";
+      document.getElementById("doctorPhone").textContent = data.phone || "—";
+      document.getElementById("doctorNationalId").textContent = data.national_id || "—";
+      document.getElementById("doctorEmployeeId").textContent = data.employee_id || "—";
+
+      // Hide placeholders
+      document.querySelectorAll('.loading-placeholder').forEach(el => el.remove());
+    } catch (err) {
+      console.error(err);
+      document.querySelectorAll('#doctorUsername, #doctorEmail, #doctorPhone, #doctorNationalId, #doctorEmployeeId')
+        .forEach(el => el.textContent = "Error loading data");
+    }
+  }
+
+  setTimeout(loadDoctorProfile, 500);
+</script>
+
 </body>
 </html>
