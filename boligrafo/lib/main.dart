@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:myapp/login_screen.dart';
 import 'notifications_service.dart'; 
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
       title: 'My App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: loggedIn ? const HomeScreen() : const LoginScreen(),
+      home: loggedIn ? const HomeScreen() : const MainScreen(),
     );
   }
 }

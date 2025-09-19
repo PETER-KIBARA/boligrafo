@@ -1,59 +1,105 @@
 import 'package:flutter/material.dart';
 
-class DetailedReportScreen extends StatelessWidget {
+class DetailedReportScreen extends StatefulWidget {
   const DetailedReportScreen({super.key});
+
+  @override
+  State<DetailedReportScreen> createState() => _DetailedReportScreenState();
+}
+
+class _DetailedReportScreenState extends State<DetailedReportScreen> {
+  String _selectedRange = "weekly"; // default filter
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detailed Reports'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                _selectedRange = value;
+              });
+              // 🔥 Call your backend here with the selected filter
+              // fetchReportData(value);
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: "weekly", child: Text("Weekly")),
+              PopupMenuItem(value: "monthly", child: Text("Monthly")),
+            ],
+            icon: const Icon(Icons.filter_list),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
+            // SECTION: Vitals Chart
             Text(
-              'Blood Pressure History',
+              'Vitals History ($_selectedRange)',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 16.0),
-            // Placeholder for a chart or list of readings
+            const SizedBox(height: 12.0),
             Card(
               elevation: 2.0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              child: Container(
+              child: SizedBox(
                 height: 200,
-                alignment: Alignment.center,
-                child: const Text(
-                  '[Blood Pressure Chart Placeholder]',
-                  style: TextStyle(color: Colors.green),
+                child: Center(
+                  child: Text(
+                    '[Vitals Chart ($_selectedRange) Placeholder]',
+                    style: const TextStyle(color: Colors.green),
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 24.0),
+
+            // SECTION: Recent Vitals List
             Text(
-              'Recent Readings',
+              'Recent Vitals',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 8.0),
-            // Example readings list
-            ...[
-              {'date': 'July 28, 2025', 'bp': '120/80 mmHg', 'status': 'Normal'},
-              {'date': 'July 27, 2025', 'bp': '130/85 mmHg', 'status': 'Elevated'},
-              {'date': 'July 26, 2025', 'bp': '140/90 mmHg', 'status': 'Critical'},
-            ].map((reading) => ListTile(
-                  leading: const Icon(Icons.favorite, color: Color.fromARGB(255, 199, 226, 46)),
-                  title: Text('${reading['bp']} (${reading['status']})'),
-                  subtitle: Text(reading['date']!),
-                )),
+            // 🔥 Replace with ListView.builder after fetching from API
+            const Text("[Fetch vitals from backend here]"),
+
             const SizedBox(height: 24.0),
+
+            // SECTION: Medications
+            Text(
+              'Medications Assigned',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8.0),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  children: const [
+                    Text("[Fetch medications from backend here]"),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24.0),
+
+            // SECTION: Insights (optional backend-driven)
             Text(
               'Insights & Recommendations',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -62,7 +108,8 @@ class DetailedReportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8.0),
             const Text(
-              'Your blood pressure has been mostly within the normal range. Keep up with your medication and healthy lifestyle habits!',
+              '[Optional: show analysis from backend or AI service]',
+              style: TextStyle(color: Colors.grey),
             ),
           ],
         ),
