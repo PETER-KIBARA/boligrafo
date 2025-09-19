@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Api/api_service.dart';
-
 
 class LogVitalsScreen extends StatefulWidget {
   const LogVitalsScreen({super.key});
 
   @override
-  _LogVitalsScreenState createState() => _LogVitalsScreenState();
+  State<LogVitalsScreen> createState() => _LogVitalsScreenState();
 }
 
 class _LogVitalsScreenState extends State<LogVitalsScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _systolicController = TextEditingController();
   final TextEditingController _diastolicController = TextEditingController();
   final TextEditingController _heartRateController = TextEditingController();
@@ -29,18 +30,21 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
     _exerciseController.dispose();
     super.dispose();
   }
-
-  Future<void> _saveReading() async {
+Future<void> _saveReading() async {
   if (_formKey.currentState!.validate()) {
     final systolic = int.parse(_systolicController.text);
     final diastolic = int.parse(_diastolicController.text);
-    final symptoms = _symptomsController.text;
-    final heartRate = _heartRateController.text.isEmpty ? null : int.parse(_heartRateController.text);
-    final diet = _dietController.text.isEmpty ? null : _dietController.text;
-    final exercise = _exerciseController.text.isEmpty ? null : _exerciseController.text;
+    final symptoms = _symptomsController.text.trim();
+    final heartRate = _heartRateController.text.isEmpty
+        ? null
+        : int.parse(_heartRateController.text);
+    final diet =
+        _dietController.text.isEmpty ? null : _dietController.text.trim();
+    final exercise =
+        _exerciseController.text.isEmpty ? null : _exerciseController.text.trim();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("patientToken") ?? ""; 
+    final token = prefs.getString("patientToken") ?? "";
 
     final result = await ApiService.saveVital(
       token: token,
@@ -52,21 +56,25 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
       exercise: exercise,
     );
 
+    if (!mounted) return;
+
     if (result.containsKey("error")) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result["message"])),
+        SnackBar(content: Text(result["message"] ?? "Failed to save vitals")),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Vitals saved successfully!")),
       );
-      Navigator.pop(context);
+
+      // 🚀 Replace pop with navigation to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen() ),
+      );
     }
   }
 }
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,27 +116,29 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter diastolic reading';
                   }
-                   if (int.tryParse(value) == null) {
+                  if (int.tryParse(value) == null) {
                     return 'Please enter a valid number';
                   }
                   return null;
                 },
               ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              controller: _heartRateController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Heart Rate (bpm) - Optional',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: _heartRateController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Heart Rate (bpm) - Optional',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value != null &&
+                      value.isNotEmpty &&
+                      int.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value != null && value.isNotEmpty && int.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-            ),
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _symptomsController,
@@ -140,36 +150,39 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
                 ),
                 maxLines: 3,
               ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              controller: _dietController,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                labelText: 'Diet (Optional)',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: _dietController,
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                  labelText: 'Diet (Optional)',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 2,
               ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              controller: _exerciseController,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                labelText: 'Exercise (Optional)',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: _exerciseController,
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                  labelText: 'Exercise (Optional)',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 2,
               ),
-              maxLines: 2,
-            ),
+              
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: _saveReading,
                 style: ElevatedButton.styleFrom(
-                   padding: const EdgeInsets.symmetric(vertical: 12.0),
-                   textStyle: Theme.of(context).textTheme.titleMedium,
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  textStyle: Theme.of(context).textTheme.titleMedium,
                 ),
+                
                 child: const Text('Save Reading'),
+
               ),
             ],
           ),
