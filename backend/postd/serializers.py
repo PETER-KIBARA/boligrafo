@@ -87,12 +87,15 @@ class PatientSerializer(serializers.ModelSerializer):
             }
         return None
 class PatientSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name  = serializers.CharField(source="user.last_name", read_only=True)
+    email      = serializers.EmailField(source="user.email", read_only=True)
     last_reading = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
-        fields = ["id", "user", "phone", "last_reading"]
+        fields = ["id", "first_name", "last_name", "email", "phone", "last_reading"]
+
 
     def get_last_reading(self, obj):
         last = obj.user.vitals.order_by("-created_at").first()

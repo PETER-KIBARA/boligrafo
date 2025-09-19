@@ -99,12 +99,13 @@
     document.getElementById('prevBtn').disabled = currentPage<=1;
     document.getElementById('nextBtn').disabled = !data.next;
   }
+document.getElementById('searchBtn').addEventListener('click', ()=>{
+  currentQuery = document.getElementById('q').value.trim();
+  currentPage = 1; 
+  loadPatients();
+});
 
-  document.getElementById('searchBtn').addEventListener('click', ()=>{
-    currentQuery = document.getElementById('q').value.trim();
-    currentPage = 1; 
-    loadPatients();
-  });
+
   document.getElementById('prevBtn').addEventListener('click', ()=>{
     if(currentPage>1){ currentPage--; loadPatients(); }
   });

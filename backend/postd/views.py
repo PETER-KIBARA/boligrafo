@@ -17,6 +17,7 @@ from postd.models import DoctorProfile
 from django.db import transaction
 from postd.serializers import DoctorProfileSerializer
 from rest_framework import generics, permissions
+from django.db.models import Q
 from .models import VitalReading
 from .serializers import VitalReadingSerializer
 from rest_framework import filters
@@ -199,3 +200,16 @@ class PatientListView(generics.ListAPIView):
     queryset = UserProfile.objects.all().select_related("user")
     filter_backends = [filters.SearchFilter]
     search_fields = ["user__first_name", "user__last_name", "phone", "id"]
+
+    def get_queryset(self):
+        qs = UserProfile.objects.select_related("user").all()
+        q = self.request.query_params.get("q")
+        if q:
+            qs = qs.filter(
+                Q(user__first_name__icontains=q) |
+                Q(user__last_name__icontains=q) |
+                Q(user__email__icontains=q) |
+                Q(phone__icontains=q) |
+                Q(id__icontains=q)
+            )
+        return qs
