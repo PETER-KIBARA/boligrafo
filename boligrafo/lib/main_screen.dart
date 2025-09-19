@@ -44,14 +44,14 @@ Widget build(BuildContext context) {
           label: 'Dashboard',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.add_circle_outline),
+          activeIcon: Icon(Icons.favorite_outline, color: Colors.green),
+          label: 'Log Vitals',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.insights_outlined),
           activeIcon: Icon(Icons.insights, color: Colors.green),
           label: 'Reports',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle_outline),
-          activeIcon: Icon(Icons.favorite, color: Colors.green),
-          label: 'Log Vitals',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.health_and_safety_outlined),
