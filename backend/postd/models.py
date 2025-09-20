@@ -40,8 +40,12 @@ class DoctorProfile(models.Model):
     specialty = models.CharField(max_length=100)
     title = models.CharField(max_length=100)  # e.g. Consultant, Resident, Specialist
 
+
     def __str__(self):
         return f"Dr. {self.full_name} - {self.specialty}"
+
+
+
 
 
 
