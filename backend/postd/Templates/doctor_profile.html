@@ -176,14 +176,11 @@
         <h5 class="card-title mb-4">Profile Details</h5>
         
         <div class="detail-item row">
-          <div class="col-sm-3 label"><i class="fas fa-user"></i> Username:</div>
+          <div class="col-sm-3 label"><i class="fas fa-user"></i> Email:</div>
           <div class="col-sm-9" id="doctorUsername"><span class="loading-placeholder">—</span></div>
         </div>
         
-        <div class="detail-item row">
-          <div class="col-sm-3 label"><i class="fas fa-envelope"></i> Email:</div>
-          <div class="col-sm-9" id="doctorEmail"><span class="loading-placeholder">—</span></div>
-        </div>
+        
         
         <div class="detail-item row">
           <div class="col-sm-3 label"><i class="fas fa-phone"></i> Phone:</div>
@@ -228,7 +225,6 @@
       document.getElementById("doctorTitle").textContent = data.title || "—";
       document.getElementById("doctorSpecialty").textContent = data.specialty || "—";
       document.getElementById("doctorUsername").textContent = data.username || "—";
-      document.getElementById("doctorEmail").textContent = data.email || "—";
       document.getElementById("doctorPhone").textContent = data.phone || "—";
       document.getElementById("doctorNationalId").textContent = data.national_id || "—";
       document.getElementById("doctorEmployeeId").textContent = data.employee_id || "—";
