@@ -22,6 +22,9 @@ from .models import VitalReading
 from .serializers import VitalReadingSerializer
 from rest_framework import filters
 from .serializers import PatientSerializer
+from .models import Prescription
+from .serializers import PrescriptionSerializer
+from .models import UserProfile  
 
 
 @api_view(["POST"])
@@ -124,6 +127,12 @@ def doctor_login(request):
         "doctor": serializer.data
     })
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    request.user.auth_token.delete()
+    return Response({"message": "Logged out successfully."}, status=200)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -216,3 +225,44 @@ class PatientListView(generics.ListAPIView):
                 Q(id__icontains=q)
             )
         return qs
+
+
+
+
+class PrescriptionListCreateView(generics.ListCreateAPIView):
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Prescription.objects.all()
+
+        if hasattr(user, "doctorprofile"):
+            patient_id = self.request.query_params.get("patient")
+            if patient_id:
+                qs = qs.filter(patient_id=patient_id)
+            return qs
+
+        if hasattr(user, "userprofile"):
+            return qs.filter(patient=user.userprofile)
+
+        return Prescription.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not hasattr(user, "doctorprofile"):
+            raise PermissionDenied("Only doctors can create prescriptions.")
+        serializer.save(doctor=user.doctorprofile)
+        
+class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        user = self.request.user
+
+        if not hasattr(user, "doctorprofile"):
+            raise PermissionDenied("Only doctors can update prescriptions.")
+
+        serializer.save(doctor=user.doctorprofile)

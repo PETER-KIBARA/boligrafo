@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.contrib.auth import get_user_model 
   
 User = get_user_model()  
@@ -64,3 +65,27 @@ class VitalReading(models.Model):
 
     def __str__(self):
         return f"{self.patient.username} - {self.systolic}/{self.diastolic} mmHg"
+
+
+
+
+
+class Prescription(models.Model):
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="prescriptions"
+    )
+    patient = models.ForeignKey(
+        "UserProfile", on_delete=models.CASCADE, related_name="prescriptions"
+    )
+    medication = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=100)
+    duration_days = models.IntegerField()
+    instructions = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.medication} for {self.patient.user.get_full_name()}"

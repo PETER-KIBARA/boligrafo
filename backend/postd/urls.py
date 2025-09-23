@@ -4,6 +4,8 @@ from . import views
 from .views import VitalReadingListCreateView
 from .views import DoctorPatientDailyReportsView
 from .views import PatientListView
+from .views import PrescriptionListCreateView, PrescriptionRetrieveUpdateView
+  
 
 
 urlpatterns = [
@@ -15,6 +17,11 @@ path("list_patients", PatientListView.as_view(), name="patients-list"),
 path("patient/signup", views.patient_signup, name="patient_signup"),
 path("vitals", VitalReadingListCreateView.as_view(), name="vital-list-create"),
 path('view_patient/<int:patient_id>/daily-reports', DoctorPatientDailyReportsView.as_view()),
+path("doctor/logout", views.logout_view, name="doctor-logout"),
+path("prescriptions", PrescriptionListCreateView.as_view(), name="prescription-list-create"),
+path("prescriptions/<int:pk>", PrescriptionRetrieveUpdateView.as_view(), name="prescription-detail"),
+
+
 
 
 

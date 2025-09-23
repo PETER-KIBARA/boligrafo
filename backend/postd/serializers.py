@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from .models import DoctorProfile
 from .models import VitalReading
+from .models import Prescription
 
 
 
@@ -86,6 +87,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 "created_at": last.created_at,
             }
         return None
+        
 class PatientSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name  = serializers.CharField(source="user.last_name", read_only=True)
@@ -107,3 +109,20 @@ class PatientSerializer(serializers.ModelSerializer):
                 "created_at": last.created_at.strftime("%Y-%m-%d %H:%M")
             }
         return None
+
+
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source="patient.user.get_full_name", read_only=True)
+    doctor_name = serializers.CharField(source="doctor.get_full_name", read_only=True)
+    instructions = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = Prescription
+        fields = [
+            "id", "doctor", "doctor_name", "patient", "patient_name",
+            "medication", "dosage", "frequency", "duration_days",
+            "instructions", "created_at"
+        ]
+        read_only_fields = ["id", "doctor", "doctor_name", "created_at"]

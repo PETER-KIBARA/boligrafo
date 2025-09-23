@@ -606,10 +606,23 @@
       showSection("reports");
     }
 
-    function logout() {
-      localStorage.clear();
-      window.location.href = "doctors_login.html";
-    }
+    async function logout() {
+  try {
+    // Call backend logout to nuke token
+    await fetch(`${API_BASE}/doctor/logout`, {
+      method: "POST",
+      headers: { "Authorization": `Token ${token}` }
+    });
+  } catch (err) {
+    console.warn("Backend logout failed, clearing frontend anyway.");
+  }
+
+  localStorage.removeItem("doctorToken");
+  sessionStorage.clear();
+
+  window.location.href = "doctors_login.html";
+}
+
 
     loadDoctorProfile();
     loadPatients();
