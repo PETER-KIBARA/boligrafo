@@ -131,6 +131,7 @@
               <h5>No prescriptions found</h5>
               <button class="btn btn-doctor hidden" id="emptyStateAddBtn"><i class="fas fa-plus me-1"></i>Create</button>
             </div>
+            <div class="alert alert-danger d-none" id="errorState"></div>
           </div>
         </div>
       </div>
@@ -139,7 +140,7 @@
 
 <script>
 const API_BASE = "http://192.168.100.93:8000";
-const token = localStorage.getItem("doctorToken");
+const token = localStorage.getItem("doctorToken") || localStorage.getItem("patientToken");
 if (!token) window.location.href = "index.html";
 
 async function authFetch(url, opts = {}) {
@@ -150,38 +151,35 @@ async function authFetch(url, opts = {}) {
   return fetch(url, opts);
 }
 
+// Use doctor_profile in the endpoint name!
 async function getRole() {
   try {
     const res = await authFetch(`${API_BASE}/doctor/profile`);
-    return res.ok ? "doctor" : "patient";
+    if (res.ok) return "doctor";
+    // If doctor/profile fails, try patient endpoint or assume patient
+    return "patient";
   } catch { return "patient"; }
 }
 
 async function loadPatientsInto(selectId) {
   const res = await authFetch(`${API_BASE}/list_patients`);
+  const sel = document.getElementById(selectId);
   if (!res.ok) {
     console.error("Failed to load patients", await res.text());
+    sel.innerHTML = `<option value="">Select a patient...</option>`;
     return;
   }
   const data = await res.json();
-  console.log("Patients:", data);
-
-  // If API returns {results: [...]}
   const patients = Array.isArray(data) ? data : data.results || [];
-
-  const sel = document.getElementById(selectId);
   sel.innerHTML =
     `<option value="">Select a patient...</option>` +
     patients
       .map(
         p =>
-          `<option value="${p.id}">${p.user?.first_name || p.first_name} ${
-            p.user?.last_name || p.last_name || ""
-          }</option>`
+          `<option value="${p.id}">${p.user?.first_name || p.first_name} ${p.user?.last_name || p.last_name || ""}</option>`
       )
       .join("");
 }
-
 
 async function loadPrescriptions(patientId = null) {
   showLoading(true);
@@ -189,19 +187,23 @@ async function loadPrescriptions(patientId = null) {
   if (patientId) url += `?patient=${patientId}`;
   const res = await authFetch(url);
   const tbody = document.querySelector("#rxTable tbody");
+  const errorState = document.getElementById("errorState");
+  errorState.classList.add("d-none");
 
   if (!res.ok) {
-    tbody.innerHTML = "<tr><td colspan='5' class='text-center text-danger'>Failed</td></tr>";
-    showTable();
+    tbody.innerHTML = "";
+    showTable(false);
+    showEmptyState(false);
+    errorState.classList.remove("d-none");
+    errorState.textContent = "Failed to load prescriptions: " + (await res.text());
     return;
   }
 
   const data = await res.json();
-  // Defensive: extract the actual array
   const list = Array.isArray(data) ? data : data.results || [];
-
   if (list.length === 0) {
-    showEmptyState();
+    showTable(false);
+    showEmptyState(true);
     return;
   }
 
@@ -220,10 +222,9 @@ async function loadPrescriptions(patientId = null) {
         </button>
       </td>
     </tr>`).join('');
-
-  showTable();
+  showTable(true);
+  showEmptyState(false);
 }
-
 
 function prefill(rx) {
   document.getElementById("rxPatient").value = rx.patient;
@@ -240,39 +241,50 @@ function showLoading(s) {
   document.getElementById("loadingIndicator").classList.toggle("d-none", !s);
   document.getElementById("prescriptionsTable").classList.add("d-none");
   document.getElementById("emptyState").classList.add("d-none");
+  document.getElementById("errorState").classList.add("d-none");
 }
-function showTable() {
+function showTable(show=true) {
   document.getElementById("loadingIndicator").classList.add("d-none");
-  document.getElementById("prescriptionsTable").classList.remove("d-none");
-  document.getElementById("emptyState").classList.add("d-none");
+  document.getElementById("prescriptionsTable").classList.toggle("d-none", !show);
 }
-function showEmptyState() {
+function showEmptyState(show=true) {
   document.getElementById("loadingIndicator").classList.add("d-none");
   document.getElementById("prescriptionsTable").classList.add("d-none");
-  document.getElementById("emptyState").classList.remove("d-none");
+  document.getElementById("emptyState").classList.toggle("d-none", !show);
 }
 
 document.getElementById("rxForm").addEventListener("submit", async e => {
   e.preventDefault();
   const payload = {
-  patient: parseInt(document.getElementById("rxPatient").value),
-  medication: document.getElementById("rxMedication").value.trim(),
-  dosage: document.getElementById("rxDosage").value.trim(),
-  frequency: document.getElementById("rxFrequency").value.trim(),
-  duration_days: parseInt(document.getElementById("rxDuration").value || 0),
-  instructions: document.getElementById("rxInstructions").value.trim()
-};
+    patient: parseInt(document.getElementById("rxPatient").value),
+    medication: document.getElementById("rxMedication").value.trim(),
+    dosage: document.getElementById("rxDosage").value.trim(),
+    frequency: document.getElementById("rxFrequency").value.trim(),
+    duration_days: parseInt(document.getElementById("rxDuration").value || 0),
+    instructions: document.getElementById("rxInstructions").value.trim()
+  };
   if (!payload.patient) return alert("Select patient");
   const rxId = e.target.dataset.rxId;
   const url = rxId ? `${API_BASE}/prescriptions/${rxId}` : `${API_BASE}/prescriptions`;
   const method = rxId ? "PUT" : "POST";
-  await authFetch(url, { method, body: JSON.stringify(payload) });
+  const msgDiv = document.getElementById("rxMsg");
+  msgDiv.textContent = "";
+  const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+  if (!res.ok) {
+    msgDiv.textContent = "Failed to save prescription: " + (await res.text());
+    msgDiv.classList.add("text-danger");
+    return;
+  }
+  msgDiv.textContent = "Prescription saved!";
+  msgDiv.classList.remove("text-danger");
+  document.getElementById("doctorFormCard").classList.add("hidden");
   loadPrescriptions();
 });
 
 document.getElementById("loadRxBtn").addEventListener("click", () => loadPrescriptions(document.getElementById("rxListPatient").value||null));
 document.getElementById("addPrescriptionBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });
 document.getElementById("cancelBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.add("hidden"); });
+document.getElementById("emptyStateAddBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });
 
 (async function init() {
   const role = await getRole();

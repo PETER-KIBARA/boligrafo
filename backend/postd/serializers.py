@@ -114,8 +114,8 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class PrescriptionSerializer(serializers.ModelSerializer):
-    patient_name = serializers.CharField(source="patient.user.get_full_name", read_only=True)
-    doctor_name = serializers.CharField(source="doctor.get_full_name", read_only=True)
+    patient_name = serializers.SerializerMethodField(read_only=True)
+    doctor_name = serializers.SerializerMethodField(read_only=True)
     instructions = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
@@ -126,3 +126,13 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "instructions", "created_at"
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "created_at"]
+
+    def get_patient_name(self, obj):
+        if hasattr(obj.patient, "user") and obj.patient.user:
+            return obj.patient.user.get_full_name()
+        return ""
+
+    def get_doctor_name(self, obj):
+        if hasattr(obj.doctor, "user") and obj.doctor.user:
+            return obj.doctor.user.get_full_name()
+        return ""

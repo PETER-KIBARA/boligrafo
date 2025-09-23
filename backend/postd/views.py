@@ -237,7 +237,7 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         qs = Prescription.objects.all()
 
-        if hasattr(user, "doctorprofile"):
+        if hasattr(user, "doctor_profile"):
             patient_id = self.request.query_params.get("patient")
             if patient_id:
                 qs = qs.filter(patient_id=patient_id)
@@ -250,9 +250,9 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, "doctorprofile"):
+        if not hasattr(user, "doctor_profile"):
             raise PermissionDenied("Only doctors can create prescriptions.")
-        serializer.save(doctor=user.doctorprofile)
+        serializer.save(doctor=user)  # FIXED LINE
         
 class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Prescription.objects.all()
@@ -261,8 +261,6 @@ class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         user = self.request.user
-
-        if not hasattr(user, "doctorprofile"):
+        if not hasattr(user, "doctor_profile"):
             raise PermissionDenied("Only doctors can update prescriptions.")
-
-        serializer.save(doctor=user.doctorprofile)
+        serializer.save(doctor=user)  # FIXED LINE
