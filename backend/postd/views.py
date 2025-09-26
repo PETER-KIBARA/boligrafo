@@ -25,6 +25,8 @@ from .serializers import PatientSerializer
 from .models import Prescription
 from .serializers import PrescriptionSerializer
 from .models import UserProfile  
+from .models import Treatment
+from .serializers import TreatmentSerializer
 
 
 @api_view(["POST"])
@@ -264,3 +266,23 @@ class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         if not hasattr(user, "doctor_profile"):
             raise PermissionDenied("Only doctors can update prescriptions.")
         serializer.save(doctor=user)  # FIXED LINE
+
+
+
+class TreatmentListCreateView(generics.ListCreateAPIView):
+    serializer_class = TreatmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Treatment.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(doctor=self.request.user)
+
+
+class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TreatmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Treatment.objects.all()

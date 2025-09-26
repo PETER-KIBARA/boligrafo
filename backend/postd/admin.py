@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from .models import VitalReading
 from .models import DoctorProfile
 from .models import Prescription
+from .models import Treatment
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -47,6 +49,13 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("username", "email", "first_name", "last_name", "is_staff")
 
 
+
+@admin.register(Treatment)
+class TreatmentAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "patient", "doctor", "created_at")
+    list_filter = ("doctor", "patient")
+    search_fields = ("name", "description", "patient__user__first_name", "patient__user__last_name")
+    ordering = ("-created_at",)
 
 class VitalReadingInline(admin.TabularInline):
     model = VitalReading   # <-- Fix here

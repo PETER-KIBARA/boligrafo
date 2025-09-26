@@ -6,28 +6,50 @@
   <title>Treatments</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #8fafdf; }
-    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+    body {
+      background-color: #f2f6fc;
+      font-family: system-ui, sans-serif;
+    }
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .table thead {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+    .btn-action {
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">Clinic Treatments</h4>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold">Clinic Treatments</h3>
       <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
     </div>
-    <div class="row g-3">
+
+    <div class="row g-4">
+      <!-- Form -->
       <div class="col-lg-5">
         <div class="card">
           <div class="card-body">
-            <h6 class="mb-3">Create / Update Treatment</h6>
+            <h5 class="mb-3">Create / Update Treatment</h5>
             <form id="treatForm">
               <input type="hidden" id="treatId">
-              <div class="mb-2">
-                <label class="form-label">Name</label>
-                <input id="treatName" class="form-control" placeholder="e.g., Hypertension Care Plan">
+              <div class="mb-3">
+                <label class="form-label">Patient</label>
+                <select id="treatPatient" class="form-select" required>
+                  <option value="">-- Select Patient --</option>
+                </select>
               </div>
-              <div class="mb-2">
+              <div class="mb-3">
+                <label class="form-label">Treatment Name</label>
+                <input id="treatName" class="form-control" placeholder="e.g., Hypertension Care Plan" required>
+              </div>
+              <div class="mb-3">
                 <label class="form-label">Description</label>
                 <textarea id="treatDesc" class="form-control" rows="3" placeholder="Treatment description..."></textarea>
               </div>
@@ -35,20 +57,29 @@
                 <button class="btn btn-primary" type="submit">Save</button>
               </div>
             </form>
-            <div id="treatMsg" class="mt-2"></div>
+            <div id="treatMsg" class="mt-3"></div>
           </div>
         </div>
       </div>
+
+      <!-- Treatments Table -->
       <div class="col-lg-7">
         <div class="card">
           <div class="card-body">
-            <h6 class="mb-3">Treatments</h6>
+            <h5 class="mb-3">All Treatments</h5>
             <div class="table-responsive">
-              <table class="table table-sm table-striped" id="treatTable">
+              <table class="table table-bordered table-hover align-middle" id="treatTable">
                 <thead>
-                  <tr><th>Name</th><th>Description</th><th></th></tr>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th style="width: 120px;">Actions</th>
+                  </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                  <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -61,47 +92,110 @@
     const API_BASE = "http://192.168.100.93:8000";
     const token = localStorage.getItem("doctorToken");
 
-    async function authFetch(url, opts={}){
-      opts.headers = Object.assign({}, opts.headers||{}, { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' });
+    if (!token) {
+      window.location.href = "index.html";
+    }
+
+    async function authFetch(url, opts={}) {
+      opts.headers = Object.assign({}, opts.headers || {}, {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/json'
+      });
       return fetch(url, opts);
     }
 
-    async function loadTreatments(){
+    // Load Patients
+    async function loadPatients() {
+  const res = await authFetch(`${API_BASE}/list_patients`);
+  const select = document.getElementById('treatPatient');
+  if (!res.ok) {
+    select.innerHTML = '<option value="">Failed to load patients</option>';
+    return;
+  }
+
+  const data = await res.json();
+  const patients = data.results || data; 
+
+  select.innerHTML = '<option value="">-- Select Patient --</option>' +
+    patients.map(p => {
+      const name = p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim();
+      return `<option value="${p.id}">${name}</option>`;
+    }).join('');
+}
+
+
+    // Load Treatments
+    async function loadTreatments() {
       const res = await authFetch(`${API_BASE}/doctor/treatments`);
       const tbody = document.querySelector('#treatTable tbody');
-      if(!res.ok){ tbody.innerHTML = ''; return; }
+      if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Failed to load treatments</td></tr>';
+        return;
+      }
       const list = await res.json();
-      tbody.innerHTML = list.map(t=>`<tr>
-        <td>${t.name}</td>
-        <td>${t.description||''}</td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-primary" onclick='prefill(${JSON.stringify(JSON.stringify(t))})'>Edit</button>
-        </td>
-      </tr>`).join('');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No treatments found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(t => `
+        <tr>
+          <td>${t.patient_name || '-'}</td>
+          <td>${t.name}</td>
+          <td>${t.description || ''}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary btn-action" onclick='prefill(${JSON.stringify(t)})'>Edit</button>
+            <button class="btn btn-sm btn-outline-danger btn-action" onclick='deleteTreatment(${t.id})'>Delete</button>
+          </td>
+        </tr>`).join('');
     }
 
-    function prefill(tStr){
-      const t = JSON.parse(tStr);
-      document.getElementById('treatId').value = t.id;
-      document.getElementById('treatName').value = t.name||'';
-      document.getElementById('treatDesc').value = t.description||'';
+    // Prefill form for editing
+    function prefill(t) {
+      document.getElementById('treatId').value = t.id || '';
+      document.getElementById('treatName').value = t.name || '';
+      document.getElementById('treatDesc').value = t.description || '';
+      document.getElementById('treatPatient').value = t.patient || '';
     }
 
-    document.getElementById('treatForm').addEventListener('submit', async (e)=>{
+    // Save form
+    document.getElementById('treatForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('treatId').value;
-      const payload = { name: document.getElementById('treatName').value, description: document.getElementById('treatDesc').value };
+      const payload = {
+        patient: document.getElementById('treatPatient').value,
+        name: document.getElementById('treatName').value.trim(),
+        description: document.getElementById('treatDesc').value.trim()
+      };
       const url = id ? `${API_BASE}/doctor/treatments/${id}` : `${API_BASE}/doctor/treatments`;
       const method = id ? 'PUT' : 'POST';
       const res = await authFetch(url, { method, body: JSON.stringify(payload) });
       const msg = document.getElementById('treatMsg');
-      if(res.ok){ msg.innerHTML = '<div class="alert alert-success">Saved</div>'; loadTreatments(); e.target.reset(); document.getElementById('treatId').value=''; }
-      else { const d = await res.json(); msg.innerHTML = `<div class=\"alert alert-danger\">${d.error||'Failed'}</div>`; }
+
+      if (res.ok) {
+        msg.innerHTML = '<div class="alert alert-success">Saved successfully!</div>';
+        loadTreatments();
+        e.target.reset();
+        document.getElementById('treatId').value = '';
+      } else {
+        const d = await res.json().catch(() => ({}));
+        msg.innerHTML = `<div class="alert alert-danger">${d.error || 'Failed to save treatment'}</div>`;
+      }
     });
 
+    // Delete treatment
+    async function deleteTreatment(id) {
+      if (!confirm("Are you sure you want to delete this treatment?")) return;
+      const res = await authFetch(`${API_BASE}/doctor/treatments/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadTreatments();
+      } else {
+        alert("Failed to delete treatment");
+      }
+    }
+
+    // Init
+    loadPatients();
     loadTreatments();
   </script>
 </body>
 </html>
-
-

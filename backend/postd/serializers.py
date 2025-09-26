@@ -5,6 +5,8 @@ from rest_framework.exceptions import AuthenticationFailed
 from .models import DoctorProfile
 from .models import VitalReading
 from .models import Prescription
+from .models import Treatment
+
 
 
 
@@ -123,10 +125,10 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         model = Prescription
         fields = [
             "id",
-            "doctor",        # FK to User
-            "doctor_name",   # read-only
-            "patient",       # FK to UserProfile
-            "patient_name",  # read-only
+            "doctor",        
+            "doctor_name",   
+            "patient",       
+            "patient_name",  
             "medication",
             "dosage",
             "frequency",
@@ -150,3 +152,22 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         if hasattr(obj.doctor, "first_name") and hasattr(obj.doctor, "last_name"):
             return f"{obj.doctor.first_name} {obj.doctor.last_name}".strip()
         return f"Doctor {obj.doctor.id}"
+
+
+class TreatmentSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source="doctor.get_full_name", read_only=True)
+    patient_name = serializers.CharField(source="patient.user.get_full_name", read_only=True)
+
+    class Meta:
+        model = Treatment
+        fields = [
+            "id",
+            "doctor",
+            "doctor_name",
+            "patient",
+            "patient_name",
+            "name",
+            "description",
+            "created_at",
+        ]
+        read_only_fields = ["id", "doctor", "doctor_name", "patient_name", "created_at"]

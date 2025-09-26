@@ -5,6 +5,7 @@ from .views import VitalReadingListCreateView
 from .views import DoctorPatientDailyReportsView
 from .views import PatientListView
 from .views import PrescriptionListCreateView, PrescriptionRetrieveUpdateView
+from .views import TreatmentListCreateView, TreatmentDetailView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -23,7 +24,8 @@ path('view_patient/<int:patient_id>/daily-reports', DoctorPatientDailyReportsVie
 path("doctor/logout", views.logout_view, name="doctor-logout"),
 path("prescriptions", PrescriptionListCreateView.as_view(), name="prescription-list-create"),
 path("prescriptions/<int:pk>", PrescriptionRetrieveUpdateView.as_view(), name="prescription-detail"),
-
+path("doctor/treatments", TreatmentListCreateView.as_view(), name="treatment-list"),
+path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatment-detail"),
 
 ]
 
