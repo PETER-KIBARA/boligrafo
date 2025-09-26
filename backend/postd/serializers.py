@@ -116,20 +116,16 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class PrescriptionSerializer(serializers.ModelSerializer):
-    patient_name = serializers.CharField(
-        source="patient.user.get_full_name", read_only=True
-    )
-    doctor_name = serializers.CharField(
-        source="doctor.get_full_name", read_only=True
-    )
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Prescription
         fields = [
             "id",
-            "doctor",        # foreign key -> User
+            "doctor",        # FK to User
             "doctor_name",   # read-only
-            "patient",       # foreign key -> UserProfile
+            "patient",       # FK to UserProfile
             "patient_name",  # read-only
             "medication",
             "dosage",
@@ -140,4 +136,17 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "created_at"]
 
-        
+    def get_patient_name(self, obj):
+        if hasattr(obj.patient, "user") and obj.patient.user:
+            return obj.patient.user.get_full_name()
+        # fallback to profile fields if available
+        if hasattr(obj.patient, "first_name") and hasattr(obj.patient, "last_name"):
+            return f"{obj.patient.first_name} {obj.patient.last_name}".strip()
+        return f"Patient {obj.patient.id}"
+
+    def get_doctor_name(self, obj):
+        if hasattr(obj.doctor, "get_full_name"):
+            return obj.doctor.get_full_name()
+        if hasattr(obj.doctor, "first_name") and hasattr(obj.doctor, "last_name"):
+            return f"{obj.doctor.first_name} {obj.doctor.last_name}".strip()
+        return f"Doctor {obj.doctor.id}"

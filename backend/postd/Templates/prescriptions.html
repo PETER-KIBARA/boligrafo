@@ -1,326 +1,440 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Prescriptions Management</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    :root {
-      --primary: #0d6efd;
-      --secondary: #248a05;
-      --accent: #ff6b6b;
-      --light: #f8f9fa;
-      --dark: #212529;
-      --doctor-blue: #1a73e8;
-    }
-    body {
-      background: linear-gradient(135deg, #8fafdf, #6a8fcc);
-      min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .card { border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border: none; }
-    .hidden { display: none; }
-    .btn-doctor {
-      background: linear-gradient(135deg, var(--doctor-blue), #0d6efd);
-      border: none; border-radius: 50px; color: white; font-weight: 600; padding: 8px 20px;
-    }
-    .btn-doctor:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-    .loading-spinner { width: 1rem; height: 1rem; border: 2px solid #f3f3f3; border-top: 2px solid var(--doctor-blue); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-    .empty-state { text-align: center; padding: 40px 20px; color: #6c757d; }
-    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #dee2e6; }
+    :root{--doctor-blue:#1a73e8}
+    body{background:linear-gradient(135deg,#8fafdf,#6a8fcc);min-height:100vh;font-family:Inter,Segoe UI,Roboto,Arial;}
+    .card{border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06);border:none}
+    .hidden{display:none!important}
+    .btn-doctor{background:linear-gradient(135deg,var(--doctor-blue),#0d6efd);color:#fff;border:none}
+    .loading-spinner{width:32px;height:32px;border:4px solid #eee;border-top-color:var(--doctor-blue);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .empty-state{padding:36px;text-align:center;color:#6c757d}
   </style>
 </head>
 <body>
   <div class="container py-4">
-    <div class="page-header mb-4">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-          <h4><i class="fas fa-prescription me-2 text-primary"></i>Prescriptions Management</h4>
-          <p class="text-muted mb-0">Manage patient medications and prescriptions</p>
-        </div>
-        <a href="dashboard.html" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="mb-0"><i class="fas fa-pills me-2 text-primary"></i>Prescriptions Management</h4>
+        <small class="text-muted">Manage patient medications and prescriptions</small>
+      </div>
+      <div>
+        <a href="dashboard.html" class="btn btn-outline-light btn-sm">Back</a>
       </div>
     </div>
 
     <div class="row g-4">
-      <!-- Doctor-only: Create/Update Form -->
+      <!-- Doctor form -->
       <div class="col-lg-5 hidden" id="doctorFormCard">
         <div class="card">
-          <div class="card-header bg-primary text-white"><h5><i class="fas fa-file-medical me-2"></i>Create/Edit Prescription</h5></div>
+          <div class="card-header bg-primary text-white">
+            <strong>Create / Edit Prescription</strong>
+          </div>
           <div class="card-body">
-            <form id="rxForm">
+            <form id="rxForm" novalidate>
+              <input type="hidden" id="rxId" />
               <div class="mb-3">
-                <label class="form-label fw-semibold">Patient</label>
+                <label class="form-label">Patient</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="fas fa-user-injured"></i></span>
-                  <select class="form-select" id="rxPatient">
+                  <select id="rxPatient" class="form-select" required>
                     <option value="">Select a patient...</option>
                   </select>
                 </div>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-semibold">Medication</label>
-                <input class="form-control" id="rxMedication" placeholder="e.g., Amlodipine 5mg">
+                <label class="form-label">Medication</label>
+                <input id="rxMedication" class="form-control" required placeholder="e.g., Amlodipine 5mg" />
               </div>
+
               <div class="row">
                 <div class="col-md-4 mb-3">
-                  <label class="form-label fw-semibold">Dosage</label>
-                  <input class="form-control" id="rxDosage" placeholder="1 tab">
+                  <label class="form-label">Dosage</label>
+                  <input id="rxDosage" class="form-control" required placeholder="1 tab" />
                 </div>
                 <div class="col-md-4 mb-3">
-                  <label class="form-label fw-semibold">Frequency</label>
-                  <select class="form-select" id="rxFrequency">
-                    <option value="Once daily">Once daily</option>
-                    <option value="BID">BID</option>
-                    <option value="TID">TID</option>
-                    <option value="QID">QID</option>
-                    <option value="PRN">PRN</option>
+                  <label class="form-label">Frequency</label>
+                  <select id="rxFrequency" class="form-select">
+                    <option>Once daily</option>
+                    <option>BID</option>
+                    <option>TID</option>
+                    <option>QID</option>
+                    <option>PRN</option>
                   </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                  <label class="form-label fw-semibold">Duration (days)</label>
-                  <input type="number" class="form-control" id="rxDuration" value="30" min="1">
+                  <label class="form-label">Duration (days)</label>
+                  <input id="rxDuration" type="number" class="form-control" min="1" value="30" />
                 </div>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-semibold">Instructions</label>
-                <textarea class="form-control" id="rxInstructions" rows="3"></textarea>
+                <label class="form-label">Instructions</label>
+                <textarea id="rxInstructions" class="form-control" rows="3"></textarea>
               </div>
+
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" id="cancelBtn">Cancel</button>
-                <button class="btn btn-doctor" type="submit"><i class="fas fa-save me-1"></i>Save</button>
+                <button type="button" id="cancelBtn" class="btn btn-outline-secondary">Cancel</button>
+                <button type="submit" class="btn btn-doctor"><i class="fas fa-save me-1"></i>Save</button>
               </div>
+
+              <div id="rxMsg" class="mt-3" aria-live="polite"></div>
             </form>
-            <div id="rxMsg" class="mt-3"></div>
           </div>
         </div>
       </div>
 
-      <!-- Prescription List -->
+      <!-- List -->
       <div class="col-lg-7">
         <div class="card">
-          <div class="card-header bg-light d-flex justify-content-between">
-            <h5><i class="fas fa-list me-2"></i>Existing Prescriptions</h5>
-            <button class="btn btn-sm btn-outline-primary hidden" id="addPrescriptionBtn"><i class="fas fa-plus me-1"></i>New</button>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Existing Prescriptions</strong>
+            <button id="addPrescriptionBtn" class="btn btn-sm btn-outline-light hidden"><i class="fas fa-plus me-1"></i>New</button>
           </div>
           <div class="card-body">
-            <div class="hidden mb-3" id="doctorPatientFilter">
-              <label class="form-label fw-semibold me-2">Filter:</label>
-              <select class="form-select" id="rxListPatient">
-                <option value="">All Patients</option>
+            <div id="doctorPatientFilter" class="hidden mb-3 d-flex gap-2 align-items-center">
+              <label class="mb-0">Filter by patient</label>
+              <select id="rxListPatient" class="form-select w-auto">
+                <option value="">All patients</option>
               </select>
-              <button class="btn btn-doctor ms-2" id="loadRxBtn"><i class="fas fa-sync-alt me-1"></i>Load</button>
+              <button id="loadRxBtn" class="btn btn-doctor">Load</button>
             </div>
-            <div class="hidden alert alert-info mb-3" id="patientInfo"><i class="fas fa-info-circle me-2"></i>Showing your prescriptions only.</div>
-            <div id="loadingIndicator" class="text-center py-4">
-              <div class="loading-spinner mx-auto mb-2"></div><p class="text-muted">Loading...</p>
+
+            <div id="loadingIndicator" class="text-center py-4 d-none">
+              <div class="loading-spinner mx-auto mb-2" role="status" aria-hidden="true"></div>
+              <p class="text-muted mb-0">Loading prescriptions...</p>
             </div>
-            <div class="table-responsive d-none" id="prescriptionsTable">
+
+            <div id="prescriptionsTable" class="table-responsive d-none">
               <table class="table table-hover" id="rxTable">
                 <thead class="table-light">
-  <tr>
-    <th>Details</th>
-    <th>Dosage</th>
-    <th>Frequency</th>
-    <th>Duration</th>
-    <th></th>
-  </tr>
-</thead>
-<tbody></tbody>
+                  <tr>
+                    <th>Details</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
               </table>
             </div>
+
             <div id="emptyState" class="empty-state d-none">
               <i class="fas fa-file-medical"></i>
               <h5>No prescriptions found</h5>
-              <button class="btn btn-doctor hidden" id="emptyStateAddBtn"><i class="fas fa-plus me-1"></i>Create</button>
+              <p class="text-muted">Either the selected patient has no prescriptions or there are none yet.</p>
             </div>
-            <div class="alert alert-danger d-none" id="errorState"></div>
+
+            <div id="errorState" class="alert alert-danger d-none" role="alert"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-<script>
-const API_BASE = "http://192.168.100.93:8000";
-const token = localStorage.getItem("doctorToken") || localStorage.getItem("patientToken");
-if (!token) window.location.href = "index.html";
+  <!-- scripts -->
+  <script>
+  (function () {
+    // CONFIG - change API_BASE if needed
+    const API_BASE = "http://192.168.100.93:8000";
+    const token = localStorage.getItem("doctorToken") || localStorage.getItem("patientToken");
+    if (!token) {
+      // not logged in
+      window.location.href = "index.html";
+      return;
+    }
 
-async function authFetch(url, opts = {}) {
-  opts.headers = Object.assign({}, opts.headers || {}, {
-    "Authorization": `Token ${token}`,
-    "Content-Type": "application/json"
-  });
-  return fetch(url, opts);
-}
+    // helper fetch with token header merged safely
+    async function authFetch(url, opts = {}) {
+      opts = opts || {};
+      opts.headers = Object.assign({}, opts.headers || {}, {
+        "Authorization": `Token ${token}`,
+        "Content-Type": "application/json"
+      });
+      const res = await fetch(url, opts);
+      return res;
+    }
 
-// Use doctor_profile in the endpoint name!
-async function getRole() {
-  try {
-    const res = await authFetch(`${API_BASE}/doctor/profile`);
-    if (res.ok) return "doctor";
-    // If doctor/profile fails, try patient endpoint or assume patient
-    return "patient";
-  } catch { return "patient"; }
-}
+    // determine role: doctor endpoint returns 200 if doctor
+    async function getRole() {
+      try {
+        const res = await authFetch(`${API_BASE}/doctor/profile`);
+        return res.ok ? "doctor" : "patient";
+      } catch (err) {
+        console.error("getRole error:", err);
+        return "patient";
+      }
+    }
 
-async function loadPatientsInto(selectId) {
-  const res = await authFetch(`${API_BASE}/list_patients`);
-  const sel = document.getElementById(selectId);
-  if (!res.ok) {
-    console.error("Failed to load patients", await res.text());
-    sel.innerHTML = `<option value="">Select a patient...</option>`;
-    return;
-  }
-  const data = await res.json();
-  const patients = Array.isArray(data) ? data : data.results || [];
-  sel.innerHTML =
-    `<option value="">Select a patient...</option>` +
-    patients
-      .map(
-        p =>
-          `<option value="${p.id}">${p.user?.first_name || p.first_name} ${p.user?.last_name || p.last_name || ""}</option>`
-      )
-      .join("");
-}
+    // populate patient select (works with paged or array responses)
+    async function loadPatientsInto(selectId) {
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = `<option value="">Loading...</option>`;
+      try {
+        const res = await authFetch(`${API_BASE}/list_patients`);
+        if (!res.ok) {
+          console.error("loadPatientsInto failed:", await res.text());
+          sel.innerHTML = `<option value="">Unable to load patients</option>`;
+          return;
+        }
+        const data = await res.json();
+        const patients = Array.isArray(data) ? data : (data.results || []);
+        if (!patients.length) {
+          sel.innerHTML = `<option value="">No patients</option>`;
+          return;
+        }
+        const options = patients.map(p => {
+          const fname = (p.user && p.user.first_name) || p.first_name || "";
+          const lname = (p.user && p.user.last_name) || p.last_name || "";
+          const label = `${fname} ${lname}`.trim() || `Patient ${p.id}`;
+          return `<option value="${p.id}">${escapeHtml(label)} (ID: ${p.id})</option>`;
+        }).join("");
+        sel.innerHTML = `<option value="">All patients</option>${options}`;
+      } catch (err) {
+        console.error("loadPatientsInto exception:", err);
+        sel.innerHTML = `<option value="">Error loading patients</option>`;
+      }
+    }
 
-async function loadPrescriptions(patientId = null) {
-  showLoading(true);
-  let url = `${API_BASE}/prescriptions`;
-  if (patientId) url += `?patient=${patientId}`;
-  
-  const res = await authFetch(url);
-  const tbody = document.querySelector("#rxTable tbody");
-  const errorState = document.getElementById("errorState");
-  errorState.classList.add("d-none");
+    // load prescriptions - handles list or paged response
+    async function loadPrescriptions(patientId = null) {
+      showLoading(true);
+      clearError();
+      const tbody = document.querySelector("#rxTable tbody");
+      tbody.innerHTML = "";
+      let url = `${API_BASE}/prescriptions`;
+      if (patientId) url += `?patient=${encodeURIComponent(patientId)}`;
 
-  if (!res.ok) {
-    tbody.innerHTML = "";
-    showTable(false);
-    showEmptyState(false);
-    errorState.classList.remove("d-none");
-    errorState.textContent = "Failed to load prescriptions: " + (await res.text());
-    return;
-  }
+      try {
+        const res = await authFetch(url);
+        if (!res.ok) {
+          const text = await res.text().catch(()=>"");
+          showError(`Failed to load prescriptions: ${text || res.statusText}`);
+          showLoading(false);
+          hideTableAndShowEmpty(false);
+          return;
+        }
 
-  const data = await res.json();
-  const list = Array.isArray(data) ? data : data.results || [];
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : data.results || [];
 
-  if (list.length === 0) {
-    tbody.innerHTML = "";
-    showTable(false);
-    showEmptyState(true);
-    return;
-  }
+        if (!list.length) {
+          hideTableAndShowEmpty(true);
+          return;
+        }
 
-  // Render prescriptions with patient & doctor info
-  tbody.innerHTML = list.map(rx => `
-    <tr>
-      <td>
-        <div class="fw-semibold">${rx.medication}</div>
-        <small class="text-muted">Patient: ${rx.patient_name || 'Unknown'}</small><br>
-        <small class="text-muted">Doctor: ${rx.doctor_name || 'Unknown'}</small>
-      </td>
-      <td>${rx.dosage}</td>
-      <td>${rx.frequency}</td>
-      <td>${rx.duration_days} days</td>
-      <td>
-        <button class="btn btn-sm btn-outline-primary" onclick='prefill(${JSON.stringify(rx)})'>
-          <i class="fas fa-edit"></i>
-        </button>
-      </td>
-    </tr>`).join('');
+        // render rows
+        tbody.innerHTML = list.map(rx => {
+          // safe patient/doctor names
+          const patientName = rx.patient_name || (rx.patient && rx.patient_name) || 'Patient';
+          const doctorName = rx.doctor_name || 'Doctor';
+          // ensure rx contains patient id for prefill
+          const rxForPrefill = encodeURIComponent(JSON.stringify(rx));
+          return `
+            <tr>
+              <td>
+                <div class="fw-semibold">${escapeHtml(rx.medication || '')}</div>
+                <small class="text-muted">Patient: ${escapeHtml(patientName)}</small><br>
+                <small class="text-muted">Doctor: ${escapeHtml(doctorName)}</small>
+              </td>
+              <td>${escapeHtml(rx.dosage || '')}</td>
+              <td>${escapeHtml(rx.frequency || '')}</td>
+              <td>${escapeHtml(String(rx.duration_days || ''))} days</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary" data-rx='${rxForPrefill}' type="button">Edit</button>
+              </td>
+            </tr>`;
+        }).join("");
+        // attach click handlers to edit buttons
+        document.querySelectorAll("#rxTable button[data-rx]").forEach(btn=>{
+          btn.addEventListener("click", (e)=>{
+            try {
+              const rx = JSON.parse(decodeURIComponent(btn.getAttribute("data-rx")));
+              prefill(rx);
+            } catch(err){
+              console.error("prefill parse error:", err);
+            }
+          });
+        });
 
-  showTable(true);
-  showEmptyState(false);
-}
+        showLoading(false);
+        showTable(true);
+      } catch (err) {
+        console.error("loadPrescriptions exception:", err);
+        showError("Network error while loading prescriptions");
+        showLoading(false);
+      }
+    }
 
+    // helpers to show/hide UI states
+    function showLoading(show) {
+      document.getElementById("loadingIndicator").classList.toggle("d-none", !show);
+      if (show) {
+        document.getElementById("prescriptionsTable").classList.add("d-none");
+        document.getElementById("emptyState").classList.add("d-none");
+      }
+    }
+    function showTable(yes=true) {
+      document.getElementById("loadingIndicator").classList.add("d-none");
+      document.getElementById("prescriptionsTable").classList.toggle("d-none", !yes);
+      document.getElementById("emptyState").classList.add("d-none");
+      document.getElementById("errorState").classList.add("d-none");
+    }
+    function hideTableAndShowEmpty(showEmpty=true) {
+      document.getElementById("loadingIndicator").classList.add("d-none");
+      document.getElementById("prescriptionsTable").classList.add("d-none");
+      document.getElementById("emptyState").classList.toggle("d-none", !!showEmpty);
+    }
+    function showError(msg) {
+      const el = document.getElementById("errorState");
+      el.textContent = msg;
+      el.classList.remove("d-none");
+      document.getElementById("loadingIndicator").classList.add("d-none");
+      document.getElementById("prescriptionsTable").classList.add("d-none");
+      document.getElementById("emptyState").classList.add("d-none");
+    }
+    function clearError() {
+      const el = document.getElementById("errorState");
+      el.textContent = "";
+      el.classList.add("d-none");
+    }
 
-function prefill(rx) {
-  document.getElementById("rxPatient").value = rx.patient;
-  document.getElementById("rxMedication").value = rx.medication;
-  document.getElementById("rxDosage").value = rx.dosage;
-  document.getElementById("rxFrequency").value = rx.frequency;
-  document.getElementById("rxDuration").value = rx.duration_days;
-  document.getElementById("rxInstructions").value = rx.instructions||"";
-  document.getElementById("rxForm").dataset.rxId = rx.id;
-  document.getElementById("doctorFormCard").classList.remove("hidden");
-}
+    // escape to prevent injecting HTML into option/text nodes
+    function escapeHtml(str) {
+      if (!str && str !== 0) return "";
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
 
-function showLoading(s) {
-  document.getElementById("loadingIndicator").classList.toggle("d-none", !s);
-  document.getElementById("prescriptionsTable").classList.add("d-none");
-  document.getElementById("emptyState").classList.add("d-none");
-  document.getElementById("errorState").classList.add("d-none");
-}
-function showTable(show=true) {
-  document.getElementById("loadingIndicator").classList.add("d-none");
-  document.getElementById("prescriptionsTable").classList.toggle("d-none", !show);
-}
-function showEmptyState(show=true) {
-  document.getElementById("loadingIndicator").classList.add("d-none");
-  document.getElementById("prescriptionsTable").classList.add("d-none");
-  document.getElementById("emptyState").classList.toggle("d-none", !show);
-}
+    // prefill form for edit
+    function prefill(rx) {
+      const rxIdEl = document.getElementById("rxId");
+      rxIdEl.value = rx.id || "";
+      document.getElementById("rxPatient").value = rx.patient || "";
+      document.getElementById("rxMedication").value = rx.medication || "";
+      document.getElementById("rxDosage").value = rx.dosage || "";
+      document.getElementById("rxFrequency").value = rx.frequency || "";
+      document.getElementById("rxDuration").value = rx.duration_days || "";
+      document.getElementById("rxInstructions").value = rx.instructions || "";
+      document.getElementById("doctorFormCard").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
-document.getElementById("rxForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const payload = {
-    patient: parseInt(document.getElementById("rxPatient").value),
-    medication: document.getElementById("rxMedication").value.trim(),
-    dosage: document.getElementById("rxDosage").value.trim(),
-    frequency: document.getElementById("rxFrequency").value.trim(),
-    duration_days: parseInt(document.getElementById("rxDuration").value || 0),
-    instructions: document.getElementById("rxInstructions").value.trim()
-  };
-  if (!payload.patient) return alert("Select patient");
-  const rxId = e.target.dataset.rxId;
-  const url = rxId ? `${API_BASE}/prescriptions/${rxId}` : `${API_BASE}/prescriptions`;
-  const method = rxId ? "PUT" : "POST";
-  const msgDiv = document.getElementById("rxMsg");
-  msgDiv.textContent = "";
-  const res = await authFetch(url, { method, body: JSON.stringify(payload) });
-  if (!res.ok) {
-    msgDiv.textContent = "Failed to save prescription: " + (await res.text());
-    msgDiv.classList.add("text-danger");
-    return;
-  }
-  msgDiv.textContent = "Prescription saved!";
-  msgDiv.classList.remove("text-danger");
-  document.getElementById("doctorFormCard").classList.add("hidden");
-  loadPrescriptions();
-});
+    // form submit (create or update)
+    document.getElementById("rxForm").addEventListener("submit", async function (ev) {
+      ev.preventDefault();
+      clearError();
+      const rxId = document.getElementById("rxId").value || null;
+      const payload = {
+        patient: parseInt(document.getElementById("rxPatient").value) || null,
+        medication: document.getElementById("rxMedication").value.trim(),
+        dosage: document.getElementById("rxDosage").value.trim(),
+        frequency: document.getElementById("rxFrequency").value.trim(),
+        duration_days: parseInt(document.getElementById("rxDuration").value, 10) || 0,
+        instructions: document.getElementById("rxInstructions").value.trim()
+      };
 
-document.getElementById("loadRxBtn").addEventListener("click", () => {
-  const patientId = document.getElementById("rxListPatient").value;
-  console.log("Loading prescriptions for patientId:", patientId);
-  loadPrescriptions(patientId || null);
-});
+      // basic validation
+      if (!payload.patient) {
+        return showError("Please select a patient before saving.");
+      }
+      if (!payload.medication) {
+        return showError("Please enter medication name.");
+      }
+      if (!payload.dosage) {
+        return showError("Please enter dosage.");
+      }
+      if (!payload.duration_days || payload.duration_days < 1) {
+        return showError("Please enter a valid duration (days).");
+      }
 
-document.getElementById("addPrescriptionBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });
-document.getElementById("cancelBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.add("hidden"); });
-document.getElementById("emptyStateAddBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });
+      const url = rxId ? `${API_BASE}/prescriptions/${rxId}` : `${API_BASE}/prescriptions`;
+      const method = rxId ? "PUT" : "POST";
 
-(async function init() {
-  const role = await getRole();
-  if (role === "doctor") {
-    document.getElementById("doctorFormCard").classList.remove("hidden");
-    document.getElementById("doctorPatientFilter").classList.remove("hidden");
-    document.getElementById("addPrescriptionBtn").classList.remove("hidden");
-    document.getElementById("emptyStateAddBtn").classList.remove("hidden");
-    await loadPatientsInto("rxPatient");
-    await loadPatientsInto("rxListPatient");
-    document.getElementById("loadRxBtn").click();
-  } else {
-    document.getElementById("patientInfo").classList.remove("hidden");
-    await loadPrescriptions();
-  }
-})();
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+      try {
+        const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+        const text = await res.text();
+        let json = {};
+        try { json = text ? JSON.parse(text) : {}; } catch(e){ /* non-json response */ }
+
+        if (!res.ok) {
+          const errMsg = json.detail || json.error || text || `HTTP ${res.status}`;
+          return showError("Failed to save prescription: " + errMsg);
+        }
+
+        // success
+        const msgEl = document.getElementById("rxMsg");
+        msgEl.textContent = "Prescription saved successfully.";
+        msgEl.classList.remove("text-danger");
+        // reset form
+        document.getElementById("rxForm").reset();
+        document.getElementById("rxId").value = "";
+        document.getElementById("doctorFormCard").classList.add("hidden");
+        // reload list (keep currently selected filter)
+        const selectedPatient = document.getElementById("rxListPatient") ? document.getElementById("rxListPatient").value : null;
+        loadPrescriptions(selectedPatient || null);
+
+      } catch (err) {
+        console.error("Save error:", err);
+        showError("Network error while saving prescription.");
+      }
+    });
+
+    document.getElementById("cancelBtn").addEventListener("click", function () {
+      document.getElementById("rxForm").reset();
+      document.getElementById("rxId").value = "";
+      document.getElementById("doctorFormCard").classList.add("hidden");
+      clearError();
+      document.getElementById("rxMsg").textContent = "";
+    });
+
+    document.getElementById("loadRxBtn").addEventListener("click", function () {
+      const patientId = document.getElementById("rxListPatient").value || null;
+      loadPrescriptions(patientId);
+    });
+
+    // add button (optional)
+    document.getElementById("addPrescriptionBtn").addEventListener("click", function () {
+      document.getElementById("rxForm").reset();
+      document.getElementById("rxId").value = "";
+      document.getElementById("doctorFormCard").classList.remove("hidden");
+      clearError();
+    });
+
+    // init
+    (async function init() {
+      const role = await getRole();
+      if (role === "doctor") {
+        // show doctor UI
+        document.getElementById("doctorFormCard").classList.remove("hidden");
+        document.getElementById("doctorPatientFilter").classList.remove("hidden");
+        document.getElementById("addPrescriptionBtn").classList.remove("hidden");
+        await loadPatientsInto("rxPatient");
+        await loadPatientsInto("rxListPatient");
+        // load prescriptions for all by default
+        loadPrescriptions();
+      } else {
+        // patient view
+        // load prescriptions for the logged-in patient (backend should infer patient)
+        loadPrescriptions();
+      }
+    })();
+
+  })();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
