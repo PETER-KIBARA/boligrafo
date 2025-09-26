@@ -52,10 +52,28 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Treatment)
 class TreatmentAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "patient", "doctor", "created_at")
-    list_filter = ("doctor", "patient")
-    search_fields = ("name", "description", "patient__user__first_name", "patient__user__last_name")
+    list_display = (
+        "id",
+        "name",
+        "patient",
+        "doctor",
+        "status",       
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("doctor", "patient", "status", "created_at")
+    search_fields = (
+        "name",
+        "description",
+        "patient__user__first_name",
+        "patient__user__last_name",
+        "doctor__first_name",
+        "doctor__last_name",
+    )
     ordering = ("-created_at",)
+    list_editable = ("status",) 
+    date_hierarchy = "created_at"
+
 
 class VitalReadingInline(admin.TabularInline):
     model = VitalReading   # <-- Fix here

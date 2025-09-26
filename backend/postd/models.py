@@ -95,21 +95,32 @@ class Prescription(models.Model):
         return f"{self.medication} for {self.patient.user.get_full_name()}"
 
 
+
 class Treatment(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("completed", "Completed"),
+        ("pending", "Pending"),
+    ]
+
     patient = models.ForeignKey(
-        "UserProfile",                
+        "UserProfile",
         on_delete=models.CASCADE,
         related_name="treatments",
         null=True, blank=True
-
     )
     doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,      
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="treatments"
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="active"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -117,4 +128,5 @@ class Treatment(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.name} ({self.patient.user.get_full_name()})"
+        return f"{self.name} ({self.patient.user.get_full_name() if self.patient else 'No Patient'})"
+

@@ -168,6 +168,8 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "patient_name",
             "name",
             "description",
+            "status",
             "created_at",
+            "updated_at"
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "patient_name", "created_at"]
