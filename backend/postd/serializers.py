@@ -39,12 +39,14 @@ class LoginSerializer(serializers.Serializer):
 class DoctorProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
 
     class Meta:
         model = DoctorProfile
         fields = [
             "id", "full_name", "phone", "national_id",
-            "employee_id", "specialty", "title", "email", "username"
+            "employee_id", "specialty", "title", "email", "username", "profile_picture"
         ]
 
         
@@ -114,25 +116,28 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class PrescriptionSerializer(serializers.ModelSerializer):
-    patient_name = serializers.SerializerMethodField(read_only=True)
-    doctor_name = serializers.SerializerMethodField(read_only=True)
-    instructions = serializers.CharField(required=False, allow_blank=True)
+    patient_name = serializers.CharField(
+        source="patient.user.get_full_name", read_only=True
+    )
+    doctor_name = serializers.CharField(
+        source="doctor.get_full_name", read_only=True
+    )
 
     class Meta:
         model = Prescription
         fields = [
-            "id", "doctor", "doctor_name", "patient", "patient_name",
-            "medication", "dosage", "frequency", "duration_days",
-            "instructions", "created_at"
+            "id",
+            "doctor",        # foreign key -> User
+            "doctor_name",   # read-only
+            "patient",       # foreign key -> UserProfile
+            "patient_name",  # read-only
+            "medication",
+            "dosage",
+            "frequency",
+            "duration_days",
+            "instructions",
+            "created_at",
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "created_at"]
 
-    def get_patient_name(self, obj):
-        if hasattr(obj.patient, "user") and obj.patient.user:
-            return obj.patient.user.get_full_name()
-        return ""
-
-    def get_doctor_name(self, obj):
-        if hasattr(obj.doctor, "user") and obj.doctor.user:
-            return obj.doctor.user.get_full_name()
-        return ""
+        

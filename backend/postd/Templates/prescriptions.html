@@ -122,8 +122,15 @@
             <div class="table-responsive d-none" id="prescriptionsTable">
               <table class="table table-hover" id="rxTable">
                 <thead class="table-light">
-                  <tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th></th></tr>
-                </thead><tbody></tbody>
+  <tr>
+    <th>Details</th>
+    <th>Dosage</th>
+    <th>Frequency</th>
+    <th>Duration</th>
+    <th></th>
+  </tr>
+</thead>
+<tbody></tbody>
               </table>
             </div>
             <div id="emptyState" class="empty-state d-none">
@@ -185,6 +192,7 @@ async function loadPrescriptions(patientId = null) {
   showLoading(true);
   let url = `${API_BASE}/prescriptions`;
   if (patientId) url += `?patient=${patientId}`;
+  
   const res = await authFetch(url);
   const tbody = document.querySelector("#rxTable tbody");
   const errorState = document.getElementById("errorState");
@@ -201,17 +209,21 @@ async function loadPrescriptions(patientId = null) {
 
   const data = await res.json();
   const list = Array.isArray(data) ? data : data.results || [];
+
   if (list.length === 0) {
+    tbody.innerHTML = "";
     showTable(false);
     showEmptyState(true);
     return;
   }
 
+  // Render prescriptions with patient & doctor info
   tbody.innerHTML = list.map(rx => `
     <tr>
       <td>
         <div class="fw-semibold">${rx.medication}</div>
-        <small class="text-muted">${rx.patient_name || 'Patient'}</small>
+        <small class="text-muted">Patient: ${rx.patient_name || 'Unknown'}</small><br>
+        <small class="text-muted">Doctor: ${rx.doctor_name || 'Unknown'}</small>
       </td>
       <td>${rx.dosage}</td>
       <td>${rx.frequency}</td>
@@ -222,9 +234,11 @@ async function loadPrescriptions(patientId = null) {
         </button>
       </td>
     </tr>`).join('');
+
   showTable(true);
   showEmptyState(false);
 }
+
 
 function prefill(rx) {
   document.getElementById("rxPatient").value = rx.patient;
@@ -281,7 +295,12 @@ document.getElementById("rxForm").addEventListener("submit", async e => {
   loadPrescriptions();
 });
 
-document.getElementById("loadRxBtn").addEventListener("click", () => loadPrescriptions(document.getElementById("rxListPatient").value||null));
+document.getElementById("loadRxBtn").addEventListener("click", () => {
+  const patientId = document.getElementById("rxListPatient").value;
+  console.log("Loading prescriptions for patientId:", patientId);
+  loadPrescriptions(patientId || null);
+});
+
 document.getElementById("addPrescriptionBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });
 document.getElementById("cancelBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.add("hidden"); });
 document.getElementById("emptyStateAddBtn").addEventListener("click", () => { document.getElementById("doctorFormCard").classList.remove("hidden"); });

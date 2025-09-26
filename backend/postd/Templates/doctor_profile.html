@@ -229,7 +229,13 @@
       document.getElementById("doctorNationalId").textContent = data.national_id || "—";
       document.getElementById("doctorEmployeeId").textContent = data.employee_id || "—";
 
+      if (data.profile_picture) {
+  document.getElementById("doctorPhoto").src = data.profile_picture;
+} else {
+  document.getElementById("doctorPhoto").src = "profile_placeholder.jpg";
+}
       // Hide placeholders
+
       document.querySelectorAll('.loading-placeholder').forEach(el => el.remove());
     } catch (err) {
       console.error(err);

@@ -39,8 +39,12 @@ class DoctorProfile(models.Model):
     national_id = models.CharField(max_length=50, unique=True)
     employee_id = models.CharField(max_length=50, unique=True)
     specialty = models.CharField(max_length=100)
-    title = models.CharField(max_length=100)  # e.g. Consultant, Resident, Specialist
-
+    title = models.CharField(max_length=100)  
+    profile_picture = models.ImageField(
+        upload_to="doctor_profiles/",
+        blank=True,
+        null=True
+    )  
 
     def __str__(self):
         return f"Dr. {self.full_name} - {self.specialty}"

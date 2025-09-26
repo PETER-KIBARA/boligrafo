@@ -13,7 +13,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "specialty", "employee_id", "national_id", "title")
+    list_display = ("full_name", "specialty", "employee_id", "national_id", "title", "profile_picture")
 
 class DoctorProfileInline(admin.StackedInline):
     model = DoctorProfile
