@@ -27,9 +27,9 @@ def check_notifications():
     )
     for vital in abnormal_vitals:
         Notification.objects.get_or_create(
-            doctor=vital.patient.doctor,
-            patient=vital.patient,
-            message=f"Abnormal vitals for {vital.patient.user.first_name}: "
+            doctor=vital.patient.doctor,   # ✅ doctor comes from UserProfile
+            patient=vital.patient.user,    # ✅ still keep the raw User for clarity
+            message=f"Abnormal vitals for {vital.patient.user.username}: "
                     f"{vital.systolic}/{vital.diastolic}",
         )
 
