@@ -3,45 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alerts</title>
+  <title>Doctor Notifications</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a2d9d6a64d.js" crossorigin="anonymous"></script>
   <style>
-    body { background-color: #8fafdf; }
-    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+    body {
+      background-color: #f8f9fa;
+      font-family: system-ui, sans-serif;
+    }
+    .notification-card {
+      border-left: 5px solid #0d6efd;
+      transition: transform 0.2s ease-in-out;
+    }
+    .notification-card:hover {
+      transform: translateY(-2px);
+    }
+    .notification-time {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+    .header {
+      border-bottom: 2px solid #dee2e6;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
   </style>
 </head>
 <body>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">Notifications & Alerts</h4>
-      <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
-    </div>
-    <div class="card">
-      <div class="card-body">
-        <ul class="list-group list-group-flush" id="alertsList"></ul>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center header">
+      <div>
+        <h4 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Notifications</h4>
+        <small class="text-muted">Real-time updates about your patients</small>
       </div>
+      <a href="dashboard.html" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Notifications List -->
+    <div id="notificationsList" class="row g-3">
+      <!-- Filled dynamically -->
     </div>
   </div>
+
   <script>
-    const API_BASE = "http://192.168.100.93:8000";
-    const token = localStorage.getItem("doctorToken");
-    async function loadAlerts(){
-      const res = await fetch(`${API_BASE}/doctor/alerts`, { headers: { 'Authorization': `Token ${token}` } });
-      const list = document.getElementById('alertsList');
-      if(!res.ok){ list.innerHTML = '<li class="list-group-item">No alerts</li>'; return; }
-      const data = await res.json();
-      if(!data.length){ list.innerHTML = '<li class="list-group-item">No alerts</li>'; return; }
-      list.innerHTML = data.map(a=>`<li class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <div class="fw-semibold">${a.title||'Alert'}</div>
-          <div class="text-muted small">${a.message}</div>
-        </div>
-        <small class="text-muted">${a.created_at}</small>
-      </li>`).join('');
+    const API_BASE = "http://192.168.100.93:8000"; 
+    const token = localStorage.getItem("doctorToken"); // ✅ match login page
+
+    if (!token) {
+      alert("You must log in first!");
+      window.location.href = "doctors_login.html"; 
     }
-    loadAlerts();
+
+    async function loadNotifications() {
+      const container = document.getElementById("notificationsList");
+      try {
+        const res = await fetch(`${API_BASE}/notifications`, {
+          headers: { 
+            "Content-Type": "application/json",
+            // if using DRF TokenAuth:
+            "Authorization": `Token ${token}`
+            // if using JWT:
+            // "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (res.status === 401) {
+          container.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-warning">⚠ Session expired. Please log in again.</div>
+            </div>`;
+          localStorage.removeItem("doctorToken");
+          setTimeout(() => window.location.href = "login.html", 2000);
+          return;
+        }
+
+        if (!res.ok) {
+          container.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-danger">⚠ Failed to load notifications.</div>
+            </div>`;
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          container.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-info">No new notifications 🎉</div>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = data.map(n => `
+          <div class="col-12">
+            <div class="card shadow-sm notification-card">
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">
+                    <i class="fas fa-user text-primary me-2"></i>${n.patient_name || "Unknown Patient"}
+                  </h6>
+                  <p class="mb-1">${n.message}</p>
+                  <span class="notification-time">
+                    ${new Date(n.created_at).toLocaleString()}
+                  </span>
+                </div>
+                ${n.is_read 
+                  ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Read</span>' 
+                  : '<span class="badge bg-warning text-dark"><i class="fas fa-envelope me-1"></i>Unread</span>'
+                }
+              </div>
+            </div>
+          </div>
+        `).join("");
+      } catch (err) {
+        console.error("Error loading notifications:", err);
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-danger">Something went wrong. Try again later.</div>
+          </div>`;
+      }
+    }
+
+    // Initial load + auto refresh every 30s
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
   </script>
 </body>
 </html>
-
-

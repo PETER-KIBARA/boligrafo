@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     "rest_framework.authtoken",
     'postd',
-    
+    "django_apscheduler",
+    #'django_crontab',
 ]
 
 REST_FRAMEWORK = {
@@ -56,6 +57,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": None,
    
 }
+
+
+##CRONJOBS = [
+ #   ('59 23 * * *', 'postd.cron.run_checks'),
+#]
 
 
 

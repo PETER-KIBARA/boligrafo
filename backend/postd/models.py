@@ -130,3 +130,32 @@ class Treatment(models.Model):
     def __str__(self):
         return f"{self.name} ({self.patient.user.get_full_name() if self.patient else 'No Patient'})"
 
+
+class Notification(models.Model):
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+    patient = models.ForeignKey(
+        "UserProfile",
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.patient.user.get_full_name()} → {self.message[:30]}"
+        
+class PrescriptionLog(models.Model):
+    prescription = models.ForeignKey("Prescription", on_delete=models.CASCADE, related_name="logs")
+    taken_at = models.DateTimeField(auto_now_add=True)
+    patient = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.patient.user.get_full_name()} - {self.prescription.medication}"
