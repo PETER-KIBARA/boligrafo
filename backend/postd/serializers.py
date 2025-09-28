@@ -6,7 +6,7 @@ from .models import DoctorProfile
 from .models import VitalReading
 from .models import Prescription
 from .models import Treatment
-from .models import Notification
+# from .models import Notification
 
 
 
@@ -175,7 +175,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "patient_name", "created_at"]
 
-class NotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = "__all__"
+# class NotificationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Notification
+#         fields = "__all__"

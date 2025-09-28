@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.auth import get_user_model 
   
 User = get_user_model()  
@@ -56,7 +57,7 @@ class DoctorProfile(models.Model):
 
 class VitalReading(models.Model):
     patient = models.ForeignKey(
-        "UserProfile",  
+        settings.AUTH_USER_MODEL,  
         on_delete=models.CASCADE,
         related_name="vitals"
     )
@@ -67,13 +68,6 @@ class VitalReading(models.Model):
     diet = models.TextField(blank=True, null=True)
     exercise = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.patient.username} - {self.systolic}/{self.diastolic} mmHg"
-
 
 
 
@@ -135,26 +129,7 @@ class Treatment(models.Model):
         return f"{self.name} ({self.patient.user.get_full_name() if self.patient else 'No Patient'})"
 
 
-class Notification(models.Model):
-    doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="notifications"
-    )
-    patient = models.ForeignKey(
-        "UserProfile",
-        on_delete=models.CASCADE,
-        related_name="notifications"
-    )
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
 
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.patient.user.get_full_name()} → {self.message[:30]}"
         
 class PrescriptionLog(models.Model):
     prescription = models.ForeignKey("Prescription", on_delete=models.CASCADE, related_name="logs")

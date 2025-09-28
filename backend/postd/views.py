@@ -27,8 +27,8 @@ from .serializers import PrescriptionSerializer
 from .models import UserProfile  
 from .models import Treatment
 from .serializers import TreatmentSerializer
-from .models import Notification
-from .serializers import NotificationSerializer
+# from .models import Notification
+# from .serializers import NotificationSerializer
 
 
 
@@ -293,10 +293,10 @@ class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class NotificationListView(generics.ListAPIView):
-    serializer_class = NotificationSerializer   # 💡 FIX
-    permission_classes = [permissions.IsAuthenticated]
+# class NotificationListView(generics.ListAPIView):
+#     serializer_class = NotificationSerializer   # 💡 FIX
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        return Notification.objects.filter(doctor=user).order_by("-created_at")
+#     def get_queryset(self):
+#         user = self.request.user
+#         return Notification.objects.filter(doctor=user).order_by("-created_at")
