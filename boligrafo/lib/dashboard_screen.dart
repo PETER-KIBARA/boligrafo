@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api/api_service.dart';
 import 'medication_service.dart';
+import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,11 +23,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _loading = true;
   String? _patientName;
 
-  @override
-  void initState() {
-    super.initState();
+  Timer? _refreshTimer;
+
+@override
+void initState() {
+  super.initState();
+  _loadData();
+
+  _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
     _loadData();
-  }
+  });
+}
+
+@override
+void dispose() {
+  _refreshTimer?.cancel(); // Clean up timer when screen is closed
+  super.dispose();
+}
+
 
   Future<void> _loadData() async {
     try {
@@ -251,19 +265,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String bpStatus = '—';
     String lastReadingTimestamp = '—';
     if (_vitals.isNotEmpty) {
-      final v = _vitals.first as Map<String, dynamic>;
-      latestBpReading = '${v['systolic']}/${v['diastolic']} mmHg';
-      final int sys = v['systolic'] ?? 0;
-      final int dia = v['diastolic'] ?? 0;
-      if (sys >= 180 || dia >= 120) {
-        bpStatus = 'Critical';
-      } else if (sys >= 130 || dia >= 80) {
-        bpStatus = 'Elevated';
-      } else {
-        bpStatus = 'Normal';
-      }
-      lastReadingTimestamp = v['created_at']?.toString() ?? 'Recent';
-    }
+  // Sort vitals by created_at just to be safe
+  _vitals.sort((a, b) {
+    final da = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+    final db = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+    return da.compareTo(db); // oldest → newest
+  });
+
+  final v = _vitals.last as Map<String, dynamic>; // latest reading
+
+  latestBpReading = '${v['systolic']}/${v['diastolic']} mmHg';
+
+  final int sys = v['systolic'] ?? 0;
+  final int dia = v['diastolic'] ?? 0;
+
+  if (sys >= 180 || dia >= 120) {
+    bpStatus = 'Critical';
+  } else if (sys >= 130 || dia >= 80) {
+    bpStatus = 'Elevated';
+  } else {
+    bpStatus = 'Normal';
+  }
+
+  lastReadingTimestamp = v['created_at']?.toString() ?? 'Recent';
+}
+
 
     Color statusColor = const Color(0xFF4CAF50);
     if (bpStatus == 'Elevated') {
