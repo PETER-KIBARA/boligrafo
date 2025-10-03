@@ -301,79 +301,45 @@
   </footer>
 
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Login Script -->
-  <script>
-  document.getElementById("loginForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+<!-- Config -->
+  <script src="scripts/config.js"></script>
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const errorBox = document.getElementById("loginError");
+<!-- Login Script -->
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
 
-    try {
-      const response = await fetch("http://192.168.100.93:8000/doctor/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errorBox = document.getElementById("loginError");
 
-      const data = await response.json();
+  try {
+    const response = await fetch(`${API_BASE}/doctor/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
 
-      if (response.ok) {
-        localStorage.setItem("doctorToken", data.token);
-        localStorage.setItem("doctorName", data.doctor.full_name);
-        localStorage.setItem("doctorEmail", data.doctor.email);
-        localStorage.setItem("doctorSpecialty", data.doctor.specialty);
-        window.location.href = "dashboard.html";
-      } else {
-        errorBox.textContent = data.error || "Login failed!";
-        errorBox.classList.remove("d-none");
-      }
-    } catch (err) {
-      errorBox.textContent = "Server error. Try again later.";
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("doctorToken", data.token);
+      localStorage.setItem("doctorName", data.doctor.full_name);
+      localStorage.setItem("doctorEmail", data.doctor.email);
+      localStorage.setItem("doctorSpecialty", data.doctor.specialty);
+      window.location.href = "dashboard.html";
+    } else {
+      errorBox.textContent = data.error || "Login failed!";
       errorBox.classList.remove("d-none");
     }
-  });
+  } catch (err) {
+    errorBox.textContent = "Server error. Try again later.";
+    errorBox.classList.remove("d-none");
+  }
+});
+</script>
 
-  // Animation on scroll
-  document.addEventListener('DOMContentLoaded', function() {
-    const animateElements = document.querySelectorAll('.animate-on-scroll');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.1 });
-    animateElements.forEach(el => observer.observe(el));
-
-    const statNumbers = document.querySelectorAll('.stat-number');
-    const statObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const target = entry.target;
-          const count = parseInt(target.getAttribute('data-count'));
-          const duration = 2000;
-          const step = count / (duration / 16);
-          let current = 0;
-
-          const timer = setInterval(() => {
-            current += step;
-            if (current >= count) {
-              current = count;
-              clearInterval(timer);
-            }
-            target.textContent = Math.floor(current);
-          }, 16);
-
-          statObserver.unobserve(target);
-        }
-      });
-    }, { threshold: 0.5 });
-    statNumbers.forEach(el => statObserver.observe(el));
-  });
-  </script>
 </body>
 </html>

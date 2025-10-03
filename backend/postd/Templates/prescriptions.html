@@ -141,10 +141,12 @@
   </div>
 
   <!-- scripts -->
+
+    <script src="scripts/config.js"></script>
+
   <script>
   (function () {
     // CONFIG - change API_BASE if needed
-    const API_BASE = "http://192.168.100.93:8000";
     const token = localStorage.getItem("doctorToken") || localStorage.getItem("patientToken");
     if (!token) {
       // not logged in

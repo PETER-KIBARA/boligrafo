@@ -486,146 +486,114 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const API_BASE = "http://192.168.100.93:8000"; 
-    const token = localStorage.getItem("doctorToken"); 
+  <!-- Add this before your other scripts -->
 
-    // Sidebar navigation
-    document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
-    document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
-    document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
-    document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
-    
-    // Update active link
-    function setActiveLink(activeId) {
-      document.querySelectorAll('.sidebar a').forEach(link => {
-        link.classList.remove('active');
-      });
-      document.getElementById(activeId).classList.add('active');
-    }
+    <script src="scripts/config.js"></script>
 
-    function showSection(section) {
-      ["patients", "alerts", "reports", "profile"].forEach(sec => {
-        document.getElementById(sec + "Section").classList.add("d-none");
-      });
-      document.getElementById(section + "Section").classList.remove("d-none");
-      document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-      
-      // Update active link in sidebar
-      setActiveLink(section + "Link");
-    }
+<script type="module">
 
+  // Sidebar navigation
+  document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
+  document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
+  document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
+  document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
 
-    // Fetch doctor profile
-    async function loadDoctorProfile() {
-      const response = await fetch(`${API_BASE}/doctor/profile`, {
-        headers: { "Authorization": `Token ${token}` }
-      });
-      if (!response.ok) return logout();
-      const doctor = await response.json();
-      document.getElementById("profileName").innerText = "Dr. " + doctor.full_name;
-      document.getElementById("profileEmail").innerText = doctor.email;
-      document.getElementById("profileSpecialty").innerText = doctor.specialty;
-    }
-
-    // Fetch patients
-    async function loadPatients() {
-      const response = await fetch(`${API_BASE}/doctor/patients`, {
-        headers: { "Authorization": `Token ${token}` }
-      });
-      if (!response.ok) return;
-      const patients = await response.json();
-      document.getElementById("totalPatients").innerText = patients.length;
-      const tableBody = document.getElementById("patientsTable");
-      tableBody.innerHTML = "";
-      patients.forEach(patient => {
-        const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
-        const row = `
-          <tr>
-            <td>${fullName}</td>
-            <td>${patient.id}</td>
-            <td>${patient.phone || "-"}</td>
-            <td><span class="badge bg-success">Active</span></td>
-            <td>
-              <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
-            </td>
-          </tr>`;
-        tableBody.innerHTML += row;
-      });
-    }
-
-    // Fetch patient reports and chart
-    async function viewPatientReports(patientId, patientName) {
-      const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, {
-        headers: { "Authorization": `Token ${token}` }
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      const reportsContent = document.getElementById("reportsContent");
-      reportsContent.innerHTML = `<h5>Reports for ${patientName}</h5>`;
-      if (data.readings.length === 0) {
-        reportsContent.innerHTML += "<p>No readings for today.</p>";
-        return;
-      }
-      const systolic = data.readings.map(r => r.systolic);
-      const diastolic = data.readings.map(r => r.diastolic);
-
-      new Chart(document.getElementById('bpChart').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: data.readings.map((r,i)=> `Reading ${i+1}`),
-          datasets: [
-            { 
-              label: 'Systolic', 
-              data: systolic, 
-              borderColor: '#2a5bd7', 
-              backgroundColor: 'rgba(42, 91, 215, 0.1)',
-              tension: 0.3,
-              fill: true
-            },
-            { 
-              label: 'Diastolic', 
-              data: diastolic, 
-              borderColor: '#e74a3b', 
-              backgroundColor: 'rgba(231, 74, 59, 0.1)',
-              tension: 0.3,
-              fill: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-            }
-          }
-        }
-      });
-      showSection("reports");
-    }
-
-    async function logout() {
-  try {
-    // Call backend logout to nuke token
-    await fetch(`${API_BASE}/doctor/logout`, {
-      method: "POST",
-      headers: { "Authorization": `Token ${token}` }
-    });
-  } catch (err) {
-    console.warn("Backend logout failed, clearing frontend anyway.");
+  // Update active link
+  function setActiveLink(activeId) {
+    document.querySelectorAll('.sidebar a').forEach(link => link.classList.remove('active'));
+    document.getElementById(activeId).classList.add('active');
   }
 
-  localStorage.removeItem("doctorToken");
-  sessionStorage.clear();
+  function showSection(section) {
+    ["patients", "alerts", "reports", "profile"].forEach(sec => {
+      document.getElementById(sec + "Section").classList.add("d-none");
+    });
+    document.getElementById(section + "Section").classList.remove("d-none");
+    document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
+    setActiveLink(section + "Link");
+  }
 
-  window.location.href = "doctors_login.html";
-}
+  // Fetch doctor profile
+  async function loadDoctorProfile() {
+    const response = await fetch(`${API_BASE}/doctor/profile`, { headers: getAuthHeaders() });
+    if (!response.ok) return logout();
+    const doctor = await response.json();
+    document.getElementById("profileName").innerText = "Dr. " + doctor.full_name;
+    document.getElementById("profileEmail").innerText = doctor.email;
+    document.getElementById("profileSpecialty").innerText = doctor.specialty;
+  }
 
+  // Fetch patients
+  async function loadPatients() {
+    const response = await fetch(`${API_BASE}/doctor/patients`, { headers: getAuthHeaders() });
+    if (!response.ok) return;
+    const patients = await response.json();
+    document.getElementById("totalPatients").innerText = patients.length;
 
-    loadDoctorProfile();
-    loadPatients();
-  </script>
+    const tableBody = document.getElementById("patientsTable");
+    tableBody.innerHTML = "";
+    patients.forEach(patient => {
+      const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
+      const row = `
+        <tr>
+          <td>${fullName}</td>
+          <td>${patient.id}</td>
+          <td>${patient.phone || "-"}</td>
+          <td><span class="badge bg-success">Active</span></td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
+          </td>
+        </tr>`;
+      tableBody.innerHTML += row;
+    });
+  }
+
+  // Fetch patient reports
+  async function viewPatientReports(patientId, patientName) {
+    const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, { headers: getAuthHeaders() });
+    if (!response.ok) return;
+    const data = await response.json();
+
+    const reportsContent = document.getElementById("reportsContent");
+    reportsContent.innerHTML = `<h5>Reports for ${patientName}</h5>`;
+    if (data.readings.length === 0) {
+      reportsContent.innerHTML += "<p>No readings for today.</p>";
+      return;
+    }
+
+    const systolic = data.readings.map(r => r.systolic);
+    const diastolic = data.readings.map(r => r.diastolic);
+
+    new Chart(document.getElementById('bpChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: data.readings.map((r,i)=> `Reading ${i+1}`),
+        datasets: [
+          { label: 'Systolic', data: systolic, borderColor: '#2a5bd7', backgroundColor: 'rgba(42, 91, 215, 0.1)', tension: 0.3, fill: true },
+          { label: 'Diastolic', data: diastolic, borderColor: '#e74a3b', backgroundColor: 'rgba(231, 74, 59, 0.1)', tension: 0.3, fill: true }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    showSection("reports");
+  }
+
+  // Logout
+  async function logout() {
+    try {
+      await fetch(`${API_BASE}/doctor/logout`, { method: "POST", headers: getAuthHeaders() });
+    } catch {
+      console.warn("Backend logout failed, clearing frontend anyway.");
+    }
+    localStorage.removeItem("doctorToken");
+    sessionStorage.clear();
+    window.location.href = "doctors_login.html";
+  }
+
+  loadDoctorProfile();
+  loadPatients();
+</script>
+
 </body>
 </html>
