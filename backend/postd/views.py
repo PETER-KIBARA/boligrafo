@@ -160,23 +160,33 @@ def doctor_patients(request):
 @permission_classes([IsAuthenticated])
 def doctor_profile(request):
     """
-    Return logged-in doctor's profile info
+    Return logged-in doctor's profile info including profile picture
     """
     if not hasattr(request.user, "doctor_profile"):
         return Response({"error": "Not authorized"}, status=403)
 
     doctor = request.user.doctor_profile
+    profile_pic_url = (
+        request.build_absolute_uri(doctor.profile_picture.url)
+        if doctor.profile_picture
+        else None
+    )
+    serializer = DoctorProfileSerializer(doctor, context={"request": request})
+
+
     data = {
         "id": doctor.id,
         "full_name": doctor.full_name,
         "email": request.user.email,
-        "username": request.user.username,  
-        "phone": doctor.phone,              
-        "national_id": doctor.national_id,  
+        "username": request.user.username,
+        "phone": doctor.phone,
+        "national_id": doctor.national_id,
         "specialty": doctor.specialty,
         "employee_id": doctor.employee_id,
         "title": doctor.title,
+        "profile_picture": profile_pic_url,
     }
+
     return Response(data, status=200)
 
 

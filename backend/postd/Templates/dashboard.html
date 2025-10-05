@@ -579,17 +579,26 @@
     showSection("reports");
   }
 
-  // Logout
-  async function logout() {
-    try {
-      await fetch(`${API_BASE}/doctor/logout`, { method: "POST", headers: getAuthHeaders() });
-    } catch {
-      console.warn("Backend logout failed, clearing frontend anyway.");
-    }
-    localStorage.removeItem("doctorToken");
-    sessionStorage.clear();
-    window.location.href = "doctors_login.html";
+  async function logout(e) {
+  e.preventDefault(); // stop <a> from navigating immediately
+  try {
+    const res = await fetch(`${API_BASE}/doctor/logout`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    console.log("Logout response:", res.status);
+  } catch (err) {
+    console.error("Logout failed:", err);
   }
+  localStorage.removeItem("doctorToken");
+  sessionStorage.clear();
+  window.location.href = "doctors_login.html";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+});
+
 
   loadDoctorProfile();
   loadPatients();
