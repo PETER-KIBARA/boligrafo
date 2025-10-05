@@ -204,6 +204,7 @@ class VitalReadingListCreateView(generics.ListCreateAPIView):
 
 
 
+
 class DoctorPatientDailyReportsView(APIView):
     permission_classes = [IsAuthenticated]
 
