@@ -13,13 +13,28 @@
       width: 120px; height: 120px; border-radius: 50%;
       object-fit: cover; border: 4px solid #0d6efd; margin-bottom: 10px;
     }
+    .loading-spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spinner .75s linear infinite;
+    }
+    @keyframes spinner {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="mb-0" id="patientName">Patient</h4>
-      <a class="btn btn-outline-secondary btn-sm" href="patients.html">Back</a>
+      <div>
+        <span id="doctorInfo" class="me-3 small text-muted"></span>
+        <a class="btn btn-outline-secondary btn-sm" href="patients.html">Back to Patients</a>
+      </div>
     </div>
 
     <div class="row g-3">
@@ -58,9 +73,15 @@
         </div>
 
         <div class="card mt-3">
-          <div class="card-header bg-light">Prescriptions & Treatments</div>
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span>Prescriptions & Treatments</span>
+            <small class="text-muted" id="lastUpdated"></small>
+          </div>
           <div class="card-body" id="historyList">
-            <div class="text-muted">Loading...</div>
+            <div class="text-center py-4">
+              <div class="loading-spinner text-primary me-2"></div>
+              <span class="text-muted">Loading medical history...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -69,130 +90,599 @@
 
   <script src="scripts/config.js"></script>
   <script>
+    // Enhanced authentication and debugging
     const token = localStorage.getItem("doctorToken");
     const patientId = new URLSearchParams(location.search).get("id");
+    const doctorName = localStorage.getItem("doctorName");
+    const doctorSpecialty = localStorage.getItem("doctorSpecialty");
+
+    console.log("=== AUTHENTICATION DEBUG ===");
+    console.log("Patient ID:", patientId);
+    console.log("Doctor Token:", token ? `${token.substring(0, 20)}...` : 'MISSING');
+    console.log("Doctor Name:", doctorName);
+    console.log("Doctor Specialty:", doctorSpecialty);
+    console.log("API Base:", API_BASE);
+    console.log("=== END DEBUG ===");
+
+    // Redirect if no token or patient ID
+    if (!token) {
+      console.error("No authentication token found");
+      alert("Please log in to access patient data.");
+      window.location.href = "doctors_login.html";
+    }
 
     if (!patientId) {
+      console.error("No patient ID provided");
       alert("Missing patient ID. Redirecting...");
       window.location.href = "patients.html";
     }
 
+    // Display doctor info
+    if (doctorName) {
+      document.getElementById("doctorInfo").textContent = `Dr. ${doctorName}${doctorSpecialty ? ` • ${doctorSpecialty}` : ''}`;
+    }
+
     function getAuthHeaders() {
-      return { "Authorization": `Token ${token}`, "Content-Type": "application/json" };
+      if (!token) {
+        console.error("No token available for auth headers");
+        return { "Content-Type": "application/json" };
+      }
+      
+      // Clean the token
+      let cleanToken = token.trim();
+      if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) {
+        cleanToken = cleanToken.slice(1, -1);
+      }
+      
+      console.log("Using cleaned token for request");
+      
+      return { 
+        "Authorization": `Token ${cleanToken}`, 
+        "Content-Type": "application/json" 
+      };
     }
 
     async function authFetch(url) {
-      return fetch(url, { headers: getAuthHeaders() });
+      const headers = getAuthHeaders();
+      console.log(`🔐 Making authenticated request to: ${url}`);
+      
+      try {
+        const response = await fetch(url, { headers });
+        console.log(`📡 Response status: ${response.status} for ${url}`);
+        
+        if (response.status === 401) {
+          console.error("❌ Authentication failed - token invalid or expired");
+          localStorage.removeItem("doctorToken");
+          localStorage.removeItem("doctorName");
+          localStorage.removeItem("doctorEmail");
+          localStorage.removeItem("doctorSpecialty");
+          alert("Your session has expired. Please log in again.");
+          window.location.href = "login.html";
+          throw new Error("Authentication failed");
+        }
+        
+        if (response.status === 403) {
+          console.error("🚫 Permission denied for endpoint");
+          const errorText = await response.text();
+          throw new Error(`Access denied: ${errorText}`);
+        }
+        
+        return response;
+      } catch (error) {
+        console.error("💥 Fetch error:", error);
+        throw error;
+      }
     }
+
+    // Add this function to debug the current user
+async function debugCurrentUser() {
+    try {
+        console.log("🔍 Debugging current user...");
+        
+        // Try to get current user info
+        const res = await authFetch(`${API_BASE}/doctor/profile`);
+        if (res.ok) {
+            const userData = await res.json();
+            console.log("✅ Current user data:", userData);
+            return userData;
+        } else {
+            const errorText = await res.text();
+            console.error("❌ Cannot access doctor profile:", errorText);
+            return null;
+        }
+    } catch (error) {
+        console.error("💥 Error debugging user:", error);
+        return null;
+    }
+}
 
     // ✅ Load patient info
     async function loadPatientInfo() {
-      const res = await authFetch(`${API_BASE}/view_patient/${patientId}/daily-reports`);
-      if (!res.ok) {
-        console.error("Failed to load patient profile");
-        return;
-      }
-      const data = await res.json();
-      const user = data.user || {};
+      console.log("👤 Loading patient info...");
+      const loadingElement = document.getElementById("patientNameCard");
+      loadingElement.innerHTML = '<span class="loading-spinner me-2"></span> Loading...';
 
-      document.getElementById("patientName").textContent = `${user.first_name || ""} ${user.last_name || ""}`;
-      document.getElementById("patientNameCard").textContent = `${user.first_name || ""} ${user.last_name || ""}`;
-      document.getElementById("email").textContent = user.email || "-";
-      document.getElementById("phone").textContent = data.phone || "-";
-      document.getElementById("address").textContent = data.address || "-";
-      if (data.profile_picture) {
-        document.getElementById("profilePicture").src = `${API_BASE}${data.profile_picture}`;
+      try {
+        const res = await authFetch(`${API_BASE}/view_patient/${patientId}/daily-reports`);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to load patient profile: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log("✅ Patient data loaded:", data);
+        const user = data.user || {};
+
+        document.getElementById("patientName").textContent = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown Patient";
+        document.getElementById("patientNameCard").textContent = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown Patient";
+        document.getElementById("email").textContent = user.email || "-";
+        document.getElementById("phone").textContent = data.phone || "-";
+        document.getElementById("address").textContent = data.address || "-";
+        
+        if (data.profile_picture) {
+          document.getElementById("profilePicture").src = `${API_BASE}${data.profile_picture}`;
+        }
+      } catch (error) {
+        console.error("❌ Error loading patient info:", error);
+        document.getElementById("patientNameCard").textContent = "Error loading patient";
+        document.getElementById("patientName").textContent = "Error loading patient";
       }
     }
 
     // ✅ Fetch vitals and draw BP chart
-    let chart;
-    async function loadBPTrend() {
-      const res = await authFetch(`${API_BASE}/vitals?patient_id=${patientId}`);
-      if (!res.ok) {
-        console.error("Failed to load vitals");
-        return;
-      }
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById("bpChart").parentElement.innerHTML =
-          "<div class='text-muted text-center'>No blood pressure readings available</div>";
-        return;
-      }
+// ✅ Fetch vitals and draw BP chart
+let chart;
+async function loadBPTrend() {
+    console.log("🔍 DEBUG: Starting loadBPTrend...");
+    const chartContainer = document.getElementById("bpChart").parentElement;
+    chartContainer.innerHTML = '<div class="text-center py-4"><div class="loading-spinner text-primary me-2"></div><span class="text-muted">Loading blood pressure data...</span></div>';
 
-      const range = parseInt(document.getElementById("range").value);
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - range);
+    try {
+        const apiUrl = `${API_BASE}/doctor/vitals?patient_id=${patientId}`;
+        console.log("🔍 DEBUG: Fetching from:", apiUrl);
 
-      const filtered = data.filter(v => new Date(v.created_at) >= cutoff);
-      const labels = filtered.map(v => new Date(v.created_at).toLocaleDateString());
-      const systolic = filtered.map(v => v.systolic);
-      const diastolic = filtered.map(v => v.diastolic);
+        const res = await authFetch(apiUrl);
+        console.log("🔍 DEBUG: Response status:", res.status);
 
-      const ctx = document.getElementById("bpChart").getContext("2d");
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            { label: "Systolic", data: systolic, borderColor: "#0d6efd", fill: false, tension: 0.3 },
-            { label: "Diastolic", data: diastolic, borderColor: "#dc3545", fill: false, tension: 0.3 }
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: true, position: "top" } },
-        },
-      });
+        // Get the raw response text first
+        const responseText = await res.text();
+        console.log("🔍 DEBUG: Raw response text:", responseText);
+        console.log("🔍 DEBUG: Response length:", responseText.length);
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log("🔍 DEBUG: Parsed data:", data);
+            console.log("🔍 DEBUG: Data type:", typeof data);
+            console.log("🔍 DEBUG: Is array?", Array.isArray(data));
+            if (Array.isArray(data)) {
+                console.log("🔍 DEBUG: Array length:", data.length);
+                if (data.length > 0) {
+                    console.log("🔍 DEBUG: First item:", data[0]);
+                }
+            }
+        } catch (parseError) {
+            console.error("🔍 DEBUG: JSON parse error:", parseError);
+            throw new Error(`Invalid JSON response: ${responseText}`);
+        }
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${responseText}`);
+        }
+        
+        if (!Array.isArray(data)) {
+            console.error("🔍 DEBUG: Data is not an array:", data);
+            throw new Error("Expected array but got: " + typeof data);
+        }
+        
+        if (data.length === 0) {
+            console.log("🔍 DEBUG: Empty array received - no vital readings for patient", patientId);
+            chartContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-2x text-muted mb-3"></i>
+                    <h6 class="text-muted">No Blood Pressure Data</h6>
+                    <p class="text-muted small">No vital readings found for patient ID ${patientId}.</p>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="loadBPTrend()">
+                            <i class="fas fa-refresh me-1"></i>Retry
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="createSampleData()">
+                            <i class="fas fa-plus me-1"></i>Create Sample Data
+                        </button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        console.log("🔍 DEBUG: Processing", data.length, "records");
+        
+        // Process the data
+        const range = parseInt(document.getElementById("range").value);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - range);
+        console.log("🔍 DEBUG: Date range:", range, "days, cutoff:", cutoff);
+
+        const filtered = data.filter(v => {
+            if (!v.created_at) {
+                console.warn("🔍 DEBUG: Record missing created_at:", v);
+                return false;
+            }
+            const recordDate = new Date(v.created_at);
+            const isInRange = recordDate >= cutoff;
+            console.log(`🔍 DEBUG: Record ${v.id || 'no-id'} - Date: ${v.created_at}, In range: ${isInRange}`);
+            return isInRange;
+        });
+        
+        console.log("🔍 DEBUG: Filtered records:", filtered.length);
+
+        if (filtered.length === 0) {
+            chartContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-2x text-muted mb-3"></i>
+                    <h6 class="text-muted">No Recent Data</h6>
+                    <p class="text-muted small">No blood pressure readings in the last ${range} days.</p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadBPTrend()">
+                        <i class="fas fa-refresh me-1"></i>Show All Data
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Sort and prepare chart data
+        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        
+        const labels = filtered.map(v => {
+            const date = new Date(v.created_at);
+            return date.toLocaleDateString();
+        });
+        
+        const systolic = filtered.map(v => v.systolic);
+        const diastolic = filtered.map(v => v.diastolic);
+
+        console.log("🔍 DEBUG: Chart labels:", labels);
+        console.log("🔍 DEBUG: Systolic data:", systolic);
+        console.log("🔍 DEBUG: Diastolic data:", diastolic);
+
+        // Create chart
+        chartContainer.innerHTML = '<canvas id="bpChart"></canvas>';
+        const ctx = document.getElementById("bpChart").getContext("2d");
+        
+        if (chart) chart.destroy();
+        
+        chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [
+                    { 
+                        label: "Systolic", 
+                        data: systolic, 
+                        borderColor: "#0d6efd", 
+                        backgroundColor: "rgba(13, 110, 253, 0.1)",
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: "#0d6efd",
+                        pointBorderColor: "#ffffff",
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    { 
+                        label: "Diastolic", 
+                        data: diastolic, 
+                        borderColor: "#dc3545", 
+                        backgroundColor: "rgba(220, 53, 69, 0.1)",
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: "#dc3545",
+                        pointBorderColor: "#ffffff",
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        display: true, 
+                        position: "top",
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: `Blood Pressure Trend - ${filtered.length} Readings`,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Blood Pressure (mmHg)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            },
+        });
+        
+        console.log("✅ DEBUG: BP chart rendered successfully with", filtered.length, "readings");
+        
+    } catch (error) {
+        console.error('💥 DEBUG: Error in loadBPTrend:', error);
+        const chartContainer = document.getElementById("bpChart").parentElement;
+        chartContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                <h6 class="text-warning">Unable to Load Data</h6>
+                <p class="text-muted small">${error.message}</p>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="loadBPTrend()">
+                        <i class="fas fa-refresh me-1"></i>Try Again
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="testVitalsEndpoint()">
+                        <i class="fas fa-bug me-1"></i>Debug
+                    </button>
+                </div>
+            </div>
+        `;
     }
+}
+
+// Add debug function
+async function testVitalsEndpoint() {
+    console.log("🧪 Testing vitals endpoint directly...");
+    try {
+        const res = await authFetch(`${API_BASE}/doctor/vitals?patient_id=${patientId}`);
+        const text = await res.text();
+        console.log("🧪 Endpoint test - Status:", res.status);
+        console.log("🧪 Endpoint test - Response:", text);
+        alert(`Vitals Endpoint Test:\nStatus: ${res.status}\nResponse: ${text}\nCheck console for details.`);
+    } catch (error) {
+        console.error("🧪 Endpoint test failed:", error);
+        alert(`Endpoint test failed: ${error.message}`);
+    }
+}
+
+// Add function to create sample data via Django shell command
+function createSampleData() {
+    if (!confirm('Create sample blood pressure data for this patient?\n\nThis will add realistic sample readings for testing.')) return;
+    
+    // Show instructions for manual data creation
+    const instructions = `
+To create sample data, run this in Django shell:
+
+python manage.py shell
+
+Then run this code:
+
+from postd.models import VitalReading
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+import datetime
+import random
+
+User = get_user_model()
+patient = User.objects.get(id=${patientId})
+
+# Create 7 days of sample data
+for days_ago in range(7, -1, -1):
+    VitalReading.objects.create(
+        patient=patient,
+        systolic=120 + random.randint(-8, 8),
+        diastolic=80 + random.randint(-5, 5),
+        heartrate=70 + random.randint(-10, 10),
+        symptoms="Sample data for testing",
+        created_at=timezone.now() - datetime.timedelta(days=days_ago)
+    )
+
+print("Created sample data for patient", patient.id)
+    `;
+    
+    alert('Sample Data Creation:\n\n' + instructions);
+    
+    // Optional: Auto-refresh after a delay to check if data was created
+    setTimeout(() => {
+        if (confirm('If you created the sample data, click OK to refresh the chart.')) {
+            loadBPTrend();
+        }
+    }, 3000);
+}
 
     // ✅ Load prescriptions & treatments
-    async function loadHistory() {
-      const box = document.getElementById("historyList");
-      const [presRes, treatRes] = await Promise.all([
-        authFetch(`${API_BASE}/prescriptions`),
-        authFetch(`${API_BASE}/doctor/treatments`)
-      ]);
+// ✅ Load prescriptions & treatments
+async function loadHistory() {
+    console.log("💊 Loading prescriptions and treatments...");
+    const box = document.getElementById("historyList");
+    box.innerHTML = '<div class="text-center py-4"><div class="loading-spinner text-primary me-2"></div><span class="text-muted">Loading prescriptions and treatments...</span></div>';
 
-      const prescriptions = presRes.ok ? await presRes.json() : [];
-      const treatments = treatRes.ok ? await treatRes.json() : [];
+    try {
+        const [presRes, treatRes] = await Promise.all([
+            authFetch(`${API_BASE}/prescriptions?patient_id=${patientId}`),
+            authFetch(`${API_BASE}/doctor/treatments?patient_id=${patientId}`)
+        ]);
 
-      if (!prescriptions.length && !treatments.length) {
-        box.innerHTML = '<div class="text-muted">No prescriptions or treatments found.</div>';
-        return;
-      }
+        console.log("📊 Prescriptions response:", presRes.status, presRes.ok);
+        console.log("📊 Treatments response:", treatRes.status, treatRes.ok);
 
-      let html = "";
+        let prescriptions = [];
+        let treatments = [];
 
-      if (prescriptions.length) {
-        html += `<h6 class="fw-bold mt-2">Prescriptions</h6><ul class="list-group list-group-flush mb-2">`;
-        prescriptions.forEach(p => {
-          if (p.patient === parseInt(patientId))
-            html += `<li class="list-group-item"><strong>${p.medication}</strong> - ${p.dosage} (${p.frequency})</li>`;
-        });
-        html += "</ul>";
-      }
+        if (presRes.ok) {
+            prescriptions = await presRes.json();
+            console.log("✅ Prescriptions data:", prescriptions);
+        } else {
+            console.error("❌ Failed to load prescriptions:", presRes.status);
+        }
 
-      if (treatments.length) {
-        html += `<h6 class="fw-bold mt-2">Treatments</h6><ul class="list-group list-group-flush">`;
-        treatments.forEach(t => {
-          if (t.patient === parseInt(patientId))
-            html += `<li class="list-group-item">${t.name} - <small class="text-muted">${t.date}</small></li>`;
-        });
-        html += "</ul>";
-      }
+        if (treatRes.ok) {
+            treatments = await treatRes.json();
+            console.log("✅ Treatments data:", treatments);
+        } else {
+            console.error("❌ Failed to load treatments:", treatRes.status);
+        }
 
-      box.innerHTML = html;
+        // Check if arrays are empty or if we need to filter
+        let patientPrescriptions = prescriptions;
+        let patientTreatments = treatments;
+
+        // If endpoints don't filter by patient_id, filter client-side
+        if (prescriptions.length > 0 && prescriptions[0].patient !== undefined) {
+            patientPrescriptions = prescriptions.filter(p => p.patient === parseInt(patientId));
+            console.log(`🔍 Filtered prescriptions: ${patientPrescriptions.length} for patient ${patientId}`);
+        }
+
+        if (treatments.length > 0 && treatments[0].patient !== undefined) {
+            patientTreatments = treatments.filter(t => t.patient === parseInt(patientId));
+            console.log(`🔍 Filtered treatments: ${patientTreatments.length} for patient ${patientId}`);
+        }
+
+        if (!patientPrescriptions.length && !patientTreatments.length) {
+            box.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-pills fa-2x text-muted mb-3"></i>
+                    <h6 class="text-muted">No Medical History</h6>
+                    <p class="text-muted small">No prescriptions or treatments found for this patient.</p>
+                </div>`;
+            return;
+        }
+
+        let html = "";
+
+        if (patientPrescriptions.length) {
+            html += `
+                <h6 class="fw-bold mt-2 text-primary">
+                    <i class="fas fa-prescription me-2"></i>Prescriptions 
+                    <span class="badge bg-primary ms-2">${patientPrescriptions.length}</span>
+                </h6>
+                <div class="list-group list-group-flush mb-4">`;
+            
+            patientPrescriptions.forEach((p, index) => {
+                html += `
+                    <div class="list-group-item ${index === 0 ? 'border-top-0' : ''}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="text-dark fs-6">${p.medication || 'Unknown Medication'}</strong>
+                                <div class="mt-1">
+                                    <span class="badge bg-light text-dark">${p.dosage || 'No dosage'}</span>
+                                    <span class="badge bg-info text-dark ms-1">${p.frequency || 'As directed'}</span>
+                                </div>
+                                ${p.instructions ? `<small class="text-muted d-block mt-1">${p.instructions}</small>` : ''}
+                            </div>
+                            ${p.start_date ? `<small class="text-muted text-nowrap ms-3">${new Date(p.start_date).toLocaleDateString()}</small>` : ''}
+                        </div>
+                    </div>`;
+            });
+            html += "</div>";
+        }
+
+        if (patientTreatments.length) {
+            html += `
+                <h6 class="fw-bold mt-2 text-success">
+                    <i class="fas fa-stethoscope me-2"></i>Treatments
+                    <span class="badge bg-success ms-2">${patientTreatments.length}</span>
+                </h6>
+                <div class="list-group list-group-flush">`;
+            
+            patientTreatments.forEach((t, index) => {
+                html += `
+                    <div class="list-group-item ${index === 0 && !patientPrescriptions.length ? 'border-top-0' : ''}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="text-dark fs-6">${t.name || 'Unknown Treatment'}</strong>
+                                ${t.description ? `<p class="mb-1 mt-1 small text-muted">${t.description}</p>` : ''}
+                                ${t.notes ? `<small class="text-muted d-block">${t.notes}</small>` : ''}
+                            </div>
+                            <div class="text-end">
+                                ${t.date ? `<small class="text-muted d-block">${new Date(t.date).toLocaleDateString()}</small>` : ''}
+                                ${t.status ? `<span class="badge ${t.status === 'completed' ? 'bg-success' : t.status === 'ongoing' ? 'bg-warning' : 'bg-secondary'}">${t.status}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            html += "</div>";
+        }
+
+        box.innerHTML = html;
+        
+        // Update last updated time
+        document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        
+        console.log("✅ Medical history loaded successfully");
+        
+    } catch (error) {
+        console.error("❌ Error loading history:", error);
+        box.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Unable to load medical history</strong>
+                <p class="mb-0 small">${error.message}</p>
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadHistory()">
+                    <i class="fas fa-refresh me-1"></i>Try Again
+                </button>
+            </div>`;
     }
+}
 
     // ✅ Initialize page after DOM loads
-    document.addEventListener("DOMContentLoaded", () => {
-      loadPatientInfo();
-      loadBPTrend();
-      loadHistory();
-      document.getElementById("range").addEventListener("change", loadBPTrend);
+    document.addEventListener("DOMContentLoaded", async () => {
+      console.log("🚀 Initializing patient profile page...");
+      
+      try {
+        // Load all data in sequence for better error handling
+        await loadPatientInfo();
+        await loadBPTrend();
+        await loadHistory();
+        
+        // Add event listener for range change
+        document.getElementById("range").addEventListener("change", loadBPTrend);
+        
+        console.log("✅ Patient profile page initialized successfully");
+      } catch (error) {
+        console.error("💥 Initialization error:", error);
+      }
+    });
+
+    // Add global error handler
+    window.addEventListener('error', function(e) {
+      console.error('💥 Global error:', e.error);
     });
   </script>
 </body>

@@ -75,17 +75,48 @@ class TreatmentAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
 
 
-class VitalReadingInline(admin.TabularInline):
-    model = VitalReading   # <-- Fix here
-    extra = 0
-    readonly_fields = ("systolic", "diastolic", "symptoms", "created_at")
-    can_delete = False
-    verbose_name_plural = "Vital Readings"
-    fk_name = "patient" 
+@admin.register(VitalReading)
+class VitalReadingAdmin(admin.ModelAdmin):
+    list_display = [
+        'id',
+        'patient_column',
+        'bp_column', 
+        'hr_column',
+        'created_date',
+        'created_time'
+    ]
+    
+    list_filter = ['created_at', 'patient']
+    search_fields = ['patient__first_name', 'patient__last_name']
+    list_per_page = 30
+    
+    def patient_column(self, obj):
+        name = f"{obj.patient.first_name} {obj.patient.last_name}".strip()
+        return name or obj.patient.username
+    patient_column.short_description = 'Patient'
+    patient_column.admin_order_field = 'patient__first_name'
+    
+    def bp_column(self, obj):
+        return f"{obj.systolic}/{obj.diastolic}"
+    bp_column.short_description = 'BP'
+    
+    def hr_column(self, obj):
+        return obj.heartrate or "-"
+    hr_column.short_description = 'HR'
+    
+    def created_date(self, obj):
+        return obj.created_at.date()
+    created_date.short_description = 'Date'
+    created_date.admin_order_field = 'created_at'
+    
+    def created_time(self, obj):
+        return obj.created_at.time()
+    created_time.short_description = 'Time' 
+
+
+
 
 # Unregister the default User admin
 admin.site.unregister(User)
 # Register User with our custom admin
 admin.site.register(User, UserAdmin)
-
-admin.site.register(VitalReading)

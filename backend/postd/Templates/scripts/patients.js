@@ -36,9 +36,13 @@ async function loadPatients() {
 
   tbody.innerHTML = patients
     .map((p) => {
-      const first = p.user ? p.user.first_name : p.first_name;
-      const last = p.user ? p.user.last_name : p.last_name;
+      // Use the fields from the updated serializer
+      const first = p.first_name;  // Now comes directly from serializer
+      const last = p.last_name;    // Now comes directly from serializer
       const name = `${first || ""} ${last || ""}`.trim() || "-";
+
+      // Get the correct patient ID (user.id)
+      const patientId = p.patient_id;  // Use user_id if available, fallback to id
 
       const lastReading =
         p.last_reading && p.last_reading.systolic
@@ -51,11 +55,11 @@ async function loadPatients() {
 
       return `<tr>
         <td>${name}</td>
-        <td>${p.id}</td>
+        <td>${patientId}</td>  <!-- Show correct patient ID -->
         <td>${p.phone || "-"}</td>
         <td>${lastReading}</td>
         <td class="text-end">
-          <a class="btn btn-sm btn-primary" href="patient_profile.html?id=${p.id}">View</a>
+          <a class="btn btn-sm btn-primary" href="patient_profile.html?id=${patientId}">View</a>  <!-- Use correct patient ID -->
         </td>
       </tr>`;
     })

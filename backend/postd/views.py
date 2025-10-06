@@ -202,8 +202,34 @@ class VitalReadingListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user)
 
+class DoctorVitalReadingListView(generics.ListAPIView):
+    serializer_class = VitalReadingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-
+    def get_queryset(self):
+        # More flexible doctor check
+        user = self.request.user
+        
+        # Check if user is staff (common for doctors)
+        # OR has doctor profile
+        # OR is superuser
+        is_doctor = (
+            user.is_staff or 
+            user.is_superuser or 
+            hasattr(user, 'doctor')  # If you have a Doctor profile model
+        )
+        
+        if not is_doctor:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only doctors can access this endpoint")
+        
+        patient_id = self.request.query_params.get('patient_id')
+        if not patient_id:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("patient_id parameter is required")
+        
+        # Doctors can view any patient's vitals
+        return VitalReading.objects.filter(patient_id=patient_id).order_by('-created_at')
 
 class DoctorPatientDailyReportsView(APIView):
     permission_classes = [IsAuthenticated]
