@@ -31,6 +31,7 @@ path("prescriptions/<int:pk>", PrescriptionRetrieveUpdateView.as_view(), name="p
 path("doctor/treatments", TreatmentListCreateView.as_view(), name="treatment-list"),
 path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatment-detail"),
 path('doctor/vitals', views.DoctorVitalReadingListView.as_view(), name='doctor-vitals'),
+path('doctor/all-vitals', views.DoctorAllPatientsVitalsView.as_view(), name='doctor-all-vitals'),
 path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
 
 

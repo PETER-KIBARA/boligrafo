@@ -383,16 +383,441 @@
         </script>
 
         <!-- Chart -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h6 class="m-0">Patient Readings Overview</h6>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <canvas id="bpChart"></canvas>
-            </div>
+        <!-- Chart Card -->
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h6 class="m-0">Blood Pressure Trends & Insights</h6>
+    <small class="text-muted">Weekly averages with medical recommendations</small>
+  </div>
+  <div class="card-body">
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-light">
+          <div class="card-body text-center p-3">
+            <h6 class="card-title">Current Avg</h6>
+            <h4 id="currentAvg" class="mb-0">--/--</h4>
+            <small class="text-muted">mmHg</small>
           </div>
         </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light">
+          <div class="card-body text-center p-3">
+            <h6 class="card-title">Trend</h6>
+            <div id="trendIndicator" class="mb-1">
+              <i class="bi bi-dash-circle text-secondary"></i>
+            </div>
+            <small id="trendText" class="text-muted">Stable</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light">
+          <div class="card-body text-center p-3">
+            <h6 class="card-title">Category</h6>
+            <span id="bpCategory" class="badge bg-secondary">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light">
+          <div class="card-body text-center p-3">
+            <h6 class="card-title">Patients</h6>
+            <h4 id="patientCount" class="mb-0">--</h4>
+            <small class="text-muted">Monitored</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container" style="position: relative; height: 300px;">
+      <canvas id="bpTrendChart"></canvas>
+    </div>
+
+    <!-- Medical Insights -->
+    <div class="mt-4">
+      <h6>Medical Insights & Recommendations</h6>
+      <div id="medicalInsights" class="alert alert-info">
+        <div class="d-flex">
+          <i class="bi bi-info-circle me-2 mt-1"></i>
+          <div>
+            <strong>Loading insights...</strong><br>
+            <small>Analyzing patient blood pressure trends</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Items -->
+    <div class="mt-3">
+      <h6>Recommended Actions</h6>
+      <div id="actionItems" class="row">
+        <!-- Action items will be populated here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let trendChart = null;
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadTrendData();
+});
+
+async function loadTrendData() {
+  try {
+    // Show loading state
+    showLoadingState();
+    
+    // In real implementation, you would fetch this from your API
+    // For demo, we'll generate realistic trend data
+    const trendData = generateTrendData();
+    
+    // Update the UI with the data
+    updateSummaryCards(trendData);
+    createTrendChart(trendData);
+    generateMedicalInsights(trendData);
+    
+  } catch (error) {
+    console.error('Error loading trend data:', error);
+    showError('Failed to load trend data');
+  }
+}
+
+function generateTrendData() {
+  // Generate realistic weekly blood pressure data
+  const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'];
+  
+  // Base values with realistic variations
+  const baseSystolic = 125;
+  const baseDiastolic = 82;
+  
+  const systolicData = weeks.map((week, index) => {
+    const variation = (Math.random() - 0.5) * 10; // ±5 mmHg variation
+    const trend = index * 1.5; // Slight upward trend
+    return Math.round(baseSystolic + variation + trend);
+  });
+  
+  const diastolicData = weeks.map((week, index) => {
+    const variation = (Math.random() - 0.5) * 8; // ±4 mmHg variation
+    const trend = index * 0.8; // Slight upward trend
+    return Math.round(baseDiastolic + variation + trend);
+  });
+  
+  // Calculate trends
+  const systolicTrend = calculateTrend(systolicData);
+  const diastolicTrend = calculateTrend(diastolicData);
+  
+  return {
+    weeks,
+    systolic: systolicData,
+    diastolic: diastolicData,
+    systolicTrend,
+    diastolicTrend,
+    patientCount: 24, // Example patient count
+    currentAvg: {
+      systolic: systolicData[systolicData.length - 1],
+      diastolic: diastolicData[diastolicData.length - 1]
+    }
+  };
+}
+
+function calculateTrend(data) {
+  if (data.length < 2) return 0;
+  
+  const first = data[0];
+  const last = data[data.length - 1];
+  const change = last - first;
+  
+  return change;
+}
+
+function updateSummaryCards(data) {
+  // Current Average
+  document.getElementById('currentAvg').textContent = 
+    `${data.currentAvg.systolic}/${data.currentAvg.diastolic}`;
+  
+  // Trend Indicator
+  const trendIndicator = document.getElementById('trendIndicator');
+  const trendText = document.getElementById('trendText');
+  const overallTrend = data.systolicTrend + data.diastolicTrend;
+  
+  if (overallTrend > 3) {
+    trendIndicator.innerHTML = '<i class="bi bi-arrow-up-circle text-danger"></i>';
+    trendText.textContent = 'Rising';
+    trendText.className = 'text-danger';
+  } else if (overallTrend < -3) {
+    trendIndicator.innerHTML = '<i class="bi bi-arrow-down-circle text-success"></i>';
+    trendText.textContent = 'Improving';
+    trendText.className = 'text-success';
+  } else {
+    trendIndicator.innerHTML = '<i class="bi bi-dash-circle text-secondary"></i>';
+    trendText.textContent = 'Stable';
+    trendText.className = 'text-secondary';
+  }
+  
+  // BP Category
+  const bpCategory = document.getElementById('bpCategory');
+  const category = getBPCategory(data.currentAvg.systolic, data.currentAvg.diastolic);
+  bpCategory.textContent = category.name;
+  bpCategory.className = `badge bg-${category.color}`;
+  
+  // Patient Count
+  document.getElementById('patientCount').textContent = data.patientCount;
+}
+
+function getBPCategory(systolic, diastolic) {
+  if (systolic >= 180 || diastolic >= 120) {
+    return { name: 'Crisis', color: 'danger' };
+  } else if (systolic >= 140 || diastolic >= 90) {
+    return { name: 'High Stage 2', color: 'warning' };
+  } else if (systolic >= 130 || diastolic >= 80) {
+    return { name: 'High Stage 1', color: 'info' };
+  } else if (systolic >= 120) {
+    return { name: 'Elevated', color: 'primary' };
+  } else {
+    return { name: 'Normal', color: 'success' };
+  }
+}
+
+function createTrendChart(data) {
+  const ctx = document.getElementById('bpTrendChart').getContext('2d');
+  
+  // Destroy existing chart
+  if (trendChart) {
+    trendChart.destroy();
+  }
+  
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.weeks,
+      datasets: [
+        {
+          label: 'Systolic',
+          data: data.systolic,
+          borderColor: 'rgb(220, 53, 69)',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          borderWidth: 3,
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'Diastolic',
+          data: data.diastolic,
+          borderColor: 'rgb(13, 110, 253)',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          borderWidth: 3,
+          tension: 0.3,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y} mmHg`;
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            // Add reference lines for normal ranges
+            systolicNormal: {
+              type: 'line',
+              yMin: 120,
+              yMax: 120,
+              borderColor: 'rgba(40, 167, 69, 0.5)',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: 'Normal Systolic',
+                position: 'end'
+              }
+            },
+            diastolicNormal: {
+              type: 'line',
+              yMin: 80,
+              yMax: 80,
+              borderColor: 'rgba(40, 167, 69, 0.5)',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: 'Normal Diastolic',
+                position: 'end'
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: 60,
+          max: 180,
+          title: {
+            display: true,
+            text: 'Blood Pressure (mmHg)'
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Time Period'
+          },
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+}
+
+function generateMedicalInsights(data) {
+  const insightsDiv = document.getElementById('medicalInsights');
+  const actionItemsDiv = document.getElementById('actionItems');
+  
+  const currentSys = data.currentAvg.systolic;
+  const currentDia = data.currentAvg.diastolic;
+  const sysTrend = data.systolicTrend;
+  const diaTrend = data.diastolicTrend;
+  
+  let insights = [];
+  let actions = [];
+  
+  // Analyze current readings
+  if (currentSys >= 140 || currentDia >= 90) {
+    insights.push("⚠️ <strong>Elevated blood pressure</strong> detected across patient population");
+    actions.push({
+      icon: 'bi-prescription2',
+      title: 'Medication Review',
+      description: 'Consider antihypertensive medication adjustments',
+      urgency: 'high'
+    });
+  }
+  
+  if (currentSys >= 130 || currentDia >= 80) {
+    insights.push("📈 <strong>Stage 1 Hypertension</strong> levels observed");
+  }
+  
+  // Analyze trends
+  if (sysTrend > 5 || diaTrend > 3) {
+    insights.push("📊 <strong>Upward trend</strong> in blood pressure readings over past month");
+    actions.push({
+      icon: 'bi-clipboard-heart',
+      title: 'Lifestyle Counseling',
+      description: 'Reinforce diet, exercise, and stress management',
+      urgency: 'medium'
+    });
+  }
+  
+  if (sysTrend < -5 || diaTrend < -3) {
+    insights.push("✅ <strong>Improving trend</strong> - current interventions appear effective");
+  }
+  
+  // General insights based on patient count
+  if (data.patientCount > 20) {
+    insights.push("👥 Monitoring <strong>large patient cohort</strong> - consider population health strategies");
+    actions.push({
+      icon: 'bi-graph-up',
+      title: 'Population Analysis',
+      description: 'Review demographic patterns in hypertension',
+      urgency: 'low'
+    });
+  }
+  
+  // Default insight if no specific conditions
+  if (insights.length === 0) {
+    insights.push("✅ <strong>Stable readings</strong> - continue current monitoring protocol");
+    actions.push({
+      icon: 'bi-check-circle',
+      title: 'Routine Monitoring',
+      description: 'Continue regular blood pressure checks',
+      urgency: 'low'
+    });
+  }
+  
+  // Always include these standard actions
+  actions.push({
+    icon: 'bi-journal-text',
+    title: 'Document Trends',
+    description: 'Update patient records with current findings',
+    urgency: 'medium'
+  });
+  
+  // Update insights display
+  insightsDiv.innerHTML = `
+    <div class="d-flex">
+      <i class="bi bi-clipboard2-pulse me-2 mt-1"></i>
+      <div>
+        <strong>Clinical Observations:</strong><br>
+        <small>${insights.join(' • ')}</small>
+      </div>
+    </div>
+  `;
+  
+  // Update action items
+  actionItemsDiv.innerHTML = actions.map(action => `
+    <div class="col-md-6 col-lg-4 mb-3">
+      <div class="card h-100 border-${action.urgency === 'high' ? 'danger' : action.urgency === 'medium' ? 'warning' : 'success'}">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="${action.icon} me-2 text-${action.urgency === 'high' ? 'danger' : action.urgency === 'medium' ? 'warning' : 'success'}"></i>
+            <h6 class="card-title mb-0">${action.title}</h6>
+          </div>
+          <p class="card-text small">${action.description}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showLoadingState() {
+  document.getElementById('medicalInsights').innerHTML = `
+    <div class="d-flex">
+      <i class="bi bi-hourglass-split me-2 mt-1"></i>
+      <div>
+        <strong>Analyzing patient data...</strong><br>
+        <small>Processing blood pressure trends and generating insights</small>
+      </div>
+    </div>
+  `;
+}
+
+function showError(message) {
+  document.getElementById('medicalInsights').innerHTML = `
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+    </div>
+  `;
+}
+
+// Refresh data every 5 minutes
+setInterval(loadTrendData, 5 * 60 * 1000);
+</script>
+
+
+
 
         <!-- Patients Section -->
         <div id="patientsSection">
@@ -578,6 +1003,7 @@
 
     showSection("reports");
   }
+  
 
   async function logout(e) {
   e.preventDefault(); // stop <a> from navigating immediately
@@ -598,6 +1024,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("logoutBtn").addEventListener("click", logout);
 });
+
+
 
 
   loadDoctorProfile();

@@ -204,6 +204,31 @@ class VitalReadingListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user)
 
+# Add this to your views.py
+class DoctorAllPatientsVitalsView(generics.ListAPIView):
+    serializer_class = VitalReadingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        is_doctor = (
+            user.is_staff or 
+            user.is_superuser or 
+            hasattr(user, 'doctor')
+        )
+        
+        if not is_doctor:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only doctors can access this endpoint")
+        
+        # Get all patients for this doctor and their vitals
+        if hasattr(user, 'doctor'):
+            patient_ids = user.doctor.patients.values_list('id', flat=True)
+            return VitalReading.objects.filter(patient_id__in=patient_ids).order_by('-created_at')
+        else:
+            return VitalReading.objects.all().order_by('-created_at')
+
 class DoctorVitalReadingListView(generics.ListAPIView):
     serializer_class = VitalReadingSerializer
     permission_classes = [permissions.IsAuthenticated]
