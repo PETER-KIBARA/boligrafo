@@ -27,6 +27,8 @@ from .serializers import PrescriptionSerializer
 from .models import UserProfile  
 from .models import Treatment
 from .serializers import TreatmentSerializer
+from .serializers import UserProfileSerializer
+
 # from .models import Notification
 # from .serializers import NotificationSerializer
 
@@ -332,6 +334,16 @@ class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Treatment.objects.all()
 
 
+
+class UserProfileListView(generics.ListAPIView):
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        queryset = UserProfile.objects.all()
+        user_id = self.request.query_params.get("user_id")
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
 
 
 # class NotificationListView(generics.ListAPIView):

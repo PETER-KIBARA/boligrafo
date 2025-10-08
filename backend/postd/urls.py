@@ -9,6 +9,8 @@ from .views import TreatmentListCreateView, TreatmentDetailView, DoctorVitalRead
 from django.conf import settings
 from django.conf.urls.static import static
 # from .views import NotificationListView
+from .views import UserProfileListView
+
 
 
   
@@ -29,6 +31,8 @@ path("prescriptions/<int:pk>", PrescriptionRetrieveUpdateView.as_view(), name="p
 path("doctor/treatments", TreatmentListCreateView.as_view(), name="treatment-list"),
 path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatment-detail"),
 path('doctor/vitals', views.DoctorVitalReadingListView.as_view(), name='doctor-vitals'),
+path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
+
 
 # path("notifications", NotificationListView.as_view(), name="doctor-notifications"),
 
