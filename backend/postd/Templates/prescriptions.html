@@ -141,8 +141,7 @@
   </div>
 
   <!-- scripts -->
-
-    <script src="scripts/config.js"></script>
+  <script src="scripts/config.js"></script>
 
   <script>
   (function () {
@@ -177,104 +176,184 @@
     }
 
     // populate patient select (works with paged or array responses)
-    async function loadPatientsInto(selectId) {
-      const sel = document.getElementById(selectId);
-      sel.innerHTML = `<option value="">Loading...</option>`;
-      try {
-        const res = await authFetch(`${API_BASE}/list_patients`);
-        if (!res.ok) {
-          console.error("loadPatientsInto failed:", await res.text());
-          sel.innerHTML = `<option value="">Unable to load patients</option>`;
-          return;
-        }
-        const data = await res.json();
-        const patients = Array.isArray(data) ? data : (data.results || []);
-        if (!patients.length) {
-          sel.innerHTML = `<option value="">No patients</option>`;
-          return;
-        }
-        const options = patients.map(p => {
-          const fname = (p.user && p.user.first_name) || p.first_name || "";
-          const lname = (p.user && p.user.last_name) || p.last_name || "";
-          const label = `${fname} ${lname}`.trim() || `Patient ${p.id}`;
-          return `<option value="${p.id}">${escapeHtml(label)} (ID: ${p.id})</option>`;
-        }).join("");
-        sel.innerHTML = `<option value="">All patients</option>${options}`;
-      } catch (err) {
-        console.error("loadPatientsInto exception:", err);
-        sel.innerHTML = `<option value="">Error loading patients</option>`;
-      }
+// populate patient select (works with paged or array responses)
+async function loadPatientsInto(selectId) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = `<option value="">Loading...</option>`;
+  
+  try {
+    const res = await authFetch(`${API_BASE}/list_patients`);
+    if (!res.ok) {
+      console.error("loadPatientsInto failed:", await res.text());
+      sel.innerHTML = `<option value="">Unable to load patients</option>`;
+      return;
     }
 
-    // load prescriptions - handles list or paged response
-    async function loadPrescriptions(patientId = null) {
-      showLoading(true);
-      clearError();
-      const tbody = document.querySelector("#rxTable tbody");
-      tbody.innerHTML = "";
-      let url = `${API_BASE}/prescriptions`;
-      if (patientId) url += `?patient=${encodeURIComponent(patientId)}`;
+    const data = await res.json();
+    const patients = Array.isArray(data) ? data : (data.results || []);
 
-      try {
-        const res = await authFetch(url);
-        if (!res.ok) {
-          const text = await res.text().catch(()=>"");
-          showError(`Failed to load prescriptions: ${text || res.statusText}`);
-          showLoading(false);
-          hideTableAndShowEmpty(false);
-          return;
-        }
-
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : data.results || [];
-
-        if (!list.length) {
-          hideTableAndShowEmpty(true);
-          return;
-        }
-
-        // render rows
-        tbody.innerHTML = list.map(rx => {
-          // safe patient/doctor names
-          const patientName = rx.patient_name || (rx.patient && rx.patient_name) || 'Patient';
-          const doctorName = rx.doctor_name || 'Doctor';
-          // ensure rx contains patient id for prefill
-          const rxForPrefill = encodeURIComponent(JSON.stringify(rx));
-          return `
-            <tr>
-              <td>
-                <div class="fw-semibold">${escapeHtml(rx.medication || '')}</div>
-                <small class="text-muted">Patient: ${escapeHtml(patientName)}</small><br>
-                <small class="text-muted">Doctor: ${escapeHtml(doctorName)}</small>
-              </td>
-              <td>${escapeHtml(rx.dosage || '')}</td>
-              <td>${escapeHtml(rx.frequency || '')}</td>
-              <td>${escapeHtml(String(rx.duration_days || ''))} days</td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary" data-rx='${rxForPrefill}' type="button">Edit</button>
-              </td>
-            </tr>`;
-        }).join("");
-        // attach click handlers to edit buttons
-        document.querySelectorAll("#rxTable button[data-rx]").forEach(btn=>{
-          btn.addEventListener("click", (e)=>{
-            try {
-              const rx = JSON.parse(decodeURIComponent(btn.getAttribute("data-rx")));
-              prefill(rx);
-            } catch(err){
-              console.error("prefill parse error:", err);
-            }
-          });
-        });
-
-        showLoading(false);
-        showTable(true);
-      } catch (err) {
-        console.error("loadPrescriptions exception:", err);
-        showError("Network error while loading prescriptions");
-        showLoading(false);
-      }
+    if (!patients.length) {
+      sel.innerHTML = `<option value="">No patients</option>`;
+      return;
     }
+
+    const options = patients.map(p => {
+      // Extract names from either the UserProfile or its nested user object
+      const fname = p.first_name || (p.user?.first_name || "");
+      const lname = p.last_name || (p.user?.last_name || "");
+      const label = `${fname} ${lname}`.trim() || `Patient ${p.id}`;
+
+      // Use UserProfile.id for the value (NOT user.id)
+      return `<option value="${p.id}">${escapeHtml(label)} (Profile ID: ${p.id})</option>`;
+    }).join("");
+
+    sel.innerHTML = `<option value="">All patients</option>${options}`;
+  } catch (err) {
+    console.error("loadPatientsInto exception:", err);
+    sel.innerHTML = `<option value="">Error loading patients</option>`;
+  }
+}
+
+
+// load prescriptions - handles list or paged response
+async function loadPrescriptions(patientProfileId = null) {
+  showLoading(true);
+  clearError();
+  const tbody = document.querySelector("#rxTable tbody");
+  tbody.innerHTML = "";
+
+  // Base endpoint
+  let url = `${API_BASE}/prescriptions`;
+
+  // Use the UserProfile.id for filtering (not user.id)
+  if (patientProfileId) {
+    url += `?patient_id=${encodeURIComponent(patientProfileId)}`;
+  }
+
+  try {
+    const res = await authFetch(url);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      showError(`Failed to load prescriptions: ${text || res.statusText}`);
+      showLoading(false);
+      hideTableAndShowEmpty(false);
+      return;
+    }
+
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : data.results || [];
+
+    if (!list.length) {
+      hideTableAndShowEmpty(true);
+      return;
+    }
+
+    // Render rows dynamically
+    tbody.innerHTML = list.map(rx => {
+      const patientName = rx.patient_name || (rx.patient?.user?.first_name + " " + rx.patient?.user?.last_name) || "Patient";
+      const doctorName = rx.doctor_name || "Doctor";
+      const rxForPrefill = encodeURIComponent(JSON.stringify(rx));
+
+      return `
+        <tr>
+          <td>
+            <div class="fw-semibold">${escapeHtml(rx.medication || "")}</div>
+            <small class="text-muted">Patient: ${escapeHtml(patientName)}</small><br>
+            <small class="text-muted">Doctor: ${escapeHtml(doctorName)}</small>
+          </td>
+          <td>${escapeHtml(rx.dosage || "")}</td>
+          <td>${escapeHtml(rx.frequency || "")}</td>
+          <td>${escapeHtml(String(rx.duration_days || ""))} days</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary" data-rx='${rxForPrefill}' type="button">Edit</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+    // Attach edit listeners
+    document.querySelectorAll("#rxTable button[data-rx]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        try {
+          const rx = JSON.parse(decodeURIComponent(btn.getAttribute("data-rx")));
+          prefill(rx);
+        } catch (err) {
+          console.error("prefill parse error:", err);
+        }
+      });
+    });
+
+    showLoading(false);
+    showTable(true);
+  } catch (err) {
+    console.error("loadPrescriptions exception:", err);
+    showError("Network error while loading prescriptions");
+    showLoading(false);
+  }
+}
+
+// form submit (create or update)
+document.getElementById("rxForm").addEventListener("submit", async function (ev) {
+  ev.preventDefault();
+  clearError();
+  const rxId = document.getElementById("rxId").value || null;
+  
+  // Get the selected patient value - this is now patient_id (user.id)
+  const selectedPatientId = document.getElementById("rxPatient").value;
+  
+  const payload = {
+    patient: parseInt(selectedPatientId) || null,  // This is now the patient_id (user.id)
+    medication: document.getElementById("rxMedication").value.trim(),
+    dosage: document.getElementById("rxDosage").value.trim(),
+    frequency: document.getElementById("rxFrequency").value.trim(),
+    duration_days: parseInt(document.getElementById("rxDuration").value, 10) || 0,
+    instructions: document.getElementById("rxInstructions").value.trim()
+  };
+
+  // basic validation
+  if (!payload.patient) {
+    return showError("Please select a patient before saving.");
+  }
+  if (!payload.medication) {
+    return showError("Please enter medication name.");
+  }
+  if (!payload.dosage) {
+    return showError("Please enter dosage.");
+  }
+  if (!payload.duration_days || payload.duration_days < 1) {
+    return showError("Please enter a valid duration (days).");
+  }
+
+  const url = rxId ? `${API_BASE}/prescriptions/${rxId}` : `${API_BASE}/prescriptions`;
+  const method = rxId ? "PUT" : "POST";
+
+  try {
+    const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+    const text = await res.text();
+    let json = {};
+    try { json = text ? JSON.parse(text) : {}; } catch(e){ /* non-json response */ }
+
+    if (!res.ok) {
+      const errMsg = json.detail || json.error || text || `HTTP ${res.status}`;
+      return showError("Failed to save prescription: " + errMsg);
+    }
+
+    // success
+    const msgEl = document.getElementById("rxMsg");
+    msgEl.textContent = "Prescription saved successfully.";
+    msgEl.classList.remove("text-danger");
+    // reset form
+    document.getElementById("rxForm").reset();
+    document.getElementById("rxId").value = "";
+    document.getElementById("doctorFormCard").classList.add("hidden");
+    // reload list (keep currently selected filter)
+    const selectedPatient = document.getElementById("rxListPatient") ? document.getElementById("rxListPatient").value : null;
+    loadPrescriptions(selectedPatient || null);
+
+  } catch (err) {
+    console.error("Save error:", err);
+    showError("Network error while saving prescription.");
+  }
+});
 
     // helpers to show/hide UI states
     function showLoading(show) {

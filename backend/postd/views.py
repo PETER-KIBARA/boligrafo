@@ -277,24 +277,28 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Prescription.objects.all()
+        patient_id = self.request.query_params.get("patient_id")
 
+        # If doctor is logged in
         if hasattr(user, "doctor_profile"):
-            patient_id = self.request.query_params.get("patient")
+            qs = Prescription.objects.all()
             if patient_id:
                 qs = qs.filter(patient_id=patient_id)
-            return qs
+            return qs.order_by("-created_at")
 
+        # If patient is logged in (linked through UserProfile)
         if hasattr(user, "userprofile"):
-            return qs.filter(patient=user.userprofile)
+            return Prescription.objects.filter(patient=user.userprofile).order_by("-created_at")
 
         return Prescription.objects.none()
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, "doctor_profile"):
+        if hasattr(user, "doctor_profile"):
+            serializer.save(doctor=user)
+        else:
             raise PermissionDenied("Only doctors can create prescriptions.")
-        serializer.save(doctor=user)  # FIXED LINE
+
         
 class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Prescription.objects.all()

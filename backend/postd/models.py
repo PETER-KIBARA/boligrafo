@@ -31,6 +31,9 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+    @property
+    def patient_id(self):
+        return self.user.id
 
 
 class DoctorProfile(models.Model):
