@@ -839,7 +839,7 @@ setInterval(loadTrendData, 5 * 60 * 1000);
                       <th>Patient ID</th>
                       <th>Phone</th>
                       <th>Status</th>
-                      <th>Action</th>
+                      <!-- <th>Action</th> -->
                     </tr>
                   </thead>
                   <tbody id="patientsTable"></tbody>
@@ -965,9 +965,7 @@ setInterval(loadTrendData, 5 * 60 * 1000);
           <td>${patient.id}</td>
           <td>${patient.phone || "-"}</td>
           <td><span class="badge bg-success">Active</span></td>
-          <td>
-            <button class="btn btn-sm btn-primary" onclick="viewPatientReports(${patient.id}, '${fullName}')">View</button>
-          </td>
+          
         </tr>`;
       tableBody.innerHTML += row;
     });

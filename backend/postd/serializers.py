@@ -6,7 +6,7 @@ from .models import DoctorProfile
 from .models import VitalReading
 from .models import Prescription
 from .models import Treatment
-# from .models import Notification
+from .models import Notification
 
 
 
@@ -177,7 +177,49 @@ class TreatmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "patient_name", "created_at"]
 
-# class NotificationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Notification
-#         fields = "__all__"
+class NotificationSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source="patient.user.get_full_name", read_only=True)
+    patient_id = serializers.IntegerField(source="patient.user.id", read_only=True)
+    created_at_formatted = serializers.SerializerMethodField()
+    bp_status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "doctor",
+            "patient",
+            "patient_name",
+            "patient_id",
+            "notification_type",
+            "title",
+            "message",
+            "bp_systolic",
+            "bp_diastolic",
+            "missed_days",
+            "is_read",
+            "created_at",
+            "created_at_formatted",
+            "bp_status"
+        ]
+        read_only_fields = ["id", "created_at"]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d %H:%M")
+    
+    def get_bp_status(self, obj):
+        if obj.bp_systolic and obj.bp_diastolic:
+            return self.get_bp_category(obj.bp_systolic, obj.bp_diastolic)
+        return None
+    
+    def get_bp_category(self, systolic, diastolic):
+        if systolic >= 180 or diastolic >= 120:
+            return "Hypertensive Crisis"
+        elif systolic >= 140 or diastolic >= 90:
+            return "Stage 2 Hypertension"
+        elif systolic >= 130 or diastolic >= 80:
+            return "Stage 1 Hypertension"
+        elif systolic < 90 or diastolic < 60:
+            return "Hypotension"
+        else:
+            return "Normal"

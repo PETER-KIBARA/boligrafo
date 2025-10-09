@@ -12,8 +12,8 @@
       font-family: system-ui, sans-serif;
     }
     .notification-card {
-      border-left: 5px solid #0d6efd;
       transition: transform 0.2s ease-in-out;
+      margin-bottom: 1rem;
     }
     .notification-card:hover {
       transform: translateY(-2px);
@@ -27,6 +27,44 @@
       padding-bottom: 0.5rem;
       margin-bottom: 1.5rem;
     }
+    .critical-bp {
+      border-left: 5px solid #dc3545;
+    }
+    .missed-prescription {
+      border-left: 5px solid #fd7e14;
+    }
+    .normal-notification {
+      border-left: 5px solid #0d6efd;
+    }
+    .filter-badge {
+      cursor: pointer;
+    }
+    .filter-badge.active {
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
+    }
+    .patient-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #0d6efd;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .bp-value {
+      font-weight: bold;
+    }
+    .critical {
+      color: #dc3545;
+    }
+    .high {
+      color: #fd7e14;
+    }
+    .normal {
+      color: #198754;
+    }
   </style>
 </head>
 <body>
@@ -34,12 +72,20 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center header">
       <div>
-        <h4 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Notifications</h4>
-        <small class="text-muted">Real-time updates about your patients</small>
+        <h4 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Patient Notifications</h4>
+        <small class="text-muted">Missed prescriptions and critical BP readings</small>
       </div>
       <a href="dashboard.html" class="btn btn-outline-primary btn-sm">
         <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
       </a>
+    </div>
+
+    <!-- Filter Badges -->
+    <div class="mb-4">
+      <span class="badge filter-badge bg-primary me-2 mb-2 active" data-filter="all">All</span>
+      <span class="badge filter-badge bg-danger me-2 mb-2" data-filter="critical">Critical BP</span>
+      <span class="badge filter-badge bg-warning text-dark me-2 mb-2" data-filter="missed">Missed Prescriptions</span>
+      <span class="badge filter-badge bg-info me-2 mb-2" data-filter="other">Other</span>
     </div>
 
     <!-- Notifications List -->
@@ -47,90 +93,43 @@
       <!-- Filled dynamically -->
     </div>
   </div>
-  <script src="scripts/config.js"></script>
 
   <script>
-    const token = localStorage.getItem("doctorToken"); // ✅ match login page
-
-    if (!token) {
-      alert("You must log in first!");
-      window.location.href = "doctors_login.html"; 
-    }
-
-    async function loadNotifications() {
-      const container = document.getElementById("notificationsList");
-      try {
-        const res = await fetch(`${API_BASE}/notifications`, {
-          headers: { 
-            "Content-Type": "application/json",
-            // if using DRF TokenAuth:
-            "Authorization": `Token ${token}`
-            // if using JWT:
-            // "Authorization": `Bearer ${token}`
-          }
-        });
-
-        if (res.status === 401) {
-          container.innerHTML = `
-            <div class="col-12">
-              <div class="alert alert-warning">⚠ Session expired. Please log in again.</div>
-            </div>`;
-          localStorage.removeItem("doctorToken");
-          setTimeout(() => window.location.href = "login.html", 2000);
-          return;
-        }
-
-        if (!res.ok) {
-          container.innerHTML = `
-            <div class="col-12">
-              <div class="alert alert-danger">⚠ Failed to load notifications.</div>
-            </div>`;
-          return;
-        }
-
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-          container.innerHTML = `
-            <div class="col-12">
-              <div class="alert alert-info">No new notifications 🎉</div>
-            </div>`;
-          return;
-        }
-
-        container.innerHTML = data.map(n => `
-          <div class="col-12">
-            <div class="card shadow-sm notification-card">
-              <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-1">
-                    <i class="fas fa-user text-primary me-2"></i>${n.patient_name || "Unknown Patient"}
-                  </h6>
-                  <p class="mb-1">${n.message}</p>
-                  <span class="notification-time">
-                    ${new Date(n.created_at).toLocaleString()}
-                  </span>
-                </div>
-                ${n.is_read 
-                  ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Read</span>' 
-                  : '<span class="badge bg-warning text-dark"><i class="fas fa-envelope me-1"></i>Unread</span>'
-                }
-              </div>
-            </div>
-          </div>
-        `).join("");
-      } catch (err) {
-        console.error("Error loading notifications:", err);
-        container.innerHTML = `
-          <div class="col-12">
-            <div class="alert alert-danger">Something went wrong. Try again later.</div>
-          </div>`;
+    // Update your existing JavaScript
+async function loadNotifications() {
+  const container = document.getElementById("notificationsList");
+  try {
+    const res = await fetch(`${API_BASE}/notifications/`, {
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Token ${token}`
       }
-    }
+    });
 
-    // Initial load + auto refresh every 30s
-    loadNotifications();
-    setInterval(loadNotifications, 30000);
+    // ... rest of your existing code ...
+  } catch (err) {
+    console.error("Error loading notifications:", err);
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="alert alert-danger">Something went wrong. Try again later.</div>
+      </div>`;
+  }
+}
+
+// Function to mark notification as read
+async function markAsRead(notificationId) {
+  try {
+    await fetch(`${API_BASE}/notifications/${notificationId}/read/`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Token ${token}`
+      }
+    });
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+  }
+}
   </script>
 </body>
 </html>

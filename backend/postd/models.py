@@ -141,3 +141,56 @@ class PrescriptionLog(models.Model):
 
     def __str__(self):
         return f"{self.patient.user.get_full_name()} - {self.prescription.medication}"
+
+
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('missed_prescription', 'Missed Prescription'),
+        ('critical_bp', 'Critical BP Reading'),
+        ('general', 'General Notification'),
+    ]
+    
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+    patient = models.ForeignKey(
+        "UserProfile",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True
+    )
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='general')
+    title = models.CharField(max_length=255, default="Notification")
+    message = models.TextField(default="")
+    bp_systolic = models.IntegerField(null=True, blank=True)
+    bp_diastolic = models.IntegerField(null=True, blank=True)
+    missed_days = models.IntegerField(default=0)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        db_table = 'postd_notification'
+    
+    def __str__(self):
+        if self.patient and self.patient.user:
+            patient_name = self.patient.user.get_full_name()
+        else:
+            patient_name = "Unknown Patient"
+        return f"{self.notification_type} - {patient_name}"
+    
+    def get_bp_category(self):
+        if self.bp_systolic and self.bp_diastolic:
+            if self.bp_systolic >= 180 or self.bp_diastolic >= 120:
+                return "Hypertensive Crisis"
+            elif self.bp_systolic >= 140 or self.bp_diastolic >= 90:
+                return "Stage 2 Hypertension"
+            elif self.bp_systolic >= 130 or self.bp_diastolic >= 80:
+                return "Stage 1 Hypertension"
+            elif self.bp_systolic < 90 or self.bp_diastolic < 60:
+                return "Hypotension"
+        return "Normal"
