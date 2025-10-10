@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     "rest_framework.authtoken",
-    'postd',
+    'postd.apps.PostdConfig',
     "django_apscheduler",
     #'django_crontab',
 ]
