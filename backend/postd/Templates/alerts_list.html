@@ -3,133 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor Notifications</title>
+  <title>Doctor Alerts</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/a2d9d6a64d.js" crossorigin="anonymous"></script>
-  <style>
-    body {
-      background-color: #f8f9fa;
-      font-family: system-ui, sans-serif;
-    }
-    .notification-card {
-      transition: transform 0.2s ease-in-out;
-      margin-bottom: 1rem;
-    }
-    .notification-card:hover {
-      transform: translateY(-2px);
-    }
-    .notification-time {
-      font-size: 0.85rem;
-      color: #6c757d;
-    }
-    .header {
-      border-bottom: 2px solid #dee2e6;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1.5rem;
-    }
-    .critical-bp {
-      border-left: 5px solid #dc3545;
-    }
-    .missed-prescription {
-      border-left: 5px solid #fd7e14;
-    }
-    .normal-notification {
-      border-left: 5px solid #0d6efd;
-    }
-    .filter-badge {
-      cursor: pointer;
-    }
-    .filter-badge.active {
-      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
-    }
-    .patient-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: #0d6efd;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .bp-value {
-      font-weight: bold;
-    }
-    .critical {
-      color: #dc3545;
-    }
-    .high {
-      color: #fd7e14;
-    }
-    .normal {
-      color: #198754;
-    }
-  </style>
 </head>
-<body>
-  <div class="container py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center header">
-      <div>
-        <h4 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Patient Notifications</h4>
-        <small class="text-muted">Missed prescriptions and critical BP readings</small>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Doctor Dashboard</a>
+      <div class="d-flex">
+        <button id="logoutBtn" class="btn btn-outline-light btn-sm">Logout</button>
       </div>
-      <a href="dashboard.html" class="btn btn-outline-primary btn-sm">
-        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-      </a>
     </div>
+  </nav>
 
-    <!-- Filter Badges -->
-    <div class="mb-4">
-      <span class="badge filter-badge bg-primary me-2 mb-2 active" data-filter="all">All</span>
-      <span class="badge filter-badge bg-danger me-2 mb-2" data-filter="critical">Critical BP</span>
-      <span class="badge filter-badge bg-warning text-dark me-2 mb-2" data-filter="missed">Missed Prescriptions</span>
-      <span class="badge filter-badge bg-info me-2 mb-2" data-filter="other">Other</span>
-    </div>
+  <div class="container py-4">
+    <h2 class="mb-4">Alerts & Notifications</h2>
 
-    <!-- Notifications List -->
-    <div id="notificationsList" class="row g-3">
-      <!-- Filled dynamically -->
+    <div id="alertsContainer" class="list-group shadow-sm"></div>
+
+    <div id="noAlerts" class="text-center text-muted mt-5 d-none">
+      <p>No alerts to display 🎉</p>
     </div>
   </div>
 
+  <script src="scripts/config.js"></script>
   <script>
-    // Update your existing JavaScript
-async function loadNotifications() {
-  const container = document.getElementById("notificationsList");
-  try {
-    const res = await fetch(`${API_BASE}/notifications/`, {
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Token ${token}`
+    const token = localStorage.getItem("doctorToken");
+    if (!token) {
+      window.location.href = "doctors_login.html";
+    }
+
+    async function fetchAlerts() {
+      try {
+        const response = await fetch(`${API_BASE}/notifications/`, {
+          method: "GET",
+          headers: getAuthHeaders()
+        });
+
+        if (response.status === 401) {
+          console.warn("Unauthorized — token missing or expired");
+          localStorage.removeItem("doctorToken");
+          window.location.href = "doctors_login.html";
+          return;
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const alerts = await response.json();
+        renderAlerts(alerts);
+      } catch (err) {
+        console.error("Error fetching alerts:", err);
+        document.getElementById("alertsContainer").innerHTML =
+          `<div class="alert alert-danger">Failed to load alerts. Try again later.</div>`;
       }
+    }
+
+    function renderAlerts(alerts) {
+      const container = document.getElementById("alertsContainer");
+      const emptyBox = document.getElementById("noAlerts");
+      container.innerHTML = "";
+
+      if (!alerts || alerts.length === 0) {
+        emptyBox.classList.remove("d-none");
+        return;
+      }
+
+      emptyBox.classList.add("d-none");
+
+      alerts.forEach(alert => {
+        const item = document.createElement("div");
+        item.className = `list-group-item list-group-item-action mb-2 border-0 shadow-sm 
+                          ${alert.is_read ? "bg-light" : "bg-warning-subtle"}`;
+
+        const patientName = alert.patient_name || "Unknown Patient";
+        const patientEmail = alert.patient_email || "No email available";
+        const createdAt = new Date(alert.created_at).toLocaleString();
+
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="flex-grow-1">
+              <h5 class="mb-1">${alert.title || "Notification"}</h5>
+              <p class="mb-1">${alert.message || "No message provided."}</p>
+              <small class="text-muted d-block">
+                Type: ${alert.notification_type?.replace("_", " ")} 
+                • ${createdAt}
+              </small>
+              <small class="text-secondary d-block mt-1">
+                👤 <strong>${patientName}</strong><br>
+                📧 <a href="mailto:${patientEmail}" class="text-decoration-none">${patientEmail}</a>
+              </small>
+            </div>
+            ${alert.bp_systolic && alert.bp_diastolic ? `
+              <span class="badge bg-danger fs-6 align-self-center">
+                ${alert.bp_systolic}/${alert.bp_diastolic} mmHg
+              </span>` : ""}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("doctorToken");
+      window.location.href = "doctors_login.html";
     });
 
-    // ... rest of your existing code ...
-  } catch (err) {
-    console.error("Error loading notifications:", err);
-    container.innerHTML = `
-      <div class="col-12">
-        <div class="alert alert-danger">Something went wrong. Try again later.</div>
-      </div>`;
-  }
-}
-
-// Function to mark notification as read
-async function markAsRead(notificationId) {
-  try {
-    await fetch(`${API_BASE}/notifications/${notificationId}/read/`, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Token ${token}`
-      }
-    });
-  } catch (err) {
-    console.error("Error marking notification as read:", err);
-  }
-}
+    fetchAlerts();
+    setInterval(fetchAlerts, 30000);
   </script>
 </body>
 </html>

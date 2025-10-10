@@ -1,32 +1,67 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.timezone import now
-from .models import VitalReading, Notification, Prescription
+from django.utils import timezone
+from .models import VitalReading, Notification, UserProfile
 
 @receiver(post_save, sender=VitalReading)
-def check_vitals(sender, instance, created, **kwargs):
+def generate_vital_alert(sender, instance, created, **kwargs):
+    """Generate alerts for both patient and doctor when vitals are abnormal."""
     if not created:
         return
-    
-    patient = instance.patient
-    doctor = getattr(patient, "assigned_doctor", None)  # adjust if you use another link
-    if not doctor:
-        return
 
-    # ✅ Check abnormal vitals
-    alerts = []
-    if instance.systolic > 180 or instance.diastolic > 120:
-        alerts.append(f"Critical high BP {instance.systolic}/{instance.diastolic}")
-    elif instance.systolic < 90 or instance.diastolic < 60:
-        alerts.append(f"Low BP {instance.systolic}/{instance.diastolic}")
+    systolic = instance.systolic
+    diastolic = instance.diastolic
+    patient_user = instance.patient
 
-    if instance.heartrate and (instance.heartrate < 50 or instance.heartrate > 120):
-        alerts.append(f"Abnormal HR {instance.heartrate} bpm")
+    try:
+        patient_profile = UserProfile.objects.get(user=patient_user)
+        doctor = patient_profile.doctor.user if patient_profile.doctor else None
+    except UserProfile.DoesNotExist:
+        patient_profile = None
+        doctor = None
 
-    for msg in alerts:
+    # Define severity
+    if systolic >= 180 or diastolic >= 120:
+        severity = "Hypertensive Crisis"
+    elif systolic >= 140 or diastolic >= 90:
+        severity = "Stage 2 Hypertension"
+    elif systolic >= 130 or diastolic >= 80:
+        severity = "Stage 1 Hypertension"
+    elif systolic < 90 or diastolic < 60:
+        severity = "Hypotension"
+    else:
+        severity = None
+
+    if not severity:
+        return  # No alert if vitals are normal
+
+    # Create alert for doctor (if assigned)
+    if doctor:
         Notification.objects.create(
             doctor=doctor,
-            patient=patient,
-            title="Abnormal Vital Reading",
-            message=f"{patient.user.get_full_name()} - {msg}"
+            patient=patient_profile,
+            notification_type="critical_bp",
+            title=f"Critical BP Alert: {severity}",
+            message=(
+                f"Patient {patient_user.get_full_name()} recorded "
+                f"{systolic}/{diastolic} mmHg ({severity}). Review recommended."
+            ),
+            bp_systolic=systolic,
+            bp_diastolic=diastolic,
+            created_at=timezone.now(),
         )
+
+    # Create alert for patient
+    Notification.objects.create(
+        doctor=doctor or patient_user,
+        patient=patient_profile,
+        notification_type="critical_bp",
+        title=f"Your Blood Pressure is {severity}",
+        message=(
+            f"Your recent reading was {systolic}/{diastolic} mmHg ({severity}). "
+            f"Please follow your doctor’s advice or seek medical attention if you feel unwell."
+        ),
+        bp_systolic=systolic,
+        bp_diastolic=diastolic,
+        created_at=timezone.now(),
+    )

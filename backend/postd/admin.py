@@ -6,6 +6,7 @@ from .models import VitalReading
 from .models import DoctorProfile
 from .models import Prescription
 from .models import Treatment
+from .models import Notification
 
 
 @admin.register(UserProfile)
@@ -112,7 +113,13 @@ class VitalReadingAdmin(admin.ModelAdmin):
     def created_time(self, obj):
         return obj.created_at.time()
     created_time.short_description = 'Time' 
-
+    
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'notification_type', 'doctor', 'patient', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('title', 'message', 'doctor__user__username', 'patient__user__username')
+    ordering = ('-created_at',)
 
 
 

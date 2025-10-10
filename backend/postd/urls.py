@@ -8,8 +8,9 @@ from .views import PrescriptionListCreateView, PrescriptionRetrieveUpdateView
 from .views import TreatmentListCreateView, TreatmentDetailView, DoctorVitalReadingListView
 from django.conf import settings
 from django.conf.urls.static import static
-# from .views import NotificationListView
+from .views import NotificationListView
 from .views import UserProfileListView
+from .views import NotificationDetailView  
 
 
 
@@ -34,11 +35,9 @@ path('doctor/vitals', views.DoctorVitalReadingListView.as_view(), name='doctor-v
 path('doctor/all-vitals', views.DoctorAllPatientsVitalsView.as_view(), name='doctor-all-vitals'),
 path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
 
-path('notifications/', views.NotificationListView.as_view(), name='notifications-list'),
-path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark-notification-read'),
-path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark-all-notifications-read'),
-path('notifications/generate/', views.generate_notifications, name='generate-notifications'),
-path('notifications/stats/', views.notification_stats, name='notification-stats'),
+path('notifications/', NotificationListView.as_view(), name='notifications'),
+path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
+
 # path("notifications", NotificationListView.as_view(), name="doctor-notifications"),
 
 

@@ -178,30 +178,19 @@ class TreatmentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "doctor", "doctor_name", "patient_name", "created_at"]
 
 class NotificationSerializer(serializers.ModelSerializer):
-    patient_name = serializers.CharField(source="patient.user.get_full_name", read_only=True)
-    patient_id = serializers.IntegerField(source="patient.user.id", read_only=True)
-    created_at_formatted = serializers.SerializerMethodField()
-    bp_status = serializers.SerializerMethodField()
-    
+    patient_name = serializers.CharField(source="patient.user.first_name", read_only=True)
+    patient_email = serializers.CharField(source="patient.user.email", read_only=True)
+    doctor_name = serializers.CharField(source="doctor.user.first_name", read_only=True)
+
     class Meta:
         model = Notification
         fields = [
-            "id",
-            "doctor",
-            "patient",
-            "patient_name",
-            "patient_id",
-            "notification_type",
-            "title",
-            "message",
-            "bp_systolic",
-            "bp_diastolic",
-            "missed_days",
-            "is_read",
-            "created_at",
-            "created_at_formatted",
-            "bp_status"
+            "id", "title", "message", "notification_type",
+            "is_read", "created_at",
+            "bp_systolic", "bp_diastolic",
+            "patient_name", "patient_email", "doctor_name"
         ]
+
         read_only_fields = ["id", "created_at"]
     
     def get_created_at_formatted(self, obj):

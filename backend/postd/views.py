@@ -36,7 +36,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 
 # from .models import Notification
-# from .serializers import NotificationSerializer
+#~from .serializers import NotificationSerializer
 
 
 
@@ -377,14 +377,7 @@ class UserProfileListView(generics.ListAPIView):
         return queryset
 
 
-# class NotificationListView(generics.ListAPIView):
-#     serializer_class = NotificationSerializer   # 💡 FIX
-#     permission_classes = [permissions.IsAuthenticated]
 
-#     def get_queryset(self):
-#         user = self.request.user
-#         return Notification.objects.filter(doctor=user).order_by("-created_at")
-# Add to your existing views.py
 
 class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
@@ -392,67 +385,23 @@ class NotificationListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Return notifications for the logged-in doctor
-        return Notification.objects.filter(doctor=user).order_by("-created_at")
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def mark_notification_read(request, notification_id):
-    """
-    Mark a specific notification as read
-    """
-    try:
-        notification = Notification.objects.get(id=notification_id, doctor=request.user)
-        notification.is_read = True
-        notification.save()
-        return Response({"message": "Notification marked as read"})
-    except Notification.DoesNotExist:
-        return Response({"error": "Notification not found"}, status=404)
+        # Check if this user is a doctor or patient
+        doctor_profile = DoctorProfile.objects.filter(user=user).first()
+        patient_profile = UserProfile.objects.filter(user=user).first()
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def mark_all_notifications_read(request):
-    """
-    Mark all notifications as read for the current doctor
-    """
-    Notification.objects.filter(doctor=request.user, is_read=False).update(is_read=True)
-    return Response({"message": "All notifications marked as read"})
+        query = Q()
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def generate_notifications(request):
-    """
-    Manually trigger notification generation (for testing)
-    """
-    if not hasattr(request.user, "doctor_profile"):
-        return Response({"error": "Not authorized"}, status=403)
-    
-    NotificationService.generate_all_notifications()
-    return Response({"message": "Notifications generated successfully"})
+        if doctor_profile:
+            # doctor field expects a User instance, not DoctorProfile
+            query |= Q(doctor=user)
+        if patient_profile:
+            # patient field expects a UserProfile instance
+            query |= Q(patient=patient_profile)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def notification_stats(request):
-    """
-    Get notification statistics for the doctor
-    """
-    if not hasattr(request.user, "doctor_profile"):
-        return Response({"error": "Not authorized"}, status=403)
-    
-    total = Notification.objects.filter(doctor=request.user).count()
-    unread = Notification.objects.filter(doctor=request.user, is_read=False).count()
-    critical_bp = Notification.objects.filter(
-        doctor=request.user, 
-        notification_type='critical_bp'
-    ).count()
-    missed_prescriptions = Notification.objects.filter(
-        doctor=request.user, 
-        notification_type='missed_prescription'
-    ).count()
-    
-    return Response({
-        "total": total,
-        "unread": unread,
-        "critical_bp": critical_bp,
-        "missed_prescriptions": missed_prescriptions
-    })
+        return Notification.objects.filter(query).order_by('-created_at')
+
+class NotificationDetailView(generics.RetrieveAPIView):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
