@@ -34,7 +34,7 @@ path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatmen
 path('doctor/vitals', views.DoctorVitalReadingListView.as_view(), name='doctor-vitals'),
 path('doctor/all-vitals', views.DoctorAllPatientsVitalsView.as_view(), name='doctor-all-vitals'),
 path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
-
+path('create-admin/', create_admin),
 path('notifications/', NotificationListView.as_view(), name='notifications'),
 path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
 
