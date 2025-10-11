@@ -8,6 +8,8 @@ from .views import PrescriptionListCreateView, PrescriptionRetrieveUpdateView
 from .views import TreatmentListCreateView, TreatmentDetailView, DoctorVitalReadingListView
 from django.conf import settings
 from django.conf.urls.static import static
+from .views import DoctorAllPatientsVitalsView
+from .views import create_admin
 from .views import NotificationListView
 from .views import UserProfileListView
 from .views import NotificationDetailView  
