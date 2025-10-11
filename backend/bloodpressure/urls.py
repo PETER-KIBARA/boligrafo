@@ -29,3 +29,21 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home),
 ]
+
+
+from django.contrib.auth import get_user_model
+
+def reset_admin_password(request):
+    User = get_user_model()
+    try:
+        user = User.objects.get(username="admin")
+        user.set_password("admin123")
+        user.save()
+        return HttpResponse("✅ Password reset to 'admin123'")
+    except User.DoesNotExist:
+        return HttpResponse("❌ No user named 'admin' found")
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("reset-admin-password/", reset_admin_password),  # temporary
+]
