@@ -24,11 +24,11 @@ def home(request):
 
 
 
-urlpatterns = [
-    path('api/', include('postd.urls')),
-    path('admin/', admin.site.urls),
-    path('', home),
-]
+# urlpatterns = [
+#     path('api/', include('postd.urls')),
+#     path('admin/', admin.site.urls),
+#     path('', home),
+# ]
 
 
 from django.contrib.auth import get_user_model
@@ -46,5 +46,7 @@ def reset_admin_password(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("reset-admin-password/", reset_admin_password),  # temporary
+    path('api/', include('postd.urls')),
+     path('', home),
 ]
 
