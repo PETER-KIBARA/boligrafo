@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = "https://backend-ubq3.onrender.com/api";
 
-  // ---------- LOGIN ----------
+  // patient login
 static Future<Map<String, dynamic>> login({
   required String email,
   required String password,
@@ -24,7 +24,10 @@ static Future<Map<String, dynamic>> login({
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("patientToken", data["token"]);
 
-      // 👇 Save the patient’s name from response["user"]["name"]
+      // 👇 Save the expiry time (example: valid for 7 days
+      final expiryDate = DateTime.now().add(Duration(hours: 1));
+      await prefs.setString("tokenExpiry", expiryDate.toIso8601String());
+
       if (data["user"] != null) {
         await prefs.setString("patientName", data["user"]["name"] ?? "Patient");
       }
@@ -40,7 +43,7 @@ static Future<Map<String, dynamic>> login({
 
 
 
-  // ---------- SAVE VITAL (CREATE) ----------
+  // saving  bp reading
  static Future<Map<String, dynamic>> saveVital({
   required String token,
   required int systolic,
@@ -69,7 +72,7 @@ static Future<Map<String, dynamic>> login({
       );
 
       if (response.statusCode == 201) {
-        return jsonDecode(response.body); // created vital
+        return jsonDecode(response.body); 
       } else {
         return {"error": true, "message": "Save failed: ${response.body}"};
       }
@@ -78,7 +81,7 @@ static Future<Map<String, dynamic>> login({
     }
   }
 
-  // ---------- LIST VITALS (READ) ----------
+  // fetching bp readings
   static Future<List<dynamic>> fetchVitals(String token) async {
     final url = Uri.parse("$baseUrl/vitals");
     final response = await http.get(url, headers: {"Authorization": "Token $token"});

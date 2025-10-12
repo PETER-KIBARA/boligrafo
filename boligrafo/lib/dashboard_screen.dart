@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'emergency_guidance_screen.dart';
+import 'package:provider/provider.dart';
 import 'tips_details.dart';
 import 'tips_data.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'api/api_service.dart';
+import 'providers/auth_provider.dart';
+import 'providers/vitals_provider.dart';
+import 'providers/medication_provider.dart';
 import 'medication_service.dart';
 import 'dart:async';
 
@@ -17,12 +18,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<dynamic> _vitals = [];
-  List<MedicationScheduleItem> _meds = [];
-  //List<Map<String, dynamic>> _aiTips = [];
-  bool _loading = true;
-  String? _patientName;
-
   Timer? _refreshTimer;
 
 @override
@@ -41,22 +36,16 @@ void dispose() {
   super.dispose();
 }
 
-
   Future<void> _loadData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('patientToken') ?? '';
-      final name = prefs.getString('patientName');
-      final vitals = await ApiService.fetchVitals(token);
-      final meds = await MedicationService.getSchedule();
-      setState(() {
-        _patientName = name;
-        _vitals = vitals;
-        _meds = meds;
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
+    final authProvider = context.read<AuthProvider>();
+    final vitalsProvider = context.read<VitalsProvider>();
+    final medicationProvider = context.read<MedicationProvider>();
+
+    if (authProvider.token != null) {
+      await Future.wait([
+        vitalsProvider.fetchVitals(authProvider.token!),
+        medicationProvider.loadMedications(),
+      ]);
     }
   }
 
@@ -73,24 +62,20 @@ void dispose() {
     }
   }
   
-  bool _isCritical(Map v) {
-    final int sys = v['systolic'] ?? 0;
-    final int dia = v['diastolic'] ?? 0;
-    return sys >= 180 || dia >= 120;
-  }
+  
 
-  List<FlSpot> _spots() {
+  List<FlSpot> _spots(List<dynamic> vitals) {
     final List<FlSpot> points = [];
-    for (int i = 0; i < _vitals.length; i++) {
-      final v = _vitals[i] as Map<String, dynamic>;
+    for (int i = 0; i < vitals.length; i++) {
+      final v = vitals[i] as Map<String, dynamic>;
       final y = (v['systolic'] ?? 0).toDouble();
       points.add(FlSpot(i.toDouble(), y));
     }
     return points;
   }
 
-  Widget _buildChart() {
-    if (_vitals.isEmpty) {
+  Widget _buildChart(List<dynamic> vitals) {
+    if (vitals.isEmpty) {
       return Container(
         height: 200,
         decoration: BoxDecoration(
@@ -149,16 +134,16 @@ void dispose() {
             border: Border.all(color: Colors.grey[300]!, width: 1),
           ),
           minX: 0,
-          maxX: _vitals.length > 1 ? (_vitals.length - 1).toDouble() : 1,
+          maxX: vitals.length > 1 ? (vitals.length - 1).toDouble() : 1,
           minY: 0,
-          maxY: _vitals.isNotEmpty
-              ? (_vitals.map((v) => (v['systolic'] ?? 0).toDouble()).reduce(
+          maxY: vitals.isNotEmpty
+              ? (vitals.map((v) => (v['systolic'] ?? 0).toDouble()).reduce(
                       (a, b) => a > b ? a : b) *
                   1.1)
               : 200,
           lineBarsData: [
             LineChartBarData(
-              spots: _spots(),
+              spots: _spots(vitals),
               isCurved: true,
               color: const Color(0xFF4CAF50),
               gradient: const LinearGradient(
@@ -186,134 +171,95 @@ void dispose() {
     );
   }
 
-  Widget _buildCriticalAlert() {
-    if (_vitals.isEmpty) return const SizedBox.shrink();
-    final latest = _vitals.first as Map<String, dynamic>;
-    if (!_isCritical(latest)) return const SizedBox.shrink();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade100),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.red.shade100,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.warning_amber_rounded, color: Colors.red),
-        ),
-        title: Text('Critical blood pressure detected!',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.red[800])),
-        subtitle: Text('Consider emergency steps while awaiting help.',
-            style: TextStyle(color: Colors.red[700])),
-        trailing: ElevatedButton.icon(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const EmergencyGuidanceScreen()),
-            );
-          },
-          icon: const Icon(Icons.emergency, size: 16),
-          label: const Text('Get Help'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+ 
+  
 
   Future<void> _toggleTaken(MedicationScheduleItem item, bool value) async {
-    await MedicationService.setTakenToday(item.id, value);
-    final updated = await MedicationService.getSchedule();
-    setState(() => _meds = updated);
+    final medicationProvider = context.read<MedicationProvider>();
+    await medicationProvider.markMedicationTaken(item.id, value);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('Loading your health data...',
-                  style: TextStyle(color: Colors.grey[600])),
-            ],
+    return Consumer3<AuthProvider, VitalsProvider, MedicationProvider>(
+      builder: (context, authProvider, vitalsProvider, medicationProvider, child) {
+        final isLoading = vitalsProvider.isLoading || medicationProvider.isLoading;
+        
+        if (isLoading && vitalsProvider.vitals.isEmpty && medicationProvider.medications.isEmpty) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 18),
+                  Text('Loading your health data...',
+                      style: TextStyle(color: Colors.grey[600])),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final DateTime now = DateTime.now();
+        final String formattedDate = DateFormat('EEEE, MMMM d').format(now);
+        final String formattedTime = DateFormat('h:mm a').format(now);
+
+        String latestBpReading = '—';
+        String bpStatus = '—';
+        // String lastReadingTimestamp = '—';
+        
+        final vitals = vitalsProvider.vitals;
+        if (vitals.isNotEmpty) {
+          // Sort vitals by created_at just to be safe
+          final sortedVitals = List<Map<String, dynamic>>.from(vitals);
+          sortedVitals.sort((a, b) {
+            final da = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+            final db = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+            return da.compareTo(db); // oldest → newest
+          });
+
+          final v = sortedVitals.last; // latest reading
+
+          latestBpReading = '${v['systolic']}/${v['diastolic']} mmHg';
+
+          final int sys = v['systolic'] ?? 0;
+          final int dia = v['diastolic'] ?? 0;
+
+          if (sys >= 180 || dia >= 120) {
+            bpStatus = 'Critical';
+          } else if (sys >= 130 || dia >= 80) {
+            bpStatus = 'Elevated';
+          } else {
+            bpStatus = 'Normal';
+          }
+
+          // lastReadingTimestamp = v['created_at']?.toString() ?? 'Recent';
+        }
+
+
+        Color statusColor = const Color(0xFF4CAF50);
+        if (bpStatus == 'Elevated') {
+          statusColor = Colors.orange;
+        } else if (bpStatus == 'Critical') {
+          statusColor = Colors.red;
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+                '${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Dashboard"}'),
+            elevation: 0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.blue[800],
+            centerTitle: false,
           ),
-        ),
-      );
-    }
-
-    final DateTime now = DateTime.now();
-    final String formattedDate = DateFormat('EEEE, MMMM d').format(now);
-    final String formattedTime = DateFormat('h:mm a').format(now);
-
-    String latestBpReading = '—';
-    String bpStatus = '—';
-    String lastReadingTimestamp = '—';
-    if (_vitals.isNotEmpty) {
-  // Sort vitals by created_at just to be safe
-  _vitals.sort((a, b) {
-    final da = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
-    final db = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
-    return da.compareTo(db); // oldest → newest
-  });
-
-  final v = _vitals.last as Map<String, dynamic>; // latest reading
-
-  latestBpReading = '${v['systolic']}/${v['diastolic']} mmHg';
-
-  final int sys = v['systolic'] ?? 0;
-  final int dia = v['diastolic'] ?? 0;
-
-  if (sys >= 180 || dia >= 120) {
-    bpStatus = 'Critical';
-  } else if (sys >= 130 || dia >= 80) {
-    bpStatus = 'Elevated';
-  } else {
-    bpStatus = 'Normal';
-  }
-
-  lastReadingTimestamp = v['created_at']?.toString() ?? 'Recent';
-}
-
-
-    Color statusColor = const Color(0xFF4CAF50);
-    if (bpStatus == 'Elevated') {
-      statusColor = Colors.orange;
-    } else if (bpStatus == 'Critical') {
-      statusColor = Colors.red;
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-            '${_patientName?.isNotEmpty == true ? _patientName : "Dashboard"}'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue[800],
-        centerTitle: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCriticalAlert(),
-            
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                
             // Welcome Section
             Container(
               padding: const EdgeInsets.all(16),
@@ -333,7 +279,7 @@ void dispose() {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_getGreeting()}, ${_patientName?.isNotEmpty == true ? _patientName : "Patient"} 👋',
+                          '${_getGreeting()}, ${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Patient"} 👋',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -342,7 +288,7 @@ void dispose() {
                                 color: Colors.blue[900],
                               ),
                         ),
-                        const SizedBox(height: 4.0),
+                        const SizedBox(height: 7.0),
                         Text(
                           '$formattedDate | $formattedTime',
                           style: TextStyle(
@@ -436,22 +382,22 @@ void dispose() {
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Last Reading',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 4.0),
-                              Text(
-                                lastReadingTimestamp,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                            // children: [
+                            //   Text(
+                            //     'Last Reading',
+                            //     style: TextStyle(
+                            //       color: Colors.grey[600],
+                            //       fontSize: 12,
+                            //     ),
+                            //   ),
+                            //   const SizedBox(height: 4.0),
+                            //   Text(
+                            //     lastReadingTimestamp,
+                            //     style: const TextStyle(
+                            //       fontWeight: FontWeight.w500,
+                            //     ),
+                            //   ),
+                            // ],
                           ),
                         ],
                       ),
@@ -477,7 +423,7 @@ void dispose() {
               ],
             ),
             const SizedBox(height: 16.0),
-            ..._meds.map((medication) {
+            ...medicationProvider.medications.map((medication) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -562,7 +508,7 @@ void dispose() {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildChart(),
+                    _buildChart(vitals),
                   ],
                 ),
               ),
@@ -667,9 +613,11 @@ void dispose() {
             ),
             
             const SizedBox(height: 24.0),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

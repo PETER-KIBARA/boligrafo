@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/main_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../Api/api_service.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/vitals_provider.dart';
 
 class LogVitalsScreen extends StatefulWidget {
   const LogVitalsScreen({super.key});
@@ -19,8 +20,6 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
   final TextEditingController _dietController = TextEditingController();
   final TextEditingController _exerciseController = TextEditingController();
 
-  bool _isLoading = false;
-
   @override
   void dispose() {
     _systolicController.dispose();
@@ -34,66 +33,62 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
 
   Future<void> _saveReading() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      final authProvider = context.read<AuthProvider>();
+      final vitalsProvider = context.read<VitalsProvider>();
 
-      try {
-        final systolic = int.parse(_systolicController.text);
-        final diastolic = int.parse(_diastolicController.text);
-        final symptoms = _symptomsController.text.trim();
-        final heartRate = _heartRateController.text.isEmpty
-            ? null
-            : int.parse(_heartRateController.text);
-        final diet =
-            _dietController.text.isEmpty ? null : _dietController.text.trim();
-        final exercise = _exerciseController.text.isEmpty
-            ? null
-            : _exerciseController.text.trim();
+      final systolic = int.parse(_systolicController.text);
+      final diastolic = int.parse(_diastolicController.text);
+      final symptoms = _symptomsController.text.trim();
+      final heartRate = _heartRateController.text.isEmpty
+          ? null
+          : int.parse(_heartRateController.text);
+      final diet =
+          _dietController.text.isEmpty ? null : _dietController.text.trim();
+      final exercise = _exerciseController.text.isEmpty
+          ? null
+          : _exerciseController.text.trim();
 
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString("patientToken") ?? "";
+      final result = await vitalsProvider.saveVital(
+        token: authProvider.token!,
+        systolic: systolic,
+        diastolic: diastolic,
+        heartRate: heartRate,
+        symptoms: symptoms,
+        diet: diet,
+        exercise: exercise,
+      );
 
-        final result = await ApiService.saveVital(
-          token: token,
-          systolic: systolic,
-          diastolic: diastolic,
-          heartRate: heartRate,
-          symptoms: symptoms,
-          diet: diet,
-          exercise: exercise,
+      if (!mounted) return;
+
+      if (result.containsKey("error")) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result["message"] ?? "Failed to save vitals"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Vitals saved successfully!"),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
 
-        if (!mounted) return;
+        // Clear form after successful save
+        _systolicController.clear();
+        _diastolicController.clear();
+        _heartRateController.clear();
+        _symptomsController.clear();
+        _dietController.clear();
+        _exerciseController.clear();
 
-        if (result.containsKey("error")) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result["message"] ?? "Failed to save vitals"),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text("Vitals saved successfully!"),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       }
     }
   }
@@ -295,44 +290,48 @@ class _LogVitalsScreenState extends State<LogVitalsScreen> {
   }
 
   Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveReading,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue[700],
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: _isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.save, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Save Vitals',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+    return Consumer<VitalsProvider>(
+      builder: (context, vitalsProvider, child) {
+        return SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            onPressed: vitalsProvider.isLoading ? null : _saveReading,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[700],
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-      ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: vitalsProvider.isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.save, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Save Vitals',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }

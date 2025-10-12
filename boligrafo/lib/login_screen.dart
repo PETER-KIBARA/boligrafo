@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/main_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 import 'api/ai_service.dart';
-import '../Api/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,45 +15,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
   bool _rememberMe = false;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-
-      final response = await ApiService.login(
+      final authProvider = context.read<AuthProvider>();
+      
+      final response = await authProvider.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      setState(() => _isLoading = false);
-
       if (response["error"] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response["message"])),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response["message"])),
+          );
+        }
       } else {
-        // ✅ Save token + patient name
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString("patientToken", response["token"]);
-        await prefs.setString("patientName", response["name"] ?? "Patient");
-
         // Generate AI lifestyle tips after login (fire-and-forget)
-        final patientName = prefs.getString("patientName") ?? "Patient";
+        final patientName = authProvider.patientName ?? "Patient";
         // If you want to pass a key explicitly, store and read it from prefs or a secure source
        // await AiService.generateAndSaveTips(apiKey: '', patientName: patientName);
         // Uses --dart-define=GEMINI_API_KEY at build/run time if not provided
         // ignore: unawaited_futures
         AiService.generateAndSaveTips(patientName: patientName);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login successful!")),
-        );
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Login successful!")),
+          );
+        }
       }
     }
   }
@@ -208,27 +199,31 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             width: double.infinity,
             height: 56,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade600,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation(Colors.white),
-                    )
-                  : const Text(
-                      'Sign In',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+            child: Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                return ElevatedButton(
+                  onPressed: authProvider.isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade600,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 2,
+                  ),
+                  child: authProvider.isLoading
+                      ? const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        )
+                      : const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                );
+              },
             ),
           ),
         ],
