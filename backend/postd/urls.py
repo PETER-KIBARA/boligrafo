@@ -40,7 +40,6 @@ path('create-admin/', create_admin),
 path('notifications/', NotificationListView.as_view(), name='notifications'),
 path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
 
-# path("notifications", NotificationListView.as_view(), name="doctor-notifications"),
 
 
 
