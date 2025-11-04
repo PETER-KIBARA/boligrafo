@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #8fafdf; }
+    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Reports</h4>
+      <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Patient</label>
+            <select class="form-select" id="repPatient"></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">From</label>
+            <input type="date" class="form-control" id="repFrom">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">To</label>
+            <input type="date" class="form-control" id="repTo">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100" id="runReport">Run</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-striped" id="repTable">
+            <thead>
+              <tr><th>Date</th><th>Patient</th><th>Systolic</th><th>Diastolic</th><th>Medication Taken</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-end">
+          <a class="btn btn-outline-secondary btn-sm" id="exportCsv" href="#">Export CSV</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="scripts/config.js"></script>
+
+  <script>
+    const token = localStorage.getItem("doctorToken");
+
+    async function loadPatients(){
+      const res = await fetch(`${API_BASE}/doctor/patients`, { headers: { 'Authorization': `Token ${token}` } });
+      if(!res.ok) return;
+      const patients = await res.json();
+      const sel = document.getElementById('repPatient');
+      sel.innerHTML = '<option value="">All</option>' + patients.map(p=>`<option value="${p.id}">${p.user.first_name} ${p.user.last_name||''}</option>`).join('');
+    }
+
+    async function runReport(){
+      const params = new URLSearchParams();
+      const pid = document.getElementById('repPatient').value;
+      const from = document.getElementById('repFrom').value;
+      const to = document.getElementById('repTo').value;
+      if(pid) params.set('patient', pid);
+      if(from) params.set('from', from);
+      if(to) params.set('to', to);
+      const res = await fetch(`${API_BASE}/doctor/reports?` + params.toString(), { headers: { 'Authorization': `Token ${token}` } });
+      if(!res.ok) return;
+      const data = await res.json();
+      const tbody = document.querySelector('#repTable tbody');
+      tbody.innerHTML = data.map(r=>`<tr>
+        <td>${r.date}</td>
+        <td>${r.patient_name}</td>
+        <td>${r.systolic}</td>
+        <td>${r.diastolic}</td>
+        <td>${r.med_taken ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+      </tr>`).join('');
+      document.getElementById('exportCsv').href = `${API_BASE}/doctor/reports/export?` + params.toString();
+    }
+
+    document.getElementById('runReport').addEventListener('click', runReport);
+    loadPatients();
+  </script>
+</body>
+</html>
+
+
