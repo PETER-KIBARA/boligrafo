@@ -312,7 +312,6 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         patient_id = self.request.query_params.get("patient_id")
 
-        # If doctor is logged in
         if hasattr(user, "doctor_profile"):
             qs = Prescription.objects.all()
             if patient_id:
@@ -332,11 +331,29 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
         else:
             raise PermissionDenied("Only doctors can create prescriptions.")
 
+from rest_framework import generics, permissions
+from .models import Prescription, UserProfile
+from .serializers import PrescriptionSerializer
+
+class PatientPrescriptionListCreateView(generics.ListCreateAPIView):
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Fetch the UserProfile linked to this User
+        try:
+            profile = user.userprofile  # <-- this is the correct instance
+        except UserProfile.DoesNotExist:
+            return Prescription.objects.none()
+
+        return Prescription.objects.filter(patient=profile).order_by("-created_at")
+
         
 class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def perform_update(self, serializer):
         user = self.request.user
@@ -344,6 +361,25 @@ class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             raise PermissionDenied("Only doctors can update prescriptions.")
         serializer.save(doctor=user)  # FIXED LINE
 
+class PatientPrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    """
+    Retrieve or update a single prescription for the logged-in patient.
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Only patients can access their own prescriptions
+        if hasattr(user, "doctor_profile"):
+            return Prescription.objects.none()
+        return Prescription.objects.filter(patient=user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if hasattr(user, "doctor_profile"):
+            raise PermissionDenied("Doctors cannot update using this endpoint.")
+        serializer.save()
 
 
 class TreatmentListCreateView(generics.ListCreateAPIView):

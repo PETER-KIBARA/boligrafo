@@ -1,2 +1,2 @@
 
-web: gunicorn bloodpressure.wsgi --log-file -
+ web: gunicorn bloodpressure.wsgi --log-file -
