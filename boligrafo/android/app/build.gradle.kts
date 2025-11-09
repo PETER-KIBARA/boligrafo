@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.example.boligrafo"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         // ✅ Kotlin DSL style
@@ -47,3 +47,4 @@ dependencies {
     // ✅ Kotlin DSL style
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
+

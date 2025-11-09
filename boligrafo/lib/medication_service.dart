@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_service.dart';
 
 class MedicationScheduleItem {
-  final String id; 
+  final  int id; 
   final String name;
   final String time; 
   final bool takenToday;
@@ -18,7 +18,7 @@ class MedicationScheduleItem {
   });
 
   MedicationScheduleItem copyWith({
-    String? id,
+    int? id,
     String? name,
     String? time,
     bool? takenToday,

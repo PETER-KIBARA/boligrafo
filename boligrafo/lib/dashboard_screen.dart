@@ -175,9 +175,17 @@ void dispose() {
   
 
   Future<void> _toggleTaken(MedicationScheduleItem item, bool value) async {
+  try {
     final medicationProvider = context.read<MedicationProvider>();
     await medicationProvider.markMedicationTaken(item.id, value);
+  } catch (e) {
+    debugPrint('Failed to update medication: $e');
+    // Optional: show a Snackbar or alert
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to update medication. Please try again.')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
