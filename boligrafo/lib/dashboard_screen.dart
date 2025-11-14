@@ -287,7 +287,7 @@ void dispose() {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_getGreeting()}, ${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Patient"} 👋',
+                          '${_getGreeting()}, ${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Patient"} ',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -417,67 +417,96 @@ void dispose() {
 
             const SizedBox(height: 24.0),
             
-            // Medications Section
-            Row(
-              children: [
-                Icon(Icons.medication, color: Colors.blue[800]),
-                const SizedBox(width: 8),
-                Text(
-                  "Today's Medications",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Row(
+      children: [
+        Icon(Icons.medication, color: Colors.blue[800]),
+        const SizedBox(width: 8),
+        Text(
+          "Today's Medications",
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+    const SizedBox(height: 16.0),
+
+    // Table Header
+    Container(
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: const Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              "Medication",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16.0),
-            ...medicationProvider.medications.map((medication) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.medication_liquid,
-                        color: Colors.blue[800], size: 20),
-                  ),
-                  title: Text(
-                    medication.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    medication.time,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  trailing: Transform.scale(
-                    scale: 1.2,
-                    child: Switch(
-                      value: medication.takenToday,
-                      onChanged: (bool value) {
-                        _toggleTaken(medication, value);
-                      },
-                      activeColor: Colors.green,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-            
-            const SizedBox(height: 24.0),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "Dosage",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "Frequency",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    ),
+    const SizedBox(height: 8),
+
+    // Table Rows
+    ...medicationProvider.medications.map((medication) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                medication.name,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(medication.dosage ?? '-'),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(medication.frequency ?? '-'),
+            ),
+          ],
+        ),
+      );
+    }).toList(),
+
+    const SizedBox(height: 24.0),
+  ],
+)
+,
+
             
             // Trends Section
             Row(

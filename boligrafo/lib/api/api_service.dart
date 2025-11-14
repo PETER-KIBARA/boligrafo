@@ -8,7 +8,7 @@ class ApiService {
 
   // static const String baseUrl = "https://backend-ubq3.onrender.com/api";
 
-  // 🧠 Patient login
+  //  Patient login
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -45,7 +45,7 @@ class ApiService {
     }
   }
 
-  // 💉 Save BP Reading
+  //  Save BP Reading
   static Future<Map<String, dynamic>> saveVital({
     required String token,
     required int systolic,
@@ -83,7 +83,7 @@ class ApiService {
     }
   }
 
-  // 📊 Fetch BP Readings
+  //  Fetch BP Readings
   static Future<List<dynamic>> fetchVitals(String token) async {
     final url = Uri.parse("$baseUrl/vitals");
     try {

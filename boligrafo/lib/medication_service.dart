@@ -3,16 +3,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_service.dart';
 
 class MedicationScheduleItem {
-  final  int id; 
+  final int id;
   final String name;
-  final String time; 
+  final String dosage;
+  final String frequency;
   final bool takenToday;
   final int notificationId;
 
   MedicationScheduleItem({
     required this.id,
     required this.name,
-    required this.time,
+    required this.dosage,
+    required this.frequency,
     required this.takenToday,
     required this.notificationId,
   });
@@ -20,14 +22,16 @@ class MedicationScheduleItem {
   MedicationScheduleItem copyWith({
     int? id,
     String? name,
-    String? time,
+    String? dosage,
+    String? frequency,
     bool? takenToday,
     int? notificationId,
   }) {
     return MedicationScheduleItem(
       id: id ?? this.id,
       name: name ?? this.name,
-      time: time ?? this.time,
+      dosage: dosage ?? this.dosage,
+      frequency: frequency ?? this.frequency,
       takenToday: takenToday ?? this.takenToday,
       notificationId: notificationId ?? this.notificationId,
     );
@@ -36,7 +40,8 @@ class MedicationScheduleItem {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'time': time,
+        'dosage': dosage,
+        'frequency': frequency,
         'takenToday': takenToday,
         'notificationId': notificationId,
       };
@@ -44,9 +49,10 @@ class MedicationScheduleItem {
   static MedicationScheduleItem fromJson(Map<String, dynamic> json) =>
       MedicationScheduleItem(
         id: json['id'],
-        name: json['name'],
-        time: json['time'],
-        takenToday: json['takenToday'] ?? false,
+        name: json['name'] ?? json['medication'] ?? '',
+        dosage: json['dosage'] ?? '',
+        frequency: json['frequency'] ?? '',
+        takenToday: json['taken_today'] ?? false,
         notificationId: json['notificationId'] ?? 0,
       );
 }
@@ -83,18 +89,18 @@ class MedicationService {
   static Future<void> scheduleNotifications(
       List<MedicationScheduleItem> items) async {
     for (final item in items) {
-      final parsed = _parseTime(item.time);
+      final parsed = _parseTime(item.frequency); // optional: use time if you have
       await NotificationsService.scheduleDailyReminder(
         id: item.notificationId,
         hour: parsed['hour']!,
         minute: parsed['minute']!,
         title: 'Medication Reminder',
-        body: 'Time to take ${item.name}',
+        body: 'Time to take ${item.name} (${item.dosage})',
       );
     }
   }
 
-  static Future<void> setTakenToday(String id, bool taken) async {
+  static Future<void> setTakenToday(int id, bool taken) async {
     final items = await getSchedule();
     final updated = items
         .map((e) => e.id == id ? e.copyWith(takenToday: taken) : e)
