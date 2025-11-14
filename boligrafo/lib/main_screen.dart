@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/medication_screen.dart';
 import 'dashboard_screen.dart';
 import 'log_vitals_screen.dart';
 import 'detailed_report_screen.dart';
 import 'emergency_guidance_screen.dart';
 import 'tips_data.dart';
+// import 'medication_screen.dart';
 import 'tips_details.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   late final List<Widget> _screens = [
     const DashboardScreen(),
     const LogVitalsScreen(),
+    const MedicationScreen(),
     const DetailedReportScreen(),
     const EmergencyGuidanceScreen(),
     LifestyleTipDetailScreen(tipId: lifestyleTips.first.id),
@@ -44,9 +47,14 @@ Widget build(BuildContext context) {
           label: 'Dashboard',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.medical_services_outlined),
+          activeIcon: Icon(Icons.medication, color: Colors.green),
+          label: 'Prescriptions',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.add_circle_outline),
           activeIcon: Icon(Icons.favorite_outline, color: Colors.green),
-          label: 'Log Vitals',
+          label: 'logvitals',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.insights_outlined),
