@@ -130,7 +130,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "id",
             "doctor",        
             "doctor_name",   
-            "patient",       
+            "patient", 
             "patient_name",  
             "medication",
             "dosage",

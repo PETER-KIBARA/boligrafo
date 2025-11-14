@@ -1,0 +1,1308 @@
+
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="Cuscss/login.css?2018042117463512335553184798"  media="all" rel="stylesheet" />
+<style type="text/css">
+#first{
+background-color:white;
+height:25px;
+text-align: center;
+color: red;
+position:absolute;
+width: 380px;
+top: 312px;
+}
+
+#pwd_modify{
+border:1px solid #CCCCCC;
+height: 200px;
+width:650px;
+margin-left:150px;
+margin-top:140px;
+position:absolute;
+z-index:10;
+background:#FFFFFF;
+display:none;
+}
+
+/*底层遮罩样式*/
+#base_mask {
+width:100%;
+height:100%;
+position:absolute;
+left:0px;
+right:0px;
+z-index:2;/*底层遮罩的z-index为2*/
+filter: alpha(opacity=60);
+-moz-opacity: 0.6;
+-khtml-opacity: 0.6;
+opacity: 0.8;
+background-color:#eeeeee;
+display:none;
+}
+
+
+</style>
+<script language="JavaScript" src="../resource/common/md5.js?2018042117463512335553184798"></script>
+<script language="JavaScript" src="../resource/common/RndSecurityFormat.js?2018042117463512335553184798"></script>
+<script language="JavaScript" src="../resource/common/jquery.min.js?2018042117463512335553184798"></script>
+<script language="JavaScript" src="../resource/common/safelogin.js?2018042117463512335553184798"></script>
+<script language="JavaScript" type="text/javascript">
+function MD5(str) { return hex_md5(str); }
+
+var APPVersion = '1.1.1.1';
+var FailStat ='0';
+var CfgMode ='COMMON';
+var LoginTimes = '0';
+var ModeCheckTimes = '0';
+var ProductName = 'HG8546M';
+var Var_DefaultLang = 'english';
+var Var_LastLoginLang = 'english';
+var LockTime = '60';
+var LockLeftTime = '0';
+var errloginlockNum = '3';
+var errVerificationCode = '0';
+var Language = '';
+var locklefttimerhandle;
+var SonetFlag = '0'; 
+var RosFlag = '0'; 
+var IsPTVDF = '0';
+var IsSmartLanDev = "0";
+var FirstStartFlag ="0";
+
+
+var UserNameNormal = 'root';
+var ModifyPasswordFlagNormal = '1';
+var UserNameAdmin = 'telecomadmin';
+var ModifyPasswordFlagAdmin = '0';
+
+
+
+
+if(Var_LastLoginLang == '')
+{
+Language = Var_DefaultLang;
+}
+else
+{
+Language = Var_LastLoginLang;
+}
+
+if ('ORO' == CfgMode.toUpperCase())
+{
+ProductName = "Internet Box 1000";
+}
+document.title = ProductName;
+
+function getValue(sId)
+{
+var item;
+if (null == (item = getElement(sId)))
+{
+debug(sId + " is not existed" );
+return -1;
+}
+
+return item.value;
+}
+
+function showlefttime()
+{
+if(LockLeftTime <= 0)
+{
+window.location="/login.asp";
+return;
+}
+
+if(LockLeftTime == 1)
+{
+if(Language == 'portuguese')
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Demasiadas tentativas, volte a tentar daqui a ' +  LockLeftTime + ' segundo';
+}
+else
+{
+var errhtml = 'Demasiadas tentativas, tente ' +  LockLeftTime + ' segundos mais tarde';
+}
+}
+else if(Language == 'japanese')
+{
+var errhtml = '再試行回数が多すぎます。' +  LockLeftTime + '秒後に再試行してください。';
+}
+else if(Language == 'spanish')
+{
+var errhtml = 'Ha intentado muchas veces. Vuelva a intentarlo dentro de ' +  LockLeftTime + ' segundo/s.';
+}
+else if(Language == 'russian')
+{
+var errhtml = 'Слишком много попыток. Попробуйте снова через ' +  LockLeftTime + ' с.';
+}
+else if(Language == "chinese")
+{
+var errhtml = '您登录失败的次数已超出限制，请' +  LockLeftTime + '秒后重试！';
+}
+else
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Too many retries, please retry in ' +  LockLeftTime + ' second.';
+}
+else
+{
+var errhtml = 'Too many retrials, please retry ' +  LockLeftTime + ' second later.';
+}
+}
+}
+else
+{
+if(Language == 'portuguese')
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Demasiadas tentativas, volte a tentar daqui a ' +  LockLeftTime + ' segundos';
+}
+else
+{
+var errhtml = 'Demasiadas tentativas, tente ' +  LockLeftTime + ' segundos mais tarde.';
+}
+}
+else if(Language == 'japanese')
+{
+var errhtml = '再試行回数が多すぎます。' +  LockLeftTime + '秒後に再試行してください。';
+}
+else if(Language == 'spanish')
+{
+var errhtml = 'Ha intentado muchas veces. Vuelva a intentarlo dentro de ' +  LockLeftTime + ' segundos.';
+}
+else if(Language == 'russian')
+{
+var errhtml = 'Слишком много попыток. Попробуйте снова через ' +  LockLeftTime + ' с.';
+}
+else if(Language == "chinese")
+{
+var errhtml = '您登录失败的次数已超出限制，请' +  LockLeftTime + '秒后重试！';
+}
+else
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Too many retries, please retry in ' +  LockLeftTime + ' seconds.';
+}
+else
+{
+var errhtml = 'Too many retrials, please retry ' +  LockLeftTime + ' seconds later.';
+}
+}
+}
+
+SetDivValue("DivErrPage", errhtml);
+LockLeftTime = LockLeftTime - 1;
+}
+
+function setErrorStatus()
+{
+clearInterval(locklefttimerhandle);
+if('1' == FailStat || (ModeCheckTimes >= errloginlockNum))
+{
+
+if(Language == 'portuguese')
+{
+var errhtml = "Demasiadas tentativas.";
+}
+else if(Language == 'japanese')
+{
+var errhtml = "再試行回数が多すぎます。";
+}
+else if(Language == 'spanish')
+{
+var errhtml = "Ha intentado muchas veces.";
+}
+else if(Language == 'russian')
+{
+var errhtml = 'Слишком много попыток.';
+}
+else if(Language == "chinese")
+{
+var errhtml = '您尝试的次数已超出限制。';
+}
+else
+{
+var errhtml = 'Too many retrials.';
+}
+SetDivValue("DivErrPage", errhtml);
+setDisable('txt_Username',1);
+setDisable('txt_Password',1);
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+setDisable('VerificationCode',1);
+setDisable('tripletbtn',1);
+}
+setDisable('button',1);
+}
+    else if('2' == FailStat)
+    {
+        var errhtml = 'You IP address cannot be used for a login.';
+SetDivValue("DivErrPage", errhtml);
+    }
+else if(LoginTimes >= errloginlockNum && parseInt(LockLeftTime) > 0)
+{
+if(Language == 'portuguese')
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Demasiadas tentativas, volte a tentar daqui a ' +  LockLeftTime + ' segundos';
+}
+else
+{
+var errhtml = 'Demasiadas tentativas, tente ' +  LockLeftTime + ' segundos mais tarde.';
+}
+}
+else if(Language == 'japanese')
+{
+var errhtml = '再試行回数が多すぎます。' +  LockLeftTime + ' 秒後に再試行してください。';
+}
+else if(Language == 'spanish')
+{
+var errhtml = 'Ha intentado muchas veces. Vuelva a intentarlo dentro de ' +  LockLeftTime + ' segundos.';
+}
+else if(Language == 'russian')
+{
+var errhtml = 'Слишком много попыток. Попробуйте снова через ' +  LockLeftTime + ' с.';
+}
+else if(Language == "chinese")
+{
+var errhtml = '您登录失败的次数已超出限制，请' +  LockLeftTime + '秒后重试！';
+}
+else
+{
+if(1 == IsPTVDF)
+{
+var errhtml = 'Too many retries, please retry in ' +  LockLeftTime + ' seconds.';
+}
+else
+{
+var errhtml = 'Too many retrials, please retry ' +  LockLeftTime + ' seconds later.';
+}
+}
+
+SetDivValue("DivErrPage", errhtml);
+setDisable('txt_Username',1);
+setDisable('txt_Password',1);
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+setDisable('VerificationCode',1);
+setDisable('tripletbtn',1);
+}
+setDisable('button',1);
+locklefttimerhandle = setInterval('showlefttime()', 1000);
+}
+else if( 1== errVerificationCode)
+{
+SetDivValue("DivErrPage", "Incorrect validate code.");
+}
+else if( 2== errVerificationCode)
+{
+SetDivValue("DivErrPage", "Login failure.");
+}
+else if((LoginTimes > 0) && (LoginTimes < errloginlockNum))
+{
+if(Language == 'portuguese')
+{
+var errhtml = "Nome de conta ou palavra-passe inválidos. Tente novamente.";
+}
+else if(Language == 'japanese')
+{
+var errhtml = "アカウントとパスワードの組み合わせが不正確です。 もう一度やり直してください。";
+}
+else if(Language == 'spanish')
+{
+var errhtml = "La combinación de la usuario/contraseña es incorrecta. Favor de volver a intentarlo.";
+}
+else if(Language == 'russian')
+{
+var errhtml = 'Неверное имя аккаунта или пароль. Повторите попытку.';
+}
+else if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+var errhtml = 'Login failure.';
+}
+else if(Language == "chinese")
+{
+var errhtml = '用户名或密码错误，请重新登录。';
+}
+else
+{
+var errhtml = 'Incorrect account/password combination. Please try again.';
+}
+
+SetDivValue("DivErrPage", errhtml);
+}
+else
+{
+document.getElementById('loginfail').style.display = 'none';
+}
+}
+
+
+function SubmitForm() {
+var Username = document.getElementById('txt_Username');
+var Password = document.getElementById('txt_Password');
+var appName = navigator.appName;
+var version = navigator.appVersion;
+var CheckResult = 0;
+
+if(Language == "portuguese")
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("Versões IE inferiores a 6.0 não são compatíveis.");
+return false;
+}
+}
+
+if (Username.value == "") {
+alert("Conta não pode ficar em branco.");
+Username.focus();
+return false;
+}
+
+if (Password.value == "") {
+alert("Palavra-passe não pode ficar em branco.");
+Password.focus();
+return false;
+}
+
+}
+else if(Language == "japanese")
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("6.0以前のIEバージョンには対応していません。");
+return false;
+}
+}
+
+if (Username.value == "") {
+alert("アカウントは必須項目です。");
+Username.focus();
+return false;
+}
+
+if (Password.value == "") {
+alert("パスワードは必須項目です。");
+Password.focus();
+return false;
+}
+
+}
+else if(Language == "spanish")
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("No se puede soportar la versión de IE inferior a la 6.0.");
+return false;
+}
+}
+
+if (Username.value == "") {
+alert("La usuario es un campo obligatorio.");
+Username.focus();
+return false;
+}
+
+if (Password.value == "")
+{
+alert("La contraseña es un campo requerido.");
+Password.focus();
+return false;
+}
+}
+else if(Language == "russian")
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("Версии браузера IE меньше 6.0 не поддерживаются.");
+return false;
+}
+}
+
+if (Username.value == "") {
+alert("Введите имя аккаунта.");
+Username.focus();
+        return false;
+}
+
+
+if (Password.value == "") {
+alert("Введите пароль.");
+Password.focus();
+        return false;
+}
+}
+else if(Language == "chinese")
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("不支持IE6.0以下版本。");
+return false;
+}
+}
+if (Username.value == "") {
+alert("用户名不能为空。");
+Username.focus();
+return false;
+}
+if (Password.value == "") {
+alert("密码不能为空。");
+Password.focus();
+return false;
+}
+}
+else
+{
+if (appName == "Microsoft Internet Explorer")
+{
+var versionNumber = version.split(" ")[3];
+if (parseInt(versionNumber.split(";")[0]) < 6)
+{
+alert("We cannot support the IE version which is lower than 6.0.");
+return false;
+}
+}
+
+if (Username.value == "") {
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+alert("User Name is a required field.");
+}
+else
+{
+alert("Account is a required field.");
+}
+Username.focus();
+return false;
+}
+
+if (Password.value == "") {
+alert("Password is a required field.");
+Password.focus();
+return false;
+}
+
+}
+
+if ('PLDT' == CfgMode.toUpperCase() || 'PLDT2' == CfgMode.toUpperCase())
+{
+
+if ((Username.value == UserNameNormal) && (ModifyPasswordFlagNormal == 0))
+{
+CheckResult = CheckPassword(Password.value);
+if (CheckResult == 1)
+{
+document.getElementById('base_mask').style.display = 'block';
+document.getElementById('pwd_modify').style.display = 'block';
+document.getElementById('old_password').focus();
+return false;
+}
+}
+else if ((Username.value == UserNameAdmin) && (ModifyPasswordFlagAdmin == 0))
+{
+CheckResult = CheckPassword(Password.value);
+if (CheckResult == 1)
+{
+document.getElementById('base_mask').style.display = 'block';
+document.getElementById('pwd_modify').style.display = 'block';
+document.getElementById('old_password').focus();
+return false;
+}
+}
+}
+
+var cookie = document.cookie;
+if ("" != cookie)
+{
+var date=new Date();
+date.setTime(date.getTime()-10000);
+var cookie22 = cookie + ";expires=" + date.toGMTString();
+document.cookie=cookie22;
+}
+
+var cnt;
+
+$.ajax({
+type : "POST",
+async : false,
+cache : false,
+url : '/asp/GetRandCount.asp',
+success : function(data) {
+cnt = data;
+}
+});
+
+var Form = new webSubmitForm();
+if('DT' == CfgMode.toUpperCase())
+{
+var cookie2 = "Cookie=" + "rid=" + RndSecurityFormat("" + cnt) + RndSecurityFormat(Username.value + cnt ) + RndSecurityFormat(RndSecurityFormat(MD5(Password.value)) + cnt) + ":" + "Language:" + Language + ":" +"id=-1;path=/";
+}
+else
+{
+var cookie2 = "Cookie=body:" + "Language:" + Language + ":" + "id=-1;path=/";
+Form.addParameter('UserName', Username.value);
+Form.addParameter('PassWord', base64encode(Password.value));
+}
+
+document.cookie = cookie2;
+Username.disabled = true;
+Password.disabled = true;
+
+if('TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+Form.addParameter('CheckCode', getValue('VerificationCode'));
+Form.setAction('login.cgi?' +'&CheckCodeErrFile=login.asp');
+}
+else
+{
+Form.setAction('/login.cgi');
+}
+Form.addParameter('x.X_HW_Token', cnt);
+Form.submit();
+return true;
+}
+
+function LoadFrame() 
+{
+document.getElementById('txt_Username').focus();
+clearInterval(locklefttimerhandle);
+
+var UserLeveladmin = '1';
+
+if(Language == "portuguese")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Conta';
+document.getElementById('Password').innerHTML = 'Palavra-passe';
+document.getElementById('button').innerHTML = 'Iniciar sessão';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. Todos os direitos reservados.';
+}
+else if(Language == "japanese")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'アカウント';
+document.getElementById('Password').innerHTML = 'パスワード';
+document.getElementById('button').innerHTML = 'ログイン';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. All rights reserved.';
+}
+else if(Language == "spanish")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Usuario';
+document.getElementById('Password').innerHTML = 'Contraseña';
+document.getElementById('button').innerHTML = 'Iniciar sesión';
+document.getElementById('footer').innerHTML = 'Copyright © Tecnologias  Co., Ltd 2020-2030. Todos los derechos reservados.';
+}
+else if(Language == "russian")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+        document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Аккаунт';
+document.getElementById('Password').innerHTML = 'Пароль';
+document.getElementById('button').innerHTML = 'Вход';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. Все права защищены.';
+    }
+else if(Language == "chinese")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = '用户名';
+document.getElementById('Password').innerHTML = '密  码';
+document.getElementById('button').innerHTML = '登录';
+document.getElementById('footer').innerHTML = '版权所有 © 华为技术有限公司 2020-2030。保留一切权利。';
+document.getElementById('footer').style.position = 'relative';
+document.getElementById('footer').style.left = '30px';
+}
+else
+{
+document.getElementById('Specical_language').style.color = '#434343';
+document.getElementById('English').style.color = '#9b0000';
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+document.getElementById('account').innerHTML = 'User Name';
+}
+else
+{
+document.getElementById('account').innerHTML = 'Account';
+}
+document.getElementById('Password').innerHTML = 'Password';
+document.getElementById('button').innerHTML = 'Login';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. All rights reserved';
+}
+
+if ((LoginTimes != null) && (LoginTimes != '') && (LoginTimes > 0)) {
+document.getElementById('loginfail').style.display = '';
+setErrorStatus();
+}
+if( "1" == FailStat || (ModeCheckTimes >= errloginlockNum))
+{
+document.getElementById('loginfail').style.display = '';
+setErrorStatus();
+}
+init();
+
+if('VIETTEL' == CfgMode.toUpperCase())
+{
+var tiphtml = 'Tên truy nhập và mật khẩu của quý khách được in ở mặt đáy thiết bị ONT';
+SetDivValue("DivTipPage", tiphtml);
+document.getElementById('tipText').style.display = '';
+}
+
+if((UserLeveladmin == '0'))
+{
+if(Language == "portuguese")
+{
+alert("O administrador não tem autorização para abrir esta página de Internet.");
+return false;
+}
+else if(Language == "japanese")
+{
+alert("管理者はこのウェブページの閲覧を許可されていません。");
+return false;
+}
+else if (Language == "spanish")
+{
+alert("El administrador no puede abrir esta página.");
+return false;
+}
+else if (Language == "russian")
+{
+alert("У текущего пользователя нет права входа.");
+return false;
+}
+else if(Language == "chinese")
+{
+alert("当前用户不允许登录。");
+return false;
+}
+else
+{
+alert("The current user is not allowed to log in.");
+return false;
+}
+}
+ }
+
+function init() {
+if (document.addEventListener) {
+document.addEventListener("keypress", onHandleKeyDown, false);
+} else {
+document.onkeypress = onHandleKeyDown;
+}
+}
+function onHandleKeyDown(event) {
+var e = event || window.event;
+var code = e.charCode || e.keyCode;
+
+if (code == 13) {
+SubmitForm();
+}
+}
+function onChangeLanguage(language) {
+Language = language;
+if(language == "portuguese")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Conta';
+document.getElementById('Password').innerHTML = 'Palavra-passe';
+document.getElementById('button').innerHTML = 'Iniciar sessão';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. Todos os direitos reservados.';
+}
+else if(language == "japanese")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'アカウント';
+document.getElementById('Password').innerHTML = 'パスワード';
+document.getElementById('button').innerHTML = 'ログイン';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. All rights reserved.';
+}
+else if (language == "spanish")
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Usuario';
+document.getElementById('Password').innerHTML = 'Contraseña';
+document.getElementById('button').innerHTML = 'Iniciar sesión';
+document.getElementById('footer').innerHTML = 'Copyright © Tecnologias  Co., Ltd 2020-2030. Todos los derechos reservados.';
+    }
+else if (language == "russian") 
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+        document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = 'Аккаунт';
+document.getElementById('Password').innerHTML = 'Пароль';
+document.getElementById('button').innerHTML = 'Вход';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. Все права защищены.';
+    }
+else if (language == "chinese") 
+{
+document.getElementById('Specical_language').style.color = '#9b0000';
+document.getElementById('English').style.color = '#434343';
+document.getElementById('account').innerHTML = '用户名';
+document.getElementById('Password').innerHTML = '密  码';
+document.getElementById('button').innerHTML = '登录';
+document.getElementById('footer').innerHTML = '版权所有 © 华为技术有限公司 2020-2030。保留一切权利。';
+document.getElementById('footer').style.position = 'relative';
+document.getElementById('footer').style.left = '30px';
+}
+else 
+{
+document.getElementById('Specical_language').style.color = '#434343';
+document.getElementById('English').style.color = '#9b0000';
+document.getElementById('account').innerHTML = 'Account';
+document.getElementById('Password').innerHTML = 'Password';
+document.getElementById('button').innerHTML = 'Login';
+document.getElementById('footer').innerHTML = 'Copyright ©  Technologies Co., Ltd 2020-2030. All rights reserved.';
+}
+
+if (((LoginTimes != null) && (LoginTimes != '') && (LoginTimes > 0))
+   ||( "1" == FailStat) || (ModeCheckTimes >= errloginlockNum) )
+{
+document.getElementById('loginfail').style.display = '';
+setErrorStatus();
+}
+}
+
+function BthRefresh()
+{
+document.getElementById("imgcode").src = 'getCheckCode.cgi?&rand=' + new Date().getTime();
+}
+
+
+
+function isValidAscii(val)
+{
+for ( var i = 0 ; i < val.length ; i++ )
+{
+var ch = val.charAt(i);
+if ( ch <= ' ' || ch > '~' )
+{
+return false;
+}
+}
+return true;
+}
+
+function isLowercaseInString(str)
+{
+var lower_reg = /^.*([a-z])+.*$/;
+var MyReg = new RegExp(lower_reg);
+if ( MyReg.test(str) )
+{
+return true;
+}
+return false;
+}
+
+function isUppercaseInString(str)
+{
+var upper_reg = /^.*([A-Z])+.*$/;
+var MyReg = new RegExp(upper_reg);
+if ( MyReg.test(str) )
+{
+return true;
+}
+return false;
+}
+
+function isDigitInString(str)
+{
+var digit_reg = /^.*([0-9])+.*$/;
+var MyReg = new RegExp(digit_reg);
+if ( MyReg.test(str) )
+{
+return true;
+}
+return false;
+}
+
+function isSpecialCharacterNoSpace(str)
+{
+var specia_Reg =/^.*[`~!@#\$%\^&\*\(\)_\+\-=\[\]\{\}\'\;\,\./:\"\?><\\\|]{1,}.*$/;
+var MyReg = new RegExp(specia_Reg);
+if ( MyReg.test(str) )
+{
+return true;
+}
+return false;
+}
+
+function CompareString(srcstr,deststr)
+{
+var reverestr=(srcstr.split("").reverse().join(""));
+if ( srcstr == deststr )
+{
+return false;
+}
+
+if (reverestr == deststr )
+{
+return false;
+}
+return true;
+}
+
+function CheckPwdIsComplex(str)
+{
+var i = 0;
+
+if ( 6 > str.length )
+{
+return false;
+}
+
+if (!CompareString(str,UserNameNormal) )
+{
+return false;
+}
+
+if ( isLowercaseInString(str) )
+{
+i++;
+}
+
+if ( isUppercaseInString(str) )
+{
+i++;
+}
+
+if ( isDigitInString(str) )
+{
+i++;
+}
+
+if ( isSpecialCharacterNoSpace(str) )
+{
+i++;
+}
+
+if ( i >= 2 )
+{
+return true;
+}
+return false;
+}
+
+function CheckPassword(PwdForCheck)
+{
+var Username = document.getElementById('txt_Username');
+var NormalPwdInfo = FormatUrlEncode(PwdForCheck);
+var CheckResult = 0;
+var url_check_pwd = 0;
+
+if (Username.value == UserNameNormal)
+{
+url_check_pwd = '/asp/CheckNormalPwdNotLogin.asp?&1=1';
+}
+else if (Username.value == UserNameAdmin)
+{
+url_check_pwd = '/asp/CheckAdminPwdNotLogin.asp?&1=1';
+}
+
+$.ajax({
+type : "POST",
+async : false,
+cache : false,
+url : url_check_pwd,
+data :'NormalPwdInfo='+NormalPwdInfo,
+success : function(data) {
+CheckResult=data;
+}
+});
+return CheckResult;
+}
+
+function CheckParameter()
+{
+var oldPassword = document.getElementById("old_password");
+var newPassword = document.getElementById("new_password");
+var cfmPassword = document.getElementById("confirm_password");
+var CheckResult = 0;
+
+if (oldPassword.value == "")
+{
+alert("The old password cannot be left blank.");
+return false;
+}
+
+if (newPassword.value == "")
+{
+alert("The new password cannot be left blank.");
+return false;
+}
+
+if (newPassword.value.length > 127)
+{
+alert("The password must consist of 1 to 127 characters.");
+return false;
+}
+
+if (!isValidAscii(newPassword.value))
+{
+alert("The new password contains invalid characters. Enter a valid one.");
+return false;
+}
+
+if (cfmPassword.value != newPassword.value)
+{
+alert("The confirm password is different from the new password.");
+return false;
+}
+
+CheckResult = CheckPassword(oldPassword.value);
+
+if (CheckResult != 1)
+{
+alert("Incorrect old password. Please retry.");
+return false;
+}
+
+if(!CheckPwdIsComplex(newPassword.value))
+{
+alert("The password strength is too weak. Configure it again.");
+return false;
+}
+
+return true;
+}
+
+function SubmitUpdate()
+{
+var Username = document.getElementById('txt_Username');
+
+if(!CheckParameter())
+{
+return false;
+}
+
+var Form = new webSubmitForm();
+
+Form.addParameter('x.Password', getValue('new_password'));
+
+
+if (Username.value == UserNameNormal)
+{
+Form.setAction('MdfPwdNormalNoLg.cgi?&x=InternetGatewayDevice.UserInterface.X_HW_WebUserInfo.1&RequestFile=login.asp');
+}
+else if (Username.value == UserNameAdmin)
+{
+Form.setAction('MdfPwdAdminNoLg.cgi?&x=InternetGatewayDevice.UserInterface.X_HW_WebUserInfo.2&RequestFile=login.asp');
+}
+
+Form.submit();
+}
+
+</script>
+</head>
+<body onLoad="LoadFrame();">
+
+<div id="base_mask" style=""></div>
+<div id="main_wrapper">
+<script language="JavaScript" type="text/javascript">
+
+if ('ORO' == CfgMode.toUpperCase())
+{
+document.write('<div style="position:absolute;margin-left:30px;top:30px;height:50px;width:50px;background: url(images/logo_Oro.gif);"></div>');
+}
+
+</script>
+
+
+<div  id="pwd_modify" style="display:none;">
+<div>
+<li style="position: relative;top:10px; width: 500px;left: 100px; list-style-type: none; color: red; font-weight: bold; font-size: 14px;"><div>The login password is the default one. Change it immediately.</div></li>
+</div>
+
+<ul style="position:absolute; clear:both; list-style-type: none; top:30px; left:-38px; height:15px; line-height:30px; font-weight: bold; font-size: 12px;">
+<li style="position: relative; top: 0px; width: 130px;" ><div align="right">Old Password:</div></li>
+<li style="position: relative; top: 0px; width: 130px;" ><div align="right">New Password:</div></li>
+<li style="position: relative; top: 0px; width: 130px;" ><div align="right">Confirm Password:</div></li>
+</ul>
+
+<ul style="color:#FFFFFF; position:absolute; top:30px; left:94px; height:15px; list-style-type:none; line-height:30px;">
+<li ><input name="old_password" id="old_password"    type="password" size="20" style="position: absolute; top: 5px; font-size:13px; width:180px;" /></li>
+<li ><input name="new_password" id="new_password"  type="password" size="20" style="position: absolute; top: 35px; font-size: 13px; width:180px; " /></li>
+<li ><input name="confirm_password" id="confirm_password" type="password" size="20" style="position: absolute; top: 65px; font-size:13px; width:180px;" /></li>
+</ul>
+
+<ul style="position:absolute; clear:both; list-style-type: none; top:30px; left:290px; height:15px; line-height:20px; font-size: 12px;">
+<li style="position: relative; top: 0px; width: 280px;" ><div align="left">1.The password must contain at least 6 characters.<br/>2.The password must contain at least two of the following combinations:Digit, uppercase letter, lowercase letter, Special characters (` ~ ! @ # $ % ^ & * ( ) - _ = + \\ | [ { } ] ; : ' \" < , . > / ?).<br/>3.The password cannot be any user name or user name in reverse order.</div></li>
+
+</ul>
+
+<div id="update">
+<div style="float:left; margin-top: 130px; margin-left: 180px;"><button id="button_update" style="width: 80px; height: 23px;" onclick="SubmitUpdate();" >Update</button></div>
+</div>
+
+</div>
+
+
+<div style="position:absolute; top:300px;margin-left:250px;height:300px; width:490px;background: url('images/pic.jpg') no-repeat center;">
+<table id="tablecheckcode" border="0" cellpadding="0" cellspacing="0" width="100%" style="display: none">
+<tr>
+<td height="8"></td>
+</tr>
+<tr>
+<td>
+<img id="imgcode" style="margin-left:111px;height:30px;width:100px;" onClick="BthRefresh();">
+<input type="button" id="changecode" style="margin-left:20px;width:58px;" class="submit" value="Refresh" onClick="BthRefresh();"/>
+</td>
+</tr>
+
+<tr>
+<td height="8"></td>
+</tr>
+<tr align="center">
+<td>
+ <button style="font-size:12px;font-family:Tahoma,Arial;margin-left:-70px;" id="tripletbtn" class="submit" name="tripletbtn" onClick="SubmitForm();" type="button">Login</button>
+</td>
+  </tr>
+  <tr>
+  <td class="info_text" height="25" id="tipletfooter"><span style="margin-left:-55px;">Copyright ©  Technologies Co., Ltd 2020-2030. All rights reserved.</span></td>
+</tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr id="Copyrightfooter" style="position:absolute; margin-left:20px;top:-25px;display: none;color:#9d9d9d;">
+<td height="25" id="footer" style="font-size:11px;"></td>
+</tr>
+<tr>
+<td valign="top" style="padding-top: 20px;"> 
+<div id="tipText" style="display: none">
+<table border="0" cellpadding="0" cellspacing="5" height="33" width="99%"> 
+<tr> 
+<td align="center" bgcolor="#FFFFFF" height="21"> <span style="color:red;font-size:12px;font-family:Arial;">
+<div id="DivTipPage"></div> 
+</span> 
+</td>
+</tr> 
+</table> 
+</div>
+</td>
+</tr>
+<tr>
+<td valign="top" style="padding-top: 20px;"> <div id="loginfail" style="display: none">
+<table border="0" cellpadding="0" cellspacing="5" height="33" width="99%">
+  <tr>
+<td align="center" bgcolor="#FFFFFF" height="21"> <span style="color:red;font-size:12px;font-family:Arial;">
+  <div id="DivErrPage"></div>
+  </span> </td>
+  </tr>
+</table>
+  </div>
+  </td>
+  </tr>
+</table>
+</div>
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<script language="JavaScript" type="text/javascript">
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'ORO' == CfgMode.toUpperCase() || 'TRIPLETSINGLE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+document.write('<td align="center" height="210" valign="bottom"> <table border="0" cellpadding="0" cellspacing="0" width="44%"> ');
+}
+else if ( 'VIETTEL' == CfgMode.toUpperCase())
+{
+document.write('<td align="center" height="210" valign="bottom"> <table border="0" cellpadding="0" cellspacing="0" width="38%"> ');
+}
+else
+{
+document.write('<td align="center" height="210" valign="bottom"> <table border="0" cellpadding="0" cellspacing="0" width="36%"> ');
+}
+</script>
+<tr>
+<script language="JavaScript" type="text/javascript">
+if ('DIGICEL' == CfgMode.toUpperCase() || 'DIGICEL2' == CfgMode.toUpperCase())
+{
+document.write('<td align="center" width="81%"> ');
+}
+else
+{
+document.write('<td align="center" width="29%"> ');
+}
+
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLETSINGLE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+document.write('<img height="70" src="images/logo3bb.gif" width="144" alt="">');
+}
+else if ('ORANGEMT' == CfgMode.toUpperCase())
+{
+document.write('<img height="118" src="images/logo_MA.gif" width="118" alt="">');
+}
+else if ('ORO' == CfgMode.toUpperCase())
+{
+document.write('');
+}
+else if('NOS' == CfgMode.toUpperCase())
+{
+document.write('<img height="72" src="images/logo_nos.gif" width="136" alt="">');
+}
+else if('ANTEL' == CfgMode.toUpperCase())
+{
+document.write('<img height="36" src="images/logo_antel.gif" width="100" alt="">');
+}
+else if (1 == SonetFlag)
+{
+document.write('<img height="0" src="images/logo.gif" width="0" alt="">');
+}
+else if('DIGICEL' == CfgMode.toUpperCase() || 'DIGICEL2' == CfgMode.toUpperCase())
+{
+document.write('<img height="56" src="images/logo_digicel.jpg" width="180" alt="">');
+}
+else if ('PLDT' == CfgMode.toUpperCase() || 'PLDT2' == CfgMode.toUpperCase())
+{
+document.write('<img height="72" src="images/logo_pldt.gif" width="144" alt="">');
+}
+else if ('VIETTEL' == CfgMode.toUpperCase())
+{
+document.write('<img height="72" src="images/logo_viettel.jpg" width="136" alt="">');
+}
+else if ('SINGTEL' == CfgMode.toUpperCase())
+{
+document.write('<img height="75" src="images/logo_singtel.gif" width="137" alt="">');
+}
+else if ('TS' == CfgMode.toUpperCase() || 'TS2' == CfgMode.toUpperCase())
+{
+document.write('<img height="75" src="images/logo_ts.jpg" width="148" alt="">');
+}
+else if ('CNT' == CfgMode.toUpperCase() || 'CNT2' == CfgMode.toUpperCase() )
+{
+document.write('<img height="75" src="images/logo_cnt.gif" width="75" alt="">');
+}
+else if ('TM' == CfgMode.toUpperCase() )
+{
+document.write('<img height="120" src="images/logo_tm.gif" width="120" alt="" style="position: absolute; margin-top: -140px; margin-left: 63px;">');
+}
+else
+{
+document.write('<img height="75" src="images/logo.gif" width="70" alt="">');
+}
+</script>
+</td>
+<script language="JavaScript" type="text/javascript">
+if('DIGICEL' == CfgMode.toUpperCase() || 'DIGICEL2' == CfgMode.toUpperCase())
+{
+document.write('<td class="hg_logo" width="11%" id="hg_logo" nowrap></td>');
+document.write('<td valign="bottom" width="8%">');
+}
+else
+{
+document.write('<td class="hg_logo" width="21%" id="hg_logo" nowrap>');
+document.write(ProductName);
+document.write('</td>');
+document.write('<td valign="bottom" width="50%">');
+}
+</script>
+<table border="0" cellpadding="0" cellspacing="0" class="text_copyright" width="100%">
+<tr>
+  <script language="JavaScript" type="text/javascript">
+if (1 == SonetFlag)
+{
+document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" onClick="onChangeLanguage(' + "'english'" + ');" style="font-size:12px;font-family:Arial;">[English]</a> </td>');
+document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language" onClick="onChangeLanguage(' + "'japanese'" + ');" style="font-size:12px;font-family:Arial;">[日本語]</a> </td>');
+}
+else if (1 == IsPTVDF)
+{
+document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" onClick="onChangeLanguage(' + "'english'" + ');" style="font-size:12px;font-family:Arial;">[English]</a> </td>');
+document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language" onClick="onChangeLanguage(' + "'portuguese'" + ');" style="font-size:12px;font-family:Arial;">[Portuguese]</a> </td>');
+}
+else if ('ANTEL' == CfgMode.toUpperCase())
+{
+document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" onClick="onChangeLanguage(' + "'english'" + ');" style="font-size:12px;font-family:Arial;">[English]</a> </td>');
+document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language" onClick="onChangeLanguage(' + "'spanish'" + ');" style="font-size:12px;font-family:Arial;">[Spanish]</a> </td>');
+                  }
+else if ('UZBEKISTAN' == CfgMode.toUpperCase() || 'ROSTELECOM' == CfgMode.toUpperCase() || 'ROSTELECOM2' == CfgMode.toUpperCase()
+  || 'ROSCNT' == CfgMode.toUpperCase() || 'NWT' == CfgMode.toUpperCase() || 'ROSCNT2' == CfgMode.toUpperCase()
+  || 'ROSUNION' == CfgMode.toUpperCase())
+                  {
+                  document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" onClick="onChangeLanguage(' + "'english'" + ');" style="font-size:12px;font-family:Arial;">[English]</a> </td>');
+                  document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language" onClick="onChangeLanguage(' + "'russian'" + ');" style="font-size:12px;font-family:Arial;">[Русский]</a> </td>');
+}
+else if ('CTM' == CfgMode.toUpperCase())
+{
+document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" onClick="onChangeLanguage(' + "'english'" + ');" style="font-size:12px;font-family:Arial;">[English]</a> </td>');
+document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language" onClick="onChangeLanguage(' + "'chinese'" + ');" style="font-size:12px;font-family:Arial;">[中文]</a> </td>');
+}
+else
+{
+document.write('<td width="47%" nowrap> <a id="English" href="#" name="English" style="font-size:12px;font-family:Arial;"></a> </td>');
+document.write('<td width="53%" nowrap> <a id="Specical_language" href="#" name="Specical_language"  style="font-size:12px;font-family:Arial;"></a> </td>');
+}
+  </script>
+</tr>
+  </table></td>
+  </tr>
+</table></td>
+</tr>
+<tr>
+      <td id="login_for_common" align="center" height="65"> <table border="0" cellpadding="0" cellspacing="0" class="tblcalss" height="65" width="45%" style="font-size:16px;"> 
+  <tr>
+<td class="whitebold" height="37" align="right" width="20%" id="account"></td>
+<td class="whitebold" height="37" align="center" width="2%">:</td>
+<td width="78%" style="text-align: left;"> <input style="font-size:12px;font-family:Tahoma,Arial;" id="txt_Username" class="input_login" name="txt_Username" type="text" maxlength="31"> </td>
+  </tr>
+  <tr>
+<td class="whitebold" height="28" align="right" id="Password"></td>
+<td class="whitebold" height="28" align="center" >:</td>
+<td style="text-align: left;"> <input style="font-size:12px;font-family:Tahoma,Arial;" id="txt_Password" class="input_login" name="txt_Password" type="password" maxlength="127">
+&nbsp;
+<button style="font-size:12px;font-family:Tahoma,Arial;display: none;" id="button" class="submit" name="Submit" onClick="SubmitForm();" type="button"></button>
+</td>
+</tr>
+
+<tr id="txtVerificationCode" style="display: none">
+<td class="whitebold" height="28" align="right" id="Validate">Validate Code</td>
+<td class="whitebold" height="32" align="center" >:</td>
+<td>
+<input style="font-size:12px;font-family:Tahoma,Arial;height:21px;" id="VerificationCode" class="input_login" name="VerificationCode" type="text" maxlength="127"></td>
+</tr>
+
+</table></td>
+</tr>
+</table>
+</div>
+<script language="JavaScript" type="text/javascript">
+if ( 'TRIPLET' == CfgMode.toUpperCase() || 'TRIPLETVOICE' == CfgMode.toUpperCase() || 'TRIPLET2' == CfgMode.toUpperCase())
+{
+document.getElementById('tablecheckcode').style.display = '';
+document.getElementById('txtVerificationCode').style.display = '';
+document.getElementById("imgcode").src = 'getCheckCode.cgi?&rand=' + new Date().getTime();
+}
+else
+{
+document.getElementById('Copyrightfooter').style.display = '';
+document.getElementById('button').style.display = '';
+}
+</script>
+</body>
+</html>

@@ -331,20 +331,17 @@ class PrescriptionListCreateView(generics.ListCreateAPIView):
         else:
             raise PermissionDenied("Only doctors can create prescriptions.")
 
-from rest_framework import generics, permissions
-from .models import Prescription, UserProfile
-from .serializers import PrescriptionSerializer
 
-class PatientPrescriptionListCreateView(generics.ListCreateAPIView):
+
+class PatientPrescriptionListView(generics.ListAPIView):
     serializer_class = PrescriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        # Fetch the UserProfile linked to this User
-        try:
-            profile = user.userprofile  # <-- this is the correct instance
-        except UserProfile.DoesNotExist:
+        profile = getattr(user, "profile", None)
+
+        if not profile:
             return Prescription.objects.none()
 
         return Prescription.objects.filter(patient=profile).order_by("-created_at")
@@ -370,16 +367,17 @@ class PatientPrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Only patients can access their own prescriptions
-        if hasattr(user, "doctor_profile"):
+        profile = getattr(user, "profile", None)
+        if profile is None:
             return Prescription.objects.none()
-        return Prescription.objects.filter(patient=user)
+        return Prescription.objects.filter(patient=profile)
 
     def perform_update(self, serializer):
         user = self.request.user
         if hasattr(user, "doctor_profile"):
             raise PermissionDenied("Doctors cannot update using this endpoint.")
         serializer.save()
+
 
 
 class TreatmentListCreateView(generics.ListCreateAPIView):

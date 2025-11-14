@@ -13,7 +13,7 @@ from .views import create_admin
 from .views import NotificationListView
 from .views import UserProfileListView
 from .views import NotificationDetailView  
-from .views import PatientPrescriptionListCreateView, PatientPrescriptionRetrieveUpdateView
+from .views import PatientPrescriptionListView, PatientPrescriptionRetrieveUpdateView
 
 
   
@@ -31,7 +31,7 @@ path('view_patient/<int:patient_id>/daily-reports', DoctorPatientDailyReportsVie
 path("doctor/logout", views.logout_view, name="doctor-logout"),
 path("prescriptions", PrescriptionListCreateView.as_view(), name="prescription-list-create"),
 path("prescriptions/<int:pk>", PrescriptionRetrieveUpdateView.as_view(), name="prescription-detail"),
-path("patient/prescriptions", PatientPrescriptionListCreateView.as_view(), name="patient-prescription-list-create"),
+path("patient/prescriptions", PatientPrescriptionListView.as_view(), name="patient-prescription"),
 path("patient/prescriptions/<int:pk>", PatientPrescriptionRetrieveUpdateView.as_view(), name="patient-prescription-detail"),
 path("doctor/treatments", TreatmentListCreateView.as_view(), name="treatment-list"),
 path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatment-detail"),
