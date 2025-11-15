@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+import datetime
 from django.utils import timezone
 from django.contrib.auth import get_user_model 
   
@@ -77,10 +78,14 @@ class VitalReading(models.Model):
 
 class Prescription(models.Model):
     doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="prescriptions"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="prescriptions"
     )
     patient = models.ForeignKey(
-        "UserProfile", on_delete=models.CASCADE, related_name="prescriptions"
+        "UserProfile",
+        on_delete=models.CASCADE,
+        related_name="prescriptions"
     )
     medication = models.CharField(max_length=255)
     dosage = models.CharField(max_length=100)
@@ -94,6 +99,47 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"{self.medication} for {self.patient.user.get_full_name()}"
+
+    @property
+    def taken_today(self):
+        """
+        Returns True if the patient has logged any dose for today.
+        """
+        today = timezone.localdate()
+        return self.logs.filter(taken_at__date=today).exists()
+
+
+class PrescriptionLog(models.Model):
+    DOSE_CHOICES = [
+        ("morning", "Morning"),
+        ("afternoon", "Afternoon"),
+        ("evening", "Evening"),
+        ("night", "Night"),
+    ]
+
+    prescription = models.ForeignKey(
+        "Prescription",
+        on_delete=models.CASCADE,
+        related_name="logs"
+    )
+    patient = models.ForeignKey(
+        "UserProfile",
+        on_delete=models.CASCADE
+    )
+    taken_at = models.DateTimeField(auto_now_add=True)
+    dose_time = models.TimeField(default=datetime.time(12, 0))
+    dose_label = models.CharField(
+        max_length=20,
+        choices=DOSE_CHOICES,
+        default="morning"
+    )
+
+    class Meta:
+        ordering = ["-taken_at"]
+
+    def __str__(self):
+        return f"{self.patient.user.get_full_name()} - {self.prescription.medication} ({self.dose_label} at {self.dose_time})"
+
 
 
 
@@ -134,13 +180,6 @@ class Treatment(models.Model):
 
 
         
-class PrescriptionLog(models.Model):
-    prescription = models.ForeignKey("Prescription", on_delete=models.CASCADE, related_name="logs")
-    taken_at = models.DateTimeField(auto_now_add=True)
-    patient = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.patient.user.get_full_name()} - {self.prescription.medication}"
 
 
 

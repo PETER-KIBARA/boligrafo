@@ -7,6 +7,8 @@ from .models import DoctorProfile
 from .models import Prescription
 from .models import Treatment
 from .models import Notification
+from .models import PrescriptionLog
+
 
 
 @admin.register(UserProfile)
@@ -23,6 +25,14 @@ class DoctorProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = "Doctor Profile"
     fk_name = "user"
+
+
+@admin.register(PrescriptionLog)
+class PrescriptionLogAdmin(admin.ModelAdmin):
+    list_display = ('patient', 'prescription', 'taken_at')
+    list_filter = ('taken_at', 'patient')
+    search_fields = ('patient__user__first_name', 'patient__user__last_name', 'prescription__medication')
+
 
 @admin.register(Prescription)
 class PrescriptionAdmin(admin.ModelAdmin):

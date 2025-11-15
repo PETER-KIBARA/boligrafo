@@ -358,10 +358,11 @@ class PrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             raise PermissionDenied("Only doctors can update prescriptions.")
         serializer.save(doctor=user)  # FIXED LINE
 
+
+
+
+
 class PatientPrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
-    """
-    Retrieve or update a single prescription for the logged-in patient.
-    """
     serializer_class = PrescriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -372,11 +373,64 @@ class PatientPrescriptionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             return Prescription.objects.none()
         return Prescription.objects.filter(patient=profile)
 
-    def perform_update(self, serializer):
-        user = self.request.user
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        user = request.user
         if hasattr(user, "doctor_profile"):
             raise PermissionDenied("Doctors cannot update using this endpoint.")
-        serializer.save()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Handle dose logging
+        taken_today = request.data.get("taken_today")
+        dose_label = request.data.get("dose_label")
+
+        if taken_today and dose_label:
+            self.log_dose(instance, dose_label)
+
+        return Response(serializer.data)
+
+    def log_dose(self, prescription, dose_label):
+        user = self.request.user
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            return
+
+        # Map dose_label to actual time (timezone-aware)
+        dose_time_map = {
+            "morning": time(8, 0),
+            "afternoon": time(14, 0),
+            "evening": time(20, 0),
+            "night": time(22, 0),
+        }
+        dose_time = dose_time_map.get(dose_label, timezone.now().time())
+
+        today = timezone.localdate()
+        start_of_day = datetime.combine(today, time.min, tzinfo=timezone.get_current_timezone())
+        end_of_day = datetime.combine(today, time.max, tzinfo=timezone.get_current_timezone())
+
+        log_qs = PrescriptionLog.objects.filter(
+            prescription=prescription,
+            patient=profile,
+            dose_label=dose_label,
+            taken_at__range=(start_of_day, end_of_day)
+        )
+
+        if log_qs.exists():
+            log = log_qs.first()
+            log.dose_time = dose_time
+            log.save()
+        else:
+            PrescriptionLog.objects.create(
+                prescription=prescription,
+                patient=profile,
+                dose_label=dose_label,
+                taken_at=timezone.now(),
+                dose_time=dose_time
+            )
 
 
 
