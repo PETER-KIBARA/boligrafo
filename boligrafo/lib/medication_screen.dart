@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/medication_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/medication_provider.dart';
+import '../medication_service.dart';
 
 class MedicationScreen extends StatelessWidget {
   const MedicationScreen({super.key});
@@ -48,63 +48,9 @@ class MedicationScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16.0),
-
-                          // Header
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.all(12),
-                            child: const Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    "Medication",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    "Dosage",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    "Frequency",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    "Taken Today",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          ...medicationProvider.medications.map(
+                            (med) => MedicationCard(medication: med),
                           ),
-
-                          const SizedBox(height: 8),
-
-                          // Medication Rows
-                          ...medicationProvider.medications.map((med) {
-                            return MedicationCard(medication: med);
-                          }).toList(),
-
                           const SizedBox(height: 24.0),
                         ],
                       ),
@@ -125,60 +71,22 @@ class MedicationCard extends StatefulWidget {
 }
 
 class _MedicationCardState extends State<MedicationCard> {
-  // Define time slots based on frequency
-  List<TimeSlot> getTimeSlots() {
-    final frequency = widget.medication.frequency?.toLowerCase() ?? '';
-    
-    if (frequency.contains('3') || frequency.contains('three') || 
-        frequency.contains('tid') || frequency.contains('three times')) {
-      return [
-        TimeSlot('Morning', TimeOfDay(hour: 8, minute: 0)),
-        TimeSlot('Afternoon', TimeOfDay(hour: 14, minute: 0)),
-        TimeSlot('Evening', TimeOfDay(hour: 20, minute: 0)),
-      ];
-    } else if (frequency.contains('2') || frequency.contains('two') || 
-               frequency.contains('bid') || frequency.contains('twice')) {
-      return [
-        TimeSlot('Morning', TimeOfDay(hour: 8, minute: 0)),
-        TimeSlot('Evening', TimeOfDay(hour: 20, minute: 0)),
-      ];
-    } else if (frequency.contains('1') || frequency.contains('one') || 
-               frequency.contains('once') || frequency.contains('daily')) {
-      return [
-        TimeSlot('Daily', TimeOfDay(hour: 12, minute: 0)),
-      ];
-    } else if (frequency.contains('4') || frequency.contains('four') || 
-               frequency.contains('qid')) {
-      return [
-        TimeSlot('Morning', TimeOfDay(hour: 8, minute: 0)),
-        TimeSlot('Noon', TimeOfDay(hour: 12, minute: 0)),
-        TimeSlot('Evening', TimeOfDay(hour: 18, minute: 0)),
-        TimeSlot('Night', TimeOfDay(hour: 22, minute: 0)),
-      ];
-    } else {
-      // Default to once daily if frequency is not recognized
-      return [
-        TimeSlot('Daily', TimeOfDay(hour: 12, minute: 0)),
-      ];
-    }
-  }
+  bool _loadingDose = false;
 
   @override
   Widget build(BuildContext context) {
-    final timeSlots = getTimeSlots();
-    
+    final provider = Provider.of<MedicationProvider>(context, listen: false);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -187,7 +95,7 @@ class _MedicationCardState extends State<MedicationCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Basic medication info row
+          // Medication basic info
           Row(
             children: [
               Expanded(
@@ -195,137 +103,139 @@ class _MedicationCardState extends State<MedicationCard> {
                 child: Text(
                   widget.medication.name,
                   style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 16),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Text(widget.medication.dosage,
+                    style: const TextStyle(fontSize: 14)),
+              ),
+              Expanded(
+                flex: 1,
+                child: Text(widget.medication.frequency,
+                    style: const TextStyle(fontSize: 14)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(height: 1, color: Colors.grey.shade200),
+          const SizedBox(height: 12),
+
+          // Doses
+          Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text(
+      "Mark as taken:",
+      style: TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        color: Colors.grey,
+      ),
+    ),
+    const SizedBox(height: 8),
+    Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: widget.medication.doses.map((dose) {
+        final isTaken = dose.isTaken;
+        return GestureDetector(
+          onTap: _loadingDose
+              ? null
+              : () async {
+                  if (isTaken) return;
+                  setState(() => _loadingDose = true);
+
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    // Since provider returns void, we assume success unless an exception occurs
+                    await provider.logDoseTaken(
+                        widget.medication.id, dose.backendKey);
+
+                    if (!mounted) return;
+                    
+                    // If we reach here without exception, assume success
+                    setState(() {}); // refresh card UI
+                    
+                  } catch (e) {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      SnackBar(content: Text("Failed to log dose: $e")),
+                    );
+                  } finally {
+                    if (mounted) setState(() => _loadingDose = false);
+                  }
+                },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isTaken ? Colors.green[50] : Colors.grey[50],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isTaken ? Colors.green : Colors.grey.shade300,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isTaken
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: isTaken ? Colors.green : Colors.grey,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  dose.timeLabel,
+                  style: TextStyle(
+                    color: isTaken ? Colors.green : Colors.grey.shade700,
                     fontWeight: FontWeight.w500,
-                    fontSize: 16,
                   ),
                 ),
-              ),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  widget.medication.dosage ?? '-',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  widget.medication.frequency ?? '-',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          
-          const SizedBox(height: 12),
-          
-          // Divider
-          Container(
-            height: 1,
-            color: Colors.grey.shade200,
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Time slots for tracking
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Mark as taken:",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: timeSlots.map((timeSlot) {
-                  final isTaken = timeSlot.isTaken;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        timeSlot.isTaken = !isTaken;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isTaken ? Colors.green[50] : Colors.grey[50],
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isTaken ? Colors.green : Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isTaken ? Icons.check_circle : Icons.radio_button_unchecked,
-                            color: isTaken ? Colors.green : Colors.grey,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            timeSlot.label,
-                            style: TextStyle(
-                              color: isTaken ? Colors.green : Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              
-              // Progress indicator
-              const SizedBox(height: 12),
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Stack(
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final takenCount = timeSlots.where((slot) => slot.isTaken).length;
-                        final progress = takenCount / timeSlots.length;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: constraints.maxWidth * progress,
-                          decoration: BoxDecoration(
-                            color: _getProgressColor(progress),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 4),
-              Text(
-                "${timeSlots.where((slot) => slot.isTaken).length} of ${timeSlots.length} doses taken today",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
+        );
+      }).toList(),
+    ),
+
+    const SizedBox(height: 12),
+
+    // Progress bar
+    Container(
+      height: 6,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final takenCount =
+              widget.medication.doses.where((d) => d.isTaken).length;
+          final progress = widget.medication.doses.isEmpty 
+              ? 0.0 // Changed to double
+              : takenCount / widget.medication.doses.length;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: constraints.maxWidth * progress.toDouble(), // Convert to double
+            decoration: BoxDecoration(
+              color: _getProgressColor(progress.toDouble()), // Convert to double
+              borderRadius: BorderRadius.circular(3),
+            ),
+          );
+        },
+      ),
+    ),
+    const SizedBox(height: 4),
+    Text(
+      "${widget.medication.doses.where((d) => d.isTaken).length} of ${widget.medication.doses.length} doses taken today",
+      style: const TextStyle(fontSize: 12, color: Colors.grey),
+    ),
+  ],
+),
         ],
       ),
     );
@@ -337,12 +247,4 @@ class _MedicationCardState extends State<MedicationCard> {
     if (progress < 1.0) return Colors.blue;
     return Colors.green;
   }
-}
-
-class TimeSlot {
-  final String label;
-  final TimeOfDay time;
-  bool isTaken;
-
-  TimeSlot(this.label, this.time, {this.isTaken = false});
 }

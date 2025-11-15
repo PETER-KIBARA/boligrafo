@@ -7,7 +7,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'providers/auth_provider.dart';
 import 'providers/vitals_provider.dart';
 import 'providers/medication_provider.dart';
-import 'medication_service.dart';
 import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
@@ -174,19 +173,7 @@ void dispose() {
  
   
 
-  Future<void> _toggleTaken(MedicationScheduleItem item, bool value) async {
-  try {
-    final medicationProvider = context.read<MedicationProvider>();
-    await medicationProvider.markMedicationTaken(item.id, value);
-  } catch (e) {
-    debugPrint('Failed to update medication: $e');
-    // Optional: show a Snackbar or alert
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to update medication. Please try again.')),
-    );
-  }
-}
-
+  
   @override
   Widget build(BuildContext context) {
     return Consumer3<AuthProvider, VitalsProvider, MedicationProvider>(

@@ -20,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
 
   late final List<Widget> _screens = [
     const DashboardScreen(),
+    const MedicationScreen(),
     const LogVitalsScreen(),
     const MedicationScreen(),
     const DetailedReportScreen(),

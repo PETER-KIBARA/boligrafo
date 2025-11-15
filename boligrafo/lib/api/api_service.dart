@@ -163,7 +163,35 @@ class ApiService {
       throw Exception("Failed to update prescription: ${response.body}");
     }
   }
+
+/// Log a specific dose as taken
+static Future<void> logDoseTaken({
+  required String token,
+  required int prescriptionId,
+  required String doseKey, // e.g., "morning", "afternoon", "evening"
+}) async {
+  final url = Uri.parse("$baseUrl/patient/prescriptions/$prescriptionId/log-dose");
+  final response = await http.patch(
+    url,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Token $token",
+    },
+    body: jsonEncode({
+      "dose_key": doseKey, // backend should create/update PrescriptionLog entry
+      "taken_at": DateTime.now().toIso8601String(),
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to log dose: ${response.body}");
+  }
 }
+
+
+
+}
+
 
 
 

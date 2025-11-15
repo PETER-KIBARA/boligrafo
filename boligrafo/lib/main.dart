@@ -37,12 +37,19 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => VitalsProvider()),
-        ChangeNotifierProvider(create: (_) => MedicationProvider()),
-      ],
+        ChangeNotifierProxyProvider<AuthProvider, MedicationProvider>(
+      create: (_) => MedicationProvider(apiBaseUrl: "http://192.168.100.93:8000/api", token: ""),
+      update: (_, authProvider, previous) => MedicationProvider(
+        apiBaseUrl: "http://192.168.100.93:8000/api",
+        token: authProvider.token ?? "",
+      ),
+    ),
+  ],
+      
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return MaterialApp(
-            title: 'My App',
+            title: 'Hypertension care',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(primarySwatch: Colors.blue),
             home: const AuthWrapper(),

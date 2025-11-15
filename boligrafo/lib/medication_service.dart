@@ -1,13 +1,52 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'notifications_service.dart';
+import 'package:http/http.dart' as http;
 
+/// Represents a single dose of a medication
+class DoseLog {
+  final String timeLabel;
+  final String backendKey;
+  final String? doseTime;
+  final bool isTaken;
+
+  DoseLog({
+    required this.timeLabel,
+    required this.backendKey,
+    this.doseTime,
+    this.isTaken = false,
+  });
+
+  DoseLog copyWith({String? doseTime, bool? isTaken}) {
+    return DoseLog(
+      timeLabel: timeLabel,
+      backendKey: backendKey,
+      doseTime: doseTime ?? this.doseTime,
+      isTaken: isTaken ?? this.isTaken,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'timeLabel': timeLabel,
+        'backendKey': backendKey,
+        'doseTime': doseTime,
+        'isTaken': isTaken,
+      };
+
+  factory DoseLog.fromJson(Map<String, dynamic> json) => DoseLog(
+        timeLabel: json['timeLabel'] ?? 'Daily',
+        backendKey: json['backendKey'] ?? 'daily',
+        doseTime: json['doseTime'],
+        isTaken: json['isTaken'] ?? false,
+      );
+}
+
+/// Medication with multiple doses
 class MedicationScheduleItem {
   final int id;
   final String name;
   final String dosage;
   final String frequency;
-  final bool takenToday;
+  final List<DoseLog> doses;
   final int notificationId;
 
   MedicationScheduleItem({
@@ -15,25 +54,18 @@ class MedicationScheduleItem {
     required this.name,
     required this.dosage,
     required this.frequency,
-    required this.takenToday,
+    required this.doses,
     required this.notificationId,
   });
 
-  MedicationScheduleItem copyWith({
-    int? id,
-    String? name,
-    String? dosage,
-    String? frequency,
-    bool? takenToday,
-    int? notificationId,
-  }) {
+  MedicationScheduleItem copyWith({List<DoseLog>? doses}) {
     return MedicationScheduleItem(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      dosage: dosage ?? this.dosage,
-      frequency: frequency ?? this.frequency,
-      takenToday: takenToday ?? this.takenToday,
-      notificationId: notificationId ?? this.notificationId,
+      id: id,
+      name: name,
+      dosage: dosage,
+      frequency: frequency,
+      doses: doses ?? this.doses,
+      notificationId: notificationId,
     );
   }
 
@@ -42,35 +74,73 @@ class MedicationScheduleItem {
         'name': name,
         'dosage': dosage,
         'frequency': frequency,
-        'takenToday': takenToday,
+        'doses': doses.map((d) => d.toJson()).toList(),
         'notificationId': notificationId,
       };
 
-  static MedicationScheduleItem fromJson(Map<String, dynamic> json) =>
-      MedicationScheduleItem(
-        id: json['id'],
-        name: json['name'] ?? json['medication'] ?? '',
-        dosage: json['dosage'] ?? '',
-        frequency: json['frequency'] ?? '',
-        takenToday: json['taken_today'] ?? false,
-        notificationId: json['notificationId'] ?? 0,
-      );
+  factory MedicationScheduleItem.fromJson(Map<String, dynamic> json) {
+    final logs = (json['doses'] as List<dynamic>?)
+            ?.map((e) => DoseLog.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        _defaultDosesFromFrequency(json['frequency'] ?? '');
+    return MedicationScheduleItem(
+      id: json['id'],
+      name: json['name'] ?? json['medication'] ?? '',
+      dosage: json['dosage'] ?? '',
+      frequency: json['frequency'] ?? '',
+      doses: logs,
+      notificationId: json['notificationId'] ?? 0,
+    );
+  }
+
+  static List<DoseLog> _defaultDosesFromFrequency(String frequency) {
+    frequency = frequency.toLowerCase();
+    if (frequency.contains('3') || frequency.contains('tid')) {
+      return [
+        DoseLog(timeLabel: 'Morning', backendKey: 'morning'),
+        DoseLog(timeLabel: 'Afternoon', backendKey: 'afternoon'),
+        DoseLog(timeLabel: 'Evening', backendKey: 'evening'),
+      ];
+    } else if (frequency.contains('2') || frequency.contains('bid')) {
+      return [
+        DoseLog(timeLabel: 'Morning', backendKey: 'morning'),
+        DoseLog(timeLabel: 'Evening', backendKey: 'evening'),
+      ];
+    } else if (frequency.contains('4') || frequency.contains('qid')) {
+      return [
+        DoseLog(timeLabel: 'Morning', backendKey: 'morning'),
+        DoseLog(timeLabel: 'Noon', backendKey: 'noon'),
+        DoseLog(timeLabel: 'Evening', backendKey: 'evening'),
+        DoseLog(timeLabel: 'Night', backendKey: 'night'),
+      ];
+    } else {
+      return [
+        DoseLog(timeLabel: 'Daily', backendKey: 'daily'),
+      ];
+    }
+  }
 }
 
+/// Updated service with backend sync
 class MedicationService {
   static const String _storageKey = 'medicationSchedule';
+  final String apiBaseUrl;
+  final String token;
 
-  static Future<List<MedicationScheduleItem>> getSchedule() async {
+  MedicationService({required this.apiBaseUrl, required this.token});
+
+  /// Local storage getters
+  Future<List<MedicationScheduleItem>> getSchedule() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
     if (raw == null) return [];
-    final List list = jsonDecode(raw) as List;
+    final list = jsonDecode(raw) as List;
     return list
         .map((e) => MedicationScheduleItem.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  static Future<void> saveSchedule(List<MedicationScheduleItem> items) async {
+  Future<void> saveSchedule(List<MedicationScheduleItem> items) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _storageKey,
@@ -78,33 +148,64 @@ class MedicationService {
     );
   }
 
-  /// Parse "HH:mm" into hour/minute
-  static Map<String, int> _parseTime(String hhmm) {
-    final parts = hhmm.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-    return {'hour': hour, 'minute': minute};
-  }
+  /// Sync a single dose with backend
+  Future<bool> logDoseTaken(
+      int prescriptionId, String doseKey, bool taken) async {
+    final url = Uri.parse('$apiBaseUrl/prescription/$prescriptionId/');
+    final response = await http.patch(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'taken_today': taken, 'dose_label': doseKey}),
+    );
 
-  static Future<void> scheduleNotifications(
-      List<MedicationScheduleItem> items) async {
-    for (final item in items) {
-      final parsed = _parseTime(item.frequency); // optional: use time if you have
-      await NotificationsService.scheduleDailyReminder(
-        id: item.notificationId,
-        hour: parsed['hour']!,
-        minute: parsed['minute']!,
-        title: 'Medication Reminder',
-        body: 'Time to take ${item.name} (${item.dosage})',
-      );
+    if (response.statusCode == 200) {
+      // Update local storage too
+      final timestamp = taken ? DateTime.now().toIso8601String() : null;
+      final items = await getSchedule();
+      final updated = items.map((med) {
+        if (med.id == prescriptionId) {
+          final updatedDoses = med.doses.map((d) {
+            if (d.backendKey == doseKey) {
+              return d.copyWith(doseTime: timestamp, isTaken: taken);
+            }
+            return d;
+          }).toList();
+          return med.copyWith(doses: updatedDoses);
+        }
+        return med;
+      }).toList();
+      await saveSchedule(updated);
+      return true;
     }
+    return false;
   }
 
-  static Future<void> setTakenToday(int id, bool taken) async {
+  /// Mark all doses of a medication as taken or not
+  Future<void> setAllTakenToday(int prescriptionId, bool taken) async {
     final items = await getSchedule();
-    final updated = items
-        .map((e) => e.id == id ? e.copyWith(takenToday: taken) : e)
-        .toList();
+    final updated = items.map((med) {
+      if (med.id == prescriptionId) {
+        final updatedDoses = med.doses
+            .map((d) => d.copyWith(
+                isTaken: taken,
+                doseTime: taken ? DateTime.now().toIso8601String() : null))
+            .toList();
+        return med.copyWith(doses: updatedDoses);
+      }
+      return med;
+    }).toList();
     await saveSchedule(updated);
+
+    // Optional: Sync each dose with backend
+    for (var med in updated) {
+      if (med.id == prescriptionId) {
+        for (var dose in med.doses) {
+          await logDoseTaken(prescriptionId, dose.backendKey, taken);
+        }
+      }
+    }
   }
 }
