@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: bloodpressure_db
+    restart: always
+    environment:
+      POSTGRES_USER: setro
+      POSTGRES_PASSWORD: KILO
+      POSTGRES_DB: postd_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: bloodpressure_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-_b6_h&78gh1*szl0g_$v%gp7o2af!^81wd96yrf6p@y3!%d=dh
+
+volumes:
+  pgdata:
