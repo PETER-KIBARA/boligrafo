@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/medication_provider.dart';
-import '../medication_service.dart';
+import '../../providers/medication_provider.dart';
+import '../models/medication_service.dart';
 
 class MedicationScreen extends StatelessWidget {
   const MedicationScreen({super.key});

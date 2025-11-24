@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_service.dart';
-import '../medication_service.dart';
+import '../models/medication_service.dart';
 
 class MedicationProvider extends ChangeNotifier {
   late final MedicationService _medService;

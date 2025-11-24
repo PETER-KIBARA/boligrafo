@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/main_screen.dart';
-import 'package:myapp/login_screen.dart';
-import 'notifications_service.dart'; 
+import 'package:myapp/screens/main_screen.dart';
+import 'package:myapp/screens/login_screen.dart';
+import 'models/notifications_service.dart'; 
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'tips_details.dart';
-import 'tips_data.dart';
+import '../models/tips_details.dart';
+import '../models/tips_data.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'providers/auth_provider.dart';
-import 'providers/vitals_provider.dart';
-import 'providers/medication_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/vitals_provider.dart';
+import '../providers/medication_provider.dart';
 import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
