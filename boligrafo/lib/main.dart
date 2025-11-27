@@ -46,12 +46,19 @@ class MyApp extends StatelessWidget {
     ),
   ],
       
+
+
+
+
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return MaterialApp(
             title: 'Hypertension care',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(primarySwatch: Colors.blue),
+            // theme: ThemeData.dark(),        
+            //     darkTheme: ThemeData.dark(),   
+            //     themeMode: ThemeMode.dark,
+             theme: ThemeData(primarySwatch: Colors.blue),
             home: const AuthWrapper(),
           );
         },

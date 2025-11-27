@@ -90,7 +90,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString("patientName", _patientName!);
     
     // Save token expiry
-    final expiryDate = DateTime.now().add(const Duration(hours: 1));
+    final expiryDate = DateTime.now().add(const Duration(days: 10));
     await prefs.setString("tokenExpiry", expiryDate.toIso8601String());
     
     _isLoggedIn = true;

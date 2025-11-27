@@ -4,8 +4,7 @@ import 'dashboard_screen.dart';
 import 'log_vitals_screen.dart';
 import 'detailed_report_screen.dart';
 import 'emergency_guidance_screen.dart';
-import '../models/tips_data.dart';
-import '../models/tips_details.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -29,10 +28,8 @@ class _MainScreenState extends State<MainScreen> {
     const DashboardScreen(),
     const MedicationScreen(),
     const LogVitalsScreen(),
-    const MedicationScreen(),
     const DetailedReportScreen(),
     const EmergencyGuidanceScreen(),
-    LifestyleTipDetailScreen(tipId: lifestyleTips.first.id),
   ];
 
   void _onItemTapped(int index) {
