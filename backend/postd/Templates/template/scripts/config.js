@@ -1,5 +1,5 @@
 // const API_BASE = "https://backend-ubq3.onrender.com/api";
-const API_BASE = "http://192.168.100.93:8000/api";
+const API_BASE = "http://192.168.100.244:8000/api";
 
 function getAuthHeaders() {
   const token = localStorage.getItem("doctorToken");
