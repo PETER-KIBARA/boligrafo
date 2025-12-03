@@ -382,84 +382,91 @@
           });
         </script>
 
-        <!-- Chart -->
-        <!-- Chart Card -->
+        <!-- Blood Pressure Trends Section -->
 
-<div class="card mb-4">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h6 class="m-0">Blood Pressure Trends & Insights</h6>
-    <small class="text-muted">Weekly averages with medical recommendations</small>
-  </div>
-  <div class="card-body">
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-      <div class="col-md-3">
-        <div class="card bg-light">
-          <div class="card-body text-center p-3">
-            <h6 class="card-title">Current Avg</h6>
-            <h4 id="currentAvg" class="mb-0">--/--</h4>
-            <small class="text-muted">mmHg</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-light">
-          <div class="card-body text-center p-3">
-            <h6 class="card-title">Trend</h6>
-            <div id="trendIndicator" class="mb-1">
-              <i class="bi bi-dash-circle text-secondary"></i>
-            </div>
-            <small id="trendText" class="text-muted">Stable</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-light">
-          <div class="card-body text-center p-3">
-            <h6 class="card-title">Category</h6>
-            <span id="bpCategory" class="badge bg-secondary">--</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-light">
-          <div class="card-body text-center p-3">
-            <h6 class="card-title">Patients</h6>
-            <h4 id="patientCount" class="mb-0">--</h4>
-            <small class="text-muted">Monitored</small>
-          </div>
-        </div>
-      </div>
-    </div>
+        <script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const ctx = document.getElementById("bpChart").getContext("2d");
 
-    <!-- Chart -->
-    <div class="chart-container" style="position: relative; height: 300px;">
-      <canvas id="bpTrendChart"></canvas>
-    </div>
+    try {
+        const res = await authFetch(`${API_BASE}/vitals`);
+        const data = res.ok ? await res.json() : [];
 
-    <!-- Medical Insights -->
-    <div class="mt-4">
-      <h6>Medical Insights & Recommendations</h6>
-      <div id="medicalInsights" class="alert alert-info">
-        <div class="d-flex">
-          <i class="bi bi-info-circle me-2 mt-1"></i>
-          <div>
-            <strong>Loading insights...</strong><br>
-            <small>Analyzing patient blood pressure trends</small>
-          </div>
-        </div>
-      </div>
-    </div>
+        console.log("Vitals data:", data);
 
-    <!-- Action Items -->
-    <div class="mt-3">
-      <h6>Recommended Actions</h6>
-      <div id="actionItems" class="row">
-        <!-- Action items will be populated here -->
-      </div>
-    </div>
-  </div>
-</div>
+        // Group by date
+        const grouped = {};
+        data.forEach(v => {
+            const date = v.created_at?.split("T")[0] || "Unknown";
+
+            if (!grouped[date]) {
+                grouped[date] = { sys: [], dia: [], heart: [] };
+            }
+
+            grouped[date].sys.push(v.systolic);
+            grouped[date].dia.push(v.diastolic);
+            grouped[date].heart.push(v.heart_rate);
+        });
+
+        const dates = Object.keys(grouped).sort();
+
+        const avgSys = dates.map(d =>
+            Math.round(grouped[d].sys.reduce((a, b) => a + b, 0) / grouped[d].sys.length)
+        );
+
+        const avgDia = dates.map(d =>
+            Math.round(grouped[d].dia.reduce((a, b) => a + b, 0) / grouped[d].dia.length)
+        );
+
+        const avgHeart = dates.map(d =>
+            Math.round(grouped[d].heart.reduce((a, b) => a + b, 0) / grouped[d].heart.length)
+        );
+
+        // Create chart
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: "Avg Systolic",
+                        data: avgSys,
+                        borderColor: "#d9534f",
+                        tension: 0.3
+                    },
+                    {
+                        label: "Avg Diastolic",
+                        data: avgDia,
+                        borderColor: "#5bc0de",
+                        tension: 0.3
+                    },
+                    {
+                        label: "Avg Heart Rate",
+                        data: avgHeart,
+                        borderColor: "#5cb85c",
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        title: { display: true, text: "Value" }
+                    },
+                    x: {
+                        title: { display: true, text: "Date" }
+                    }
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error("Chart load error:", err);
+        alert("Error loading patient readings.");
+    }
+});
+</script>
 
 <script>
 let trendChart = null;

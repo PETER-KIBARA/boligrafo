@@ -26,6 +26,8 @@ from .models import Prescription
 from .serializers import PrescriptionSerializer
 from .models import UserProfile  
 from .models import Treatment
+from .models import PrescriptionLog
+from datetime import datetime, time
 from .serializers import TreatmentSerializer
 from .serializers import UserProfileSerializer
 from .models import Notification
@@ -34,7 +36,8 @@ from .services import NotificationService
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.http import JsonResponse
-
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
 # from .models import Notification
 #~from .serializers import NotificationSerializer
 
@@ -197,6 +200,64 @@ def doctor_profile(request):
 
     return Response(data, status=200)
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def log_prescription_dose(request, prescription_id):
+    """
+    Endpoint for patients to mark a dose as taken.
+    """
+    user = request.user
+    profile = getattr(user, "profile", None)
+    if not profile:
+        return Response({"error": "User profile not found"}, status=404)
+
+    try:
+        prescription = Prescription.objects.get(id=prescription_id, patient=profile)
+    except Prescription.DoesNotExist:
+        return Response({"error": "Prescription not found"}, status=404)
+
+    dose_label = request.data.get("dose_label")
+    if dose_label not in ["morning", "afternoon", "evening", "night"]:
+        return Response({"error": "Invalid dose_label"}, status=400)
+
+    today = timezone.localdate()
+    start_of_day = datetime.combine(today, time.min, tzinfo=timezone.get_current_timezone())
+    end_of_day = datetime.combine(today, time.max, tzinfo=timezone.get_current_timezone())
+
+    log_exists = PrescriptionLog.objects.filter(
+        prescription=prescription,
+        patient=profile,
+        dose_label=dose_label,
+        taken_at__range=(start_of_day, end_of_day)
+    ).exists()
+
+    if log_exists:
+        return Response({"message": f"{dose_label} dose already marked today"}, status=200)
+
+    # Map dose_label to approximate time
+    dose_time_map = {
+        "morning": time(8, 0),
+        "afternoon": time(14, 0),
+        "evening": time(20, 0),
+        "night": time(22, 0),
+    }
+
+    PrescriptionLog.objects.create(
+        prescription=prescription,
+        patient=profile,
+        dose_label=dose_label,
+        dose_time=dose_time_map.get(dose_label, timezone.now().time()),
+        taken_at=timezone.now()
+    )
+
+    return Response({"message": f"{dose_label} dose marked as taken"}, status=201)
+
+def get_remaining_doses(self, obj):
+    freq_map = {"1": ["morning"], "2": ["morning", "evening"], "3": ["morning", "afternoon", "evening"]}
+    today_logs = obj.logs.filter(taken_at__date=timezone.localdate())
+    taken_labels = [log.dose_label for log in today_logs]
+    all_labels = freq_map.get(str(obj.frequency), [])
+    return list(set(all_labels) - set(taken_labels))
 
 
 

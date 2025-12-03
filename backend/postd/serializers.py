@@ -2,6 +2,7 @@ from rest_framework import serializers
 from  .models import UserProfile
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.authtoken.models import Token
 from .models import DoctorProfile
 from .models import VitalReading
 from .models import Prescription
@@ -138,6 +139,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "duration_days",
             "instructions",
             "created_at",
+        #    "doses_taken_today",
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "created_at"]
 

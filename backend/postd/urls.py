@@ -14,6 +14,7 @@ from .views import NotificationListView
 from .views import UserProfileListView
 from .views import NotificationDetailView  
 from .views import PatientPrescriptionListView, PatientPrescriptionRetrieveUpdateView
+from .views import log_prescription_dose
 
 
   
@@ -41,6 +42,7 @@ path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
 path('create-admin/', create_admin),
 path('notifications/', NotificationListView.as_view(), name='notifications'),
 path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
+path('prescriptions/<int:prescription_id>/log-dose/', views.log_prescription_dose, name='log-dose'),
 
 
 
