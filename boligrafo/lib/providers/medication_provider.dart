@@ -49,47 +49,37 @@ class MedicationProvider extends ChangeNotifier {
   }
 
   // -------------------- Log a single dose --------------------
-  Future<void> logDoseTaken(int prescriptionId, String doseKey) async {
-    _setLoading(true);
-    _error = null;
+Future<void> logDoseTaken(int prescriptionId, String doseKey) async {
+  _setLoading(true);
+  _error = null;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString("patientToken") ?? "";
-      final timestamp = DateTime.now().toIso8601String();
+  try {
+    // Update backend + local storage
+    final success = await _medService.logDoseTaken(prescriptionId, doseKey, true);
+    if (!success) throw Exception("Failed to log dose on server");
 
-      // Update backend
-      await ApiService.logDoseTaken(
-        token: token,
-        prescriptionId: prescriptionId,
-        doseKey: doseKey,
-      );
+    // Update local state for UI
+    _medications = _medications.map((med) {
+      if (med.id == prescriptionId) {
+        final updatedDoses = med.doses.map((d) {
+          if (d.backendKey == doseKey) {
+            return d.copyWith(isTaken: true, doseTime: DateTime.now().toIso8601String());
+          }
+          return d;
+        }).toList();
+        return med.copyWith(doses: updatedDoses);
+      }
+      return med;
+    }).toList();
 
-      // Update local state
-      _medications = _medications.map((med) {
-        if (med.id == prescriptionId) {
-          final updatedDoses = med.doses.map((d) {
-            if (d.backendKey == doseKey) {
-              return d.copyWith(isTaken: true, doseTime: timestamp);
-            }
-            return d;
-          }).toList();
-          return med.copyWith(doses: updatedDoses);
-        }
-        return med;
-      }).toList();
-
-      // Persist locally
-      await _medService.logDoseTaken(prescriptionId, doseKey, timestamp != true);
-
-      notifyListeners();
-    } catch (e, stack) {
-      _error = e.toString();
-      debugPrint('Error logging dose: $e\n$stack');
-    } finally {
-      _setLoading(false);
-    }
+    notifyListeners();
+  } catch (e, stack) {
+    _error = e.toString();
+    debugPrint('Error logging dose: $e\n$stack');
+  } finally {
+    _setLoading(false);
   }
+}
 
   // -------------------- Mark all doses for a prescription --------------------
   Future<void> markAllDoses(int prescriptionId, bool taken) async {
