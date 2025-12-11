@@ -38,6 +38,8 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from .models import Appointment
+from .serializers import AppointmentSerializer
 # from .models import Notification
 #~from .serializers import NotificationSerializer
 
@@ -567,3 +569,36 @@ def create_admin(request):
         return HttpResponse("Superuser created ✅")
     else:
         return HttpResponse("Admin already exists.")
+
+
+
+class AppointmentListCreateView(generics.ListCreateAPIView):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Doctor filters
+        if hasattr(user, "doctor_profile"):
+            patient_id = self.request.query_params.get("patient_id")
+            if patient_id:
+                return Appointment.objects.filter(patient_id=patient_id)
+
+            return Appointment.objects.filter(doctor=user)
+
+        # Patient filters
+        return Appointment.objects.filter(patient__user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not hasattr(user, "doctor_profile"):
+            raise PermissionDenied("Only doctors can create appointments.")
+        serializer.save(doctor=user)
+
+
+class AppointmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]

@@ -233,3 +233,35 @@ class Notification(models.Model):
             elif self.bp_systolic < 90 or self.bp_diastolic < 60:
                 return "Hypotension"
         return "Normal"
+
+
+class Appointment(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("cancelled", "Cancelled"),
+        ("completed", "Completed"),
+    ]
+
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="doctor_appointments"
+    )
+    patient = models.ForeignKey(
+        "UserProfile",
+        on_delete=models.CASCADE,
+        related_name="patient_appointments"
+    )
+    date = models.DateField()
+    time = models.TimeField()
+    reason = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date", "-time"]
+
+    def __str__(self):
+        return f"{self.patient.user.get_full_name()} -> {self.date} {self.time}"
