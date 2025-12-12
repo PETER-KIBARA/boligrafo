@@ -237,44 +237,23 @@ class Notification(models.Model):
 
 class Appointment(models.Model):
     STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("confirmed", "Confirmed"),
-        ("cancelled", "Cancelled"),
+        ("scheduled", "Scheduled"),
         ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+        ("missed", "Missed"),
     ]
 
-    slot = models.OneToOneField("DoctorSlot", on_delete=models.CASCADE, related_name="appointment")
     patient = models.ForeignKey("postd.UserProfile", on_delete=models.CASCADE, related_name="appointments")
+    doctor = models.ForeignKey("postd.DoctorProfile", on_delete=models.CASCADE, related_name="appointments", null=True, blank=True)
 
-    reason = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    date = models.DateField(null=True, blank=True)
+    time = models.TimeField(null=True, blank=True)
+    reason = models.TextField(default="Hypertension follow-up")
 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
+
+    created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
-
-class Availability(models.Model):
-    doctor = models.ForeignKey("postd.DoctorProfile", on_delete=models.CASCADE)
-    weekday = models.IntegerField()  # 0 = Monday ... 6 = Sunday
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    slot_minutes = models.PositiveIntegerField(default=15)
-    is_active = models.BooleanField(default=True)
-
-class DoctorSlot(models.Model):
-    doctor = models.ForeignKey("postd.DoctorProfile", on_delete=models.CASCADE, related_name="slots")
-    date = models.DateField()
-    time = models.TimeField()
-
-    is_booked = models.BooleanField(default=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("doctor", "date", "time")
-        ordering = ["date", "time"]
 
     def __str__(self):
-        return f"{self.doctor.full_name} - {self.date} {self.time}"
-
+        return f"{self.patient.user.get_full_name()} - {self.date} {self.time}"

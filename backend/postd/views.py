@@ -39,10 +39,6 @@ from django.http import JsonResponse
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from .models import Appointment
-from .models import Availability
-from .models import DoctorSlot
-from .serializers import DoctorSlotSerializer
-from .serializers import AppointmentSerializer
 from rest_framework import serializers
 from .serializers import AppointmentSerializer
 from datetime import timedelta
@@ -575,94 +571,43 @@ def create_admin(request):
     else:
         return HttpResponse("Admin already exists.")
 
-class AppointmentCreateView(generics.CreateAPIView):
+class DoctorCreateAppointmentView(generics.CreateAPIView):
     serializer_class = AppointmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        slot = serializer.validated_data["slot"]
-        if slot.is_booked:
-            raise serializers.ValidationError("This slot is already booked.")
-        slot.is_booked = True
-        slot.save()
-        serializer.save(created_by=self.request.user)
-
-
-class AppointmentListCreateView(generics.ListCreateAPIView):
-    serializer_class = AppointmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if hasattr(user, "doctor_profile"):
-            return Appointment.objects.filter(doctor=user.doctor_profile)
-        return Appointment.objects.filter(patient=user.profile)
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-class AppointmentUpdateView(generics.UpdateAPIView):
-    serializer_class = AppointmentSerializer
-    queryset = Appointment.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-
-
-@api_view(["GET"])
-def doctor_available_slots(request, doctor_id):
-    date_string = request.query_params.get("date")
-    date_obj = datetime.strptime(date_string, "%Y-%m-%d").date()
-
-    weekday = date_obj.weekday()
-    doctor = DoctorProfile.objects.get(id=doctor_id)
-    availability = Availability.objects.filter(doctor=doctor, weekday=weekday, is_active=True).first()
-
-    if not availability:
-        return Response({"slots": []})
-
-    # generate slots
-    slot_list = []
-    start = datetime.combine(date_obj, availability.start_time)
-    end = datetime.combine(date_obj, availability.end_time)
-
-    while start < end:
-        slot_list.append(start.time().strftime("%H:%M"))
-        start += timedelta(minutes=availability.slot_minutes)
-
-    # remove booked slots
-    booked = Appointment.objects.filter(doctor=doctor, date=date_obj).values_list("time", flat=True)
-    slot_list = [s for s in slot_list if s not in booked]
-
-    return Response({"slots": slot_list})
-
-class DoctorSlotCreateView(generics.CreateAPIView):
-    serializer_class = DoctorSlotSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         user = self.request.user
         if not hasattr(user, "doctor_profile"):
-            raise PermissionDenied("Only doctors can create slots.")
-        serializer.save(doctor=user.doctor_profile)
+            raise PermissionDenied("Only doctors can schedule follow-up appointments.")
+        
+        serializer.save(
+            doctor=user.doctor_profile,
+            created_by=user
+        )
 
-@api_view(["GET"])
-def doctor_slots(request, doctor_id):
-    date = request.GET.get("date")
-    qs = DoctorSlot.objects.filter(
-        doctor_id=doctor_id,
-        date=date,
-        is_booked=False
-    ).order_by("time")
-
-    serializer = DoctorSlotSerializer(qs, many=True)
-    return Response(serializer.data)
-
-class AppointmentCancelView(generics.UpdateAPIView):
-    queryset = Appointment.objects.all()
+class PatientAppointmentListView(generics.ListAPIView):
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_update(self, serializer):
-        appointment = self.get_object()
-        appointment.slot.is_booked = False
-        appointment.slot.save()
-        serializer.save(status="cancelled")
+    def get_queryset(self):
+        patient_id = self.kwargs["id"]
+        return Appointment.objects.filter(patient_id=patient_id).order_by("-date")
+
+class PatientMyAppointmentsView(generics.ListAPIView):
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Appointment.objects.filter(patient=user.profile).order_by("date")
+
+
+class DoctorUpcomingAppointmentsView(generics.ListAPIView):
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Appointment.objects.filter(
+            doctor=user.doctor_profile
+        ).order_by("date", "time")

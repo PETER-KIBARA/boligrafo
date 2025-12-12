@@ -1,61 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Appointment</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles/appointments.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f0f7ff;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      border: none;
+    }
+    .header {
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 14px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+    .btn-elegant {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      border-radius: 10px;
+      padding: 0.6rem 1.4rem;
+      font-weight: 600;
+    }
+  </style>
 </head>
-<body>
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2>Create Appointment</h2>
-      <a href="appointments.html" class="btn btn-outline-secondary">Back to Appointments</a>
+
+<body class="p-4">
+
+  <!-- HEADER -->
+  <div class="header d-flex justify-content-between align-items-center">
+    <h3><i class="fas fa-calendar-plus me-2"></i>Create Appointment</h3>
+
+    <button class="btn btn-secondary" onclick="history.back()">
+      <i class="fas fa-arrow-left me-1"></i> Back
+    </button>
+  </div>
+
+  <div class="container" style="max-width: 900px;">
+    
+    <!-- PATIENT CARD -->
+    <div class="card p-3 mb-4">
+      <h5><i class="fas fa-user me-2"></i>Patient Information</h5>
+      <hr>
+      <div id="patientInfo">Loading...</div>
     </div>
 
-    <div class="card">
-      <div class="card-body">
-        <form id="appointmentForm">
-          <div class="mb-3">
-            <label class="form-label">Patient</label>
-            <select id="patientSelect" class="form-select" required>
-              <option value="">Loading patients...</option>
-            </select>
-          </div>
+    <!-- CREATE APPOINTMENT FORM -->
+    <div class="card p-4 mb-4">
+      <h5><i class="fas fa-plus-circle me-2"></i>Schedule Follow-Up Appointment</h5>
+      <hr>
 
-          <div class="row g-2">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Date</label>
-              <input id="apptDate" type="date" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Time</label>
-              <input id="apptTime" type="time" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Reason</label>
-            <input id="apptReason" class="form-control" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <textarea id="apptNotes" class="form-control" rows="3"></textarea>
-          </div>
-
-          <div class="d-grid">
-            <button class="btn btn-primary">Create Appointment</button>
-          </div>
-        </form>
+      <div class="mb-3">
+        <label class="form-label">Appointment Date</label>
+        <input type="date" id="apptDate" class="form-control">
       </div>
+
+      <div class="mb-3">
+        <label class="form-label">Appointment Time</label>
+        <input type="time" id="apptTime" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Reason</label>
+        <textarea id="apptReason" class="form-control">Hypertension follow-up</textarea>
+      </div>
+
+      <button class="btn-elegant" onclick="createAppointment()">
+        <i class="fas fa-save me-1"></i>Create Appointment
+      </button>
+
+      <p id="msg" class="mt-3 text-muted"></p>
+    </div>
+
+    <!-- PREVIOUS APPOINTMENTS -->
+    <div class="card p-4">
+      <h5><i class="fas fa-list me-2"></i>Previous Appointments</h5>
+      <hr>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Time</th><th>Reason</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsTable">
+          <tr><td colspan="4">Loading...</td></tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
 
   <script src="scripts/config.js"></script>
-  <script type="module" src="scripts/appointments.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const patientId = new URLSearchParams(location.search).get("id");
+    const token = localStorage.getItem("doctorToken");
+
+    function authHeaders() {
+      return {
+        "Authorization": "Token " + token,
+        "Content-Type": "application/json"
+      };
+    }
+
+    // Load patient info
+    async function loadPatient() {
+      const res = await fetch(`${API_BASE}/patients/${patientId}/`, { headers: authHeaders() });
+      const p = await res.json();
+
+      document.getElementById("patientInfo").innerHTML = `
+        <strong>Name:</strong> ${p.user.first_name} ${p.user.last_name}<br>
+        <strong>Phone:</strong> ${p.phone}<br>
+        <strong>Gender:</strong> ${p.gender}<br>
+        <strong>DOB:</strong> ${p.dob}
+      `;
+    }
+
+    // Load previous appointments
+    async function loadAppointments() {
+      const res = await fetch(`${API_BASE}/patients/${patientId}/appointments/`, { headers: authHeaders() });
+      const list = await res.json();
+
+      if (list.length === 0) {
+        document.getElementById("appointmentsTable").innerHTML = `
+          <tr><td colspan="4" class="text-muted">No previous appointments</td></tr>
+        `;
+        return;
+      }
+
+      document.getElementById("appointmentsTable").innerHTML = list.map(a => `
+        <tr>
+          <td>${a.date}</td>
+          <td>${a.time}</td>
+          <td>${a.reason}</td>
+          <td>${a.status}</td>
+        </tr>
+      `).join("");
+    }
+
+    // Create Appointment
+    async function createAppointment() {
+      const date = document.getElementById("apptDate").value;
+      const time = document.getElementById("apptTime").value;
+      const reason = document.getElementById("apptReason").value;
+
+      if (!date || !time) {
+        document.getElementById("msg").innerText = "Please select date and time.";
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/appointments/create/`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          patient: patientId,
+          date: date,
+          time: time,
+          reason: reason
+        })
+      });
+
+      if (res.ok) {
+        document.getElementById("msg").innerHTML = `<span class="text-success">Appointment created successfully!</span>`;
+        loadAppointments();
+      } else {
+        const err = await res.text();
+        document.getElementById("msg").innerHTML = `<span class="text-danger">Error: ${err}</span>`;
+      }
+    }
+
+    loadPatient();
+    loadAppointments();
+  </script>
+
 </body>
 </html>

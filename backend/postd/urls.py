@@ -15,8 +15,10 @@ from .views import UserProfileListView
 from .views import NotificationDetailView  
 from .views import PatientPrescriptionListView, PatientPrescriptionRetrieveUpdateView
 from .views import log_prescription_dose
-from .views import AppointmentListCreateView, AppointmentUpdateView, doctor_available_slots
-
+from .views import DoctorCreateAppointmentView
+from .views import DoctorUpcomingAppointmentsView
+from .views import PatientAppointmentListView
+from .views import PatientMyAppointmentsView
 
   
 
@@ -44,10 +46,10 @@ path('create-admin/', create_admin),
 path('notifications/', NotificationListView.as_view(), name='notifications'),
 path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
 path('prescriptions/<int:prescription_id>/log-dose/', views.log_prescription_dose, name='log-dose'),
-path("appointments/", AppointmentListCreateView.as_view()),
-path("appointments/<int:pk>/", AppointmentUpdateView.as_view()),
-path("doctors/<int:pk>/slots/", doctor_available_slots),
-
+path("appointments/create/", DoctorCreateAppointmentView.as_view()),
+path("appointments/my/", PatientMyAppointmentsView.as_view()),
+path("doctor/appointments/", DoctorUpcomingAppointmentsView.as_view()),
+path("patients/<int:id>/appointments/", PatientAppointmentListView.as_view()),
 
 
 ]
