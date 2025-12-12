@@ -8,6 +8,9 @@ from .models import Prescription
 from .models import Treatment
 from .models import Notification
 from .models import PrescriptionLog
+from .models import DoctorSlot
+from .models import Appointment
+from .models import Availability
 
 
 
@@ -131,7 +134,39 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ('title', 'message', 'doctor__user__username', 'patient__user__username')
     ordering = ('-created_at',)
 
+@admin.register(DoctorSlot)
+class DoctorSlotAdmin(admin.ModelAdmin):
+    list_display = ("doctor", "date", "time", "is_booked")
+    list_filter = ("doctor", "date", "is_booked")
+    search_fields = ("doctor__full_name",)
+    ordering = ("date", "time")
 
+
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = ("patient", "get_doctor", "get_date", "get_time", "status", "created_at")
+    list_filter = ("status", "slot__doctor", "slot__date")
+    search_fields = ("patient__user__first_name", "patient__user__last_name")
+    ordering = ("-created_at",)
+
+    def get_doctor(self, obj):
+        return obj.slot.doctor.full_name
+    get_doctor.short_description = "Doctor"
+
+    def get_date(self, obj):
+        return obj.slot.date
+    get_date.short_description = "Date"
+
+    def get_time(self, obj):
+        return obj.slot.time
+    get_time.short_description = "Time"
+
+
+@admin.register(Availability)
+class AvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("doctor", "weekday", "start_time", "end_time", "slot_minutes", "is_active")
+    list_filter = ("doctor", "weekday", "is_active")
+    ordering = ("doctor", "weekday")
 
 # Unregister the default User admin
 admin.site.unregister(User)

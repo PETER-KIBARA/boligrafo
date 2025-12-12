@@ -8,6 +8,8 @@ from .models import VitalReading
 from .models import Prescription
 from .models import Treatment
 from .models import Notification
+from .models import Appointment
+from .models import DoctorSlot
 
 
 
@@ -214,3 +216,30 @@ class NotificationSerializer(serializers.ModelSerializer):
             return "Hypotension"
         else:
             return "Normal"
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source="slot.doctor.full_name", read_only=True)
+    date = serializers.DateField(source="slot.date", read_only=True)
+    time = serializers.TimeField(source="slot.time", read_only=True)
+
+    class Meta:
+        model = Appointment
+        fields = [
+            "id",
+            "slot",
+            "doctor_name",
+            "date",
+            "time",
+            "patient",
+            "reason",
+            "status",
+            "created_at",
+        ]
+
+
+class DoctorSlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorSlot
+        fields = ["id", "doctor", "date", "time", "is_booked"]
+        read_only_fields = ["is_booked"]

@@ -1,0 +1,9 @@
+/* Minimal styles to match your dashboard look */
+body { background: #f5f7fb; font-family: Poppins, system-ui, sans-serif; }
+.card { border-radius: 10px; }
+.table thead th { font-weight: 600; }
+.badge-status { padding: 6px 10px; border-radius: 12px; font-weight: 600; }
+.badge-pending { background: #f0ad4e; color: #fff; }
+.badge-confirmed { background: #1cc88a; color: #fff; }
+.badge-completed { background: #4e73df; color: #fff; }
+.badge-cancelled { background: #e74a3b; color: #fff; }
