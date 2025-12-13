@@ -9,180 +9,654 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <style>
+    :root {
+      --primary: #2c5aa0;
+      --primary-light: #e8efff;
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
     body {
-      background: #f0f7ff;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
       font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
     }
-    .card {
-      border-radius: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-      border: none;
+    
+    .container {
+      max-width: 900px;
     }
-    .header {
+    
+    .header-card {
       background: white;
-      padding: 1rem 1.5rem;
-      border-radius: 14px;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-    }
-    .btn-elegant {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
       border: none;
-      color: white;
+    }
+    
+    .content-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      border: none;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .btn-primary {
+      background: var(--gradient);
+      border: none;
       border-radius: 10px;
-      padding: 0.6rem 1.4rem;
+      padding: 0.75rem 2rem;
       font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      border-radius: 10px;
+      padding: 0.75rem 2rem;
+      font-weight: 500;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.1);
+    }
+    
+    .patient-info-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e8efff 100%);
+      border-left: 5px solid var(--primary);
+    }
+    
+    .appointment-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-scheduled { background: #d1e7dd; color: #0f5132; }
+    .status-completed { background: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    
+    .time-slot {
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .time-slot:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    
+    .time-slot.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 3px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spinner 0.75s linear infinite;
+    }
+    
+    @keyframes spinner {
+      to { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: #6c757d;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.7;
     }
   </style>
 </head>
-
-<body class="p-4">
-
-  <!-- HEADER -->
-  <div class="header d-flex justify-content-between align-items-center">
-    <h3><i class="fas fa-calendar-plus me-2"></i>Create Appointment</h3>
-
-    <button class="btn btn-secondary" onclick="history.back()">
-      <i class="fas fa-arrow-left me-1"></i> Back
-    </button>
-  </div>
-
-  <div class="container" style="max-width: 900px;">
+<body>
+  <div class="container">
     
-    <!-- PATIENT CARD -->
-    <div class="card p-3 mb-4">
-      <h5><i class="fas fa-user me-2"></i>Patient Information</h5>
-      <hr>
-      <div id="patientInfo">Loading...</div>
-    </div>
-
-    <!-- CREATE APPOINTMENT FORM -->
-    <div class="card p-4 mb-4">
-      <h5><i class="fas fa-plus-circle me-2"></i>Schedule Follow-Up Appointment</h5>
-      <hr>
-
-      <div class="mb-3">
-        <label class="form-label">Appointment Date</label>
-        <input type="date" id="apptDate" class="form-control">
+    <!-- Header -->
+    <div class="header-card d-flex justify-content-between align-items-center">
+      <div>
+        <h3 class="mb-1"><i class="fas fa-calendar-plus text-primary me-2"></i>Create New Appointment</h3>
+        <p class="text-muted mb-0">Schedule a follow-up appointment for your patient</p>
       </div>
-
-      <div class="mb-3">
-        <label class="form-label">Appointment Time</label>
-        <input type="time" id="apptTime" class="form-control">
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Reason</label>
-        <textarea id="apptReason" class="form-control">Hypertension follow-up</textarea>
-      </div>
-
-      <button class="btn-elegant" onclick="createAppointment()">
-        <i class="fas fa-save me-1"></i>Create Appointment
+      <button class="btn btn-secondary" onclick="window.history.back()">
+        <i class="fas fa-arrow-left me-1"></i> Back to Patient
       </button>
-
-      <p id="msg" class="mt-3 text-muted"></p>
     </div>
-
-    <!-- PREVIOUS APPOINTMENTS -->
-    <div class="card p-4">
-      <h5><i class="fas fa-list me-2"></i>Previous Appointments</h5>
-      <hr>
-
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Date</th><th>Time</th><th>Reason</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="appointmentsTable">
-          <tr><td colspan="4">Loading...</td></tr>
-        </tbody>
-      </table>
+    
+    <div class="row">
+      <!-- Left Column: Patient Info & Appointment Form -->
+      <div class="col-lg-8">
+        
+        <!-- Patient Information -->
+        <div class="content-card patient-info-card mb-4">
+          <h5><i class="fas fa-user-circle me-2"></i>Patient Information</h5>
+          <hr>
+          <div id="patientInfo" class="row">
+            <div class="col-md-6">
+              <p><strong><i class="fas fa-user me-2"></i>Full Name:</strong> <span id="patientName">Loading...</span></p>
+              <p><strong><i class="fas fa-phone me-2"></i>Phone:</strong> <span id="patientPhone">Loading...</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong><i class="fas fa-venus-mars me-2"></i>Gender:</strong> <span id="patientGender">Loading...</span></p>
+              <p><strong><i class="fas fa-birthday-cake me-2"></i>Date of Birth:</strong> <span id="patientDOB">Loading...</span></p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Appointment Form -->
+        <div class="content-card">
+          <h5><i class="fas fa-calendar-alt me-2"></i>Appointment Details</h5>
+          <hr>
+          
+          <div id="formMessage" class="alert" style="display: none;"></div>
+          
+          <form id="appointmentForm">
+            <!-- Date Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Select Date <span class="text-danger">*</span></label>
+              <input type="date" id="appointmentDate" class="form-control" required>
+              <div class="form-text">Select a date for the appointment</div>
+            </div>
+            
+            <!-- Time Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Select Time <span class="text-danger">*</span></label>
+              <div class="row g-2" id="timeSlotsContainer">
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="09:00">09:00 AM</div>
+                </div>
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="10:00">10:00 AM</div>
+                </div>
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="11:00">11:00 AM</div>
+                </div>
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="14:00">02:00 PM</div>
+                </div>
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="15:00">03:00 PM</div>
+                </div>
+                <div class="col-6 col-md-3 mb-2">
+                  <div class="time-slot" data-time="16:00">04:00 PM</div>
+                </div>
+              </div>
+              <input type="hidden" id="selectedTime" required>
+              <div class="form-text">Select an available time slot</div>
+            </div>
+            
+            <!-- Appointment Type -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Appointment Type <span class="text-danger">*</span></label>
+              <select id="appointmentType" class="form-select" required>
+                <option value="">Select type</option>
+                <option value="follow_up" selected>Follow-up Visit</option>
+                <option value="routine">Routine Checkup</option>
+                <option value="consultation">Consultation</option>
+                <option value="emergency">Emergency</option>
+                <option value="new_patient">New Patient</option>
+              </select>
+            </div>
+            
+            <!-- Reason/Notes -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Reason / Notes</label>
+              <textarea id="appointmentReason" class="form-control" rows="4" placeholder="Enter reason for appointment, symptoms, or any special notes...">Hypertension follow-up</textarea>
+            </div>
+            
+            <!-- Duration -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Duration</label>
+              <select id="appointmentDuration" class="form-select">
+                <option value="15">15 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">Cancel</button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Create Appointment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Right Column: Previous Appointments -->
+      <div class="col-lg-4">
+        <div class="content-card h-100">
+          <h5><i class="fas fa-history me-2"></i>Appointment History</h5>
+          <hr>
+          <div id="appointmentHistory">
+            <div class="text-center py-4">
+              <div class="loading-spinner text-primary mb-3"></div>
+              <p>Loading appointment history...</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
   </div>
 
-  <script src="scripts/config.js"></script>
-  <script>
-    const patientId = new URLSearchParams(location.search).get("id");
-    const token = localStorage.getItem("doctorToken");
+  <!-- Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-success"><i class="fas fa-check-circle me-2"></i>Appointment Created!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <i class="fas fa-calendar-check text-success" style="font-size: 4rem;"></i>
+          <h4 class="mt-3">Appointment Scheduled Successfully</h4>
+          <p class="text-muted">The appointment has been created and added to the patient's schedule.</p>
+        </div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="viewProfileBtn">View Patient Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    function authHeaders() {
-      return {
-        "Authorization": "Token " + token,
-        "Content-Type": "application/json"
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Load config first -->
+  <script src="../scripts/config.js"></script>
+  
+  <script>
+    // ==============================
+    // AUTHENTICATION AND SETUP
+    // ==============================
+    const token = localStorage.getItem("doctorToken");
+    const patientId = new URLSearchParams(location.search).get("id");
+    const doctorName = localStorage.getItem("doctorName");
+    const doctorSpecialty = localStorage.getItem("doctorSpecialty");
+
+    // Redirect if no token or patient ID
+    if (!token) {
+      alert("Please log in to create appointments.");
+      window.location.href = "../doctors_login.html";
+    }
+
+    if (!patientId) {
+      alert("Missing patient ID. Redirecting...");
+      window.location.href = "../patients.html";
+    }
+
+    // ==============================
+    // AUTH HEADERS FUNCTION
+    // ==============================
+    function getAuthHeaders() {
+      if (!token) return { "Content-Type": "application/json" };
+      
+      let cleanToken = token.trim();
+      if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) {
+        cleanToken = cleanToken.slice(1, -1);
+      }
+      
+      return { 
+        "Authorization": `Token ${cleanToken}`, 
+        "Content-Type": "application/json" 
       };
     }
 
-    // Load patient info
-    async function loadPatient() {
-      const res = await fetch(`${API_BASE}/patients/${patientId}/`, { headers: authHeaders() });
-      const p = await res.json();
-
-      document.getElementById("patientInfo").innerHTML = `
-        <strong>Name:</strong> ${p.user.first_name} ${p.user.last_name}<br>
-        <strong>Phone:</strong> ${p.phone}<br>
-        <strong>Gender:</strong> ${p.gender}<br>
-        <strong>DOB:</strong> ${p.dob}
-      `;
+    async function authFetch(url, options = {}) {
+      const headers = getAuthHeaders();
+      
+      try {
+        const response = await fetch(url, { 
+          ...options, 
+          headers: { ...headers, ...options.headers } 
+        });
+        
+        if (response.status === 401) {
+          localStorage.removeItem("doctorToken");
+          localStorage.removeItem("doctorName");
+          localStorage.removeItem("doctorEmail");
+          localStorage.removeItem("doctorSpecialty");
+          alert("Your session has expired. Please log in again.");
+          window.location.href = "../login.html";
+          throw new Error("Authentication failed");
+        }
+        
+        return response;
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error;
+      }
     }
 
-    // Load previous appointments
-    async function loadAppointments() {
-      const res = await fetch(`${API_BASE}/patients/${patientId}/appointments/`, { headers: authHeaders() });
-      const list = await res.json();
+    // ==============================
+    // LOAD PATIENT INFORMATION
+    // ==============================
+    async function loadPatientInfo() {
+      try {
+        // Use string concatenation to avoid template literal issues
+        const url = API_BASE + "/list_patients/" + patientId + "/";
+        console.log("Loading patient from:", url);
+        
+        const res = await authFetch(url);
 
-      if (list.length === 0) {
-        document.getElementById("appointmentsTable").innerHTML = `
-          <tr><td colspan="4" class="text-muted">No previous appointments</td></tr>
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to load patient`);
+        }
+
+        const patient = await res.json();
+        console.log("Patient data:", patient);
+        
+        // Display patient info
+        const firstName = patient.user?.first_name || patient.first_name || "Unknown";
+        const lastName = patient.user?.last_name || patient.last_name || "";
+        const phone = patient.phone || "Not provided";
+        const gender = patient.gender || "Not specified";
+        const dob = patient.dob || "Not provided";
+        
+        document.getElementById('patientName').textContent = `${firstName} ${lastName}`;
+        document.getElementById('patientPhone').textContent = phone;
+        document.getElementById('patientGender').textContent = gender;
+        document.getElementById('patientDOB').textContent = dob;
+        
+      } catch (error) {
+        console.error('Error loading patient:', error);
+        document.getElementById('patientInfo').innerHTML = `
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Failed to load patient information: ${error.message}
+          </div>
         `;
-        return;
       }
-
-      document.getElementById("appointmentsTable").innerHTML = list.map(a => `
-        <tr>
-          <td>${a.date}</td>
-          <td>${a.time}</td>
-          <td>${a.reason}</td>
-          <td>${a.status}</td>
-        </tr>
-      `).join("");
     }
 
-    // Create Appointment
-    async function createAppointment() {
-      const date = document.getElementById("apptDate").value;
-      const time = document.getElementById("apptTime").value;
-      const reason = document.getElementById("apptReason").value;
+    // ==============================
+    // LOAD APPOINTMENT HISTORY
+    // ==============================
+    async function loadAppointmentHistory() {
+      try {
+        // Use string concatenation
+        const url = API_BASE + "/patients/" + patientId + "/appointments/";
+        console.log("Loading appointments from:", url);
+        
+        const res = await authFetch(url);
 
-      if (!date || !time) {
-        document.getElementById("msg").innerText = "Please select date and time.";
-        return;
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to load appointments`);
+        }
+
+        const appointments = await res.json();
+        console.log("Appointments data:", appointments);
+        
+        if (!Array.isArray(appointments) || appointments.length === 0) {
+          document.getElementById('appointmentHistory').innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calendar-times text-muted"></i>
+              <h6 class="text-muted">No Previous Appointments</h6>
+              <p class="text-muted small mb-3">No appointment history found for this patient.</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Sort by date (newest first)
+        appointments.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Take only the 5 most recent appointments
+        const recentAppointments = appointments.slice(0, 5);
+        
+        // Display appointments
+        const historyHTML = recentAppointments.map(appointment => {
+          const date = new Date(appointment.date);
+          const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          
+          const time = appointment.time || "Unknown";
+          const status = appointment.status || "scheduled";
+          const reason = appointment.reason || "Not specified";
+          const type = appointment.type || "Follow-up";
+          
+          let statusClass = 'status-scheduled';
+          if (status === 'completed') statusClass = 'status-completed';
+          else if (status === 'cancelled') statusClass = 'status-cancelled';
+          else if (status === 'pending') statusClass = 'status-pending';
+          
+          return `
+            <div class="appointment-item mb-3 p-3 border rounded">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>${formattedDate}</strong>
+                  <span class="ms-2 text-muted">${time}</span>
+                </div>
+                <span class="appointment-status ${statusClass}">
+                  ${status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+              </div>
+              <p class="mb-1"><strong>Type:</strong> ${type}</p>
+              <p class="mb-1"><strong>Reason:</strong> ${reason.substring(0, 50)}${reason.length > 50 ? '...' : ''}</p>
+            </div>
+          `;
+        }).join('');
+        
+        document.getElementById('appointmentHistory').innerHTML = historyHTML;
+        
+      } catch (error) {
+        console.error('Error loading appointment history:', error);
+        document.getElementById('appointmentHistory').innerHTML = `
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Unable to load appointment history: ${error.message}
+          </div>
+        `;
       }
+    }
 
-      const res = await fetch(`${API_BASE}/appointments/create/`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          patient: patientId,
-          date: date,
-          time: time,
-          reason: reason
-        })
+    // ==============================
+    // FORM INITIALIZATION
+    // ==============================
+    function initializeTimeSlots() {
+      const timeSlots = document.querySelectorAll('.time-slot');
+      const timeInput = document.getElementById('selectedTime');
+      
+      timeSlots.forEach(slot => {
+        slot.addEventListener('click', () => {
+          // Remove selected class from all slots
+          timeSlots.forEach(s => s.classList.remove('selected'));
+          
+          // Add selected class to clicked slot
+          slot.classList.add('selected');
+          const selectedTime = slot.dataset.time;
+          timeInput.value = selectedTime;
+          console.log("Selected time:", selectedTime);
+        });
       });
-
-      if (res.ok) {
-        document.getElementById("msg").innerHTML = `<span class="text-success">Appointment created successfully!</span>`;
-        loadAppointments();
-      } else {
-        const err = await res.text();
-        document.getElementById("msg").innerHTML = `<span class="text-danger">Error: ${err}</span>`;
+      
+      // Set default time (10:00 AM)
+      const defaultSlot = document.querySelector('.time-slot[data-time="10:00"]');
+      if (defaultSlot) {
+        defaultSlot.click();
       }
     }
+    
+    function setMinDate() {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('appointmentDate');
+      dateInput.min = today;
+      
+      // Set default date to 7 days from now
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      dateInput.value = nextWeek.toISOString().split('T')[0];
+      
+      console.log("Set min date to:", today, "default to:", dateInput.value);
+    }
 
-    loadPatient();
-    loadAppointments();
+    // ==============================
+    // CREATE APPOINTMENT
+    // ==============================
+    async function createAppointment(event) {
+      event.preventDefault();
+      
+      console.log("Creating appointment...");
+      
+      // Get form values
+      const date = document.getElementById('appointmentDate').value;
+      const time = document.getElementById('selectedTime').value;
+      const type = document.getElementById('appointmentType').value;
+      const reason = document.getElementById('appointmentReason').value;
+      const duration = document.getElementById('appointmentDuration').value;
+      
+      console.log("Form values:", { date, time, type, reason, duration, patientId });
+      
+      // Validation
+      if (!date || !time || !type) {
+        showMessage('Please fill in all required fields (Date, Time, and Type)', 'danger');
+        return;
+      }
+      
+      // Prepare data
+      const payload = {
+        patient: parseInt(patientId),
+        date: date,
+        time: time,
+        type: type,
+        reason: reason,
+        duration: parseInt(duration),
+        status: "scheduled"
+      };
+      
+      // Show loading state
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="loading-spinner me-2"></span> Creating...';
+      submitBtn.disabled = true;
+      
+      try {
+        // Use string concatenation for URL
+        const url = API_BASE + "/appointments/create/";
+        console.log("Creating appointment at:", url, "with payload:", payload);
+        
+        const res = await authFetch(url, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Appointment creation failed:", errorText);
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
+        
+        const result = await res.json();
+        console.log("Appointment created successfully:", result);
+        
+        // Show success modal
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+        
+        // Setup the view profile button
+        document.getElementById('viewProfileBtn').onclick = function() {
+          window.location.href = "../patient_profile.html?id=" + patientId;
+        };
+        
+        // Reload appointment history
+        loadAppointmentHistory();
+        
+      } catch (error) {
+        console.error('Error creating appointment:', error);
+        showMessage(`Failed to create appointment: ${error.message}`, 'danger');
+      } finally {
+        // Reset button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    // ==============================
+    // HELPER FUNCTIONS
+    // ==============================
+    function showMessage(message, type = 'info') {
+      const messageDiv = document.getElementById('formMessage');
+      messageDiv.textContent = message;
+      messageDiv.className = `alert alert-${type}`;
+      messageDiv.style.display = 'block';
+      
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    // ==============================
+    // INITIALIZE PAGE
+    // ==============================
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("Page loaded, initializing...");
+      console.log("Patient ID:", patientId);
+      console.log("API Base:", API_BASE);
+      
+      // Load data
+      loadPatientInfo();
+      loadAppointmentHistory();
+      
+      // Initialize form
+      setMinDate();
+      initializeTimeSlots();
+      
+      // Setup form submission
+      document.getElementById('appointmentForm').addEventListener('submit', createAppointment);
+      
+      console.log("Page initialization complete");
+    });
+
+    // ==============================
+    // ERROR HANDLING
+    // ==============================
+    window.addEventListener('error', function(e) {
+      console.error('Global error:', e.error);
+      showMessage(`An error occurred: ${e.message}`, 'danger');
+    });
+    
   </script>
-
 </body>
 </html>
