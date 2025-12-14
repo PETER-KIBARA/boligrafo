@@ -529,6 +529,13 @@ class UserProfileListView(generics.ListAPIView):
         return queryset
 
 
+class UserProfileDetailView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserProfile.objects.all()
+    lookup_field = 'id'
+
+
 
 
 class NotificationListView(generics.ListAPIView):

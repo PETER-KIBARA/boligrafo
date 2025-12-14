@@ -304,7 +304,7 @@
             <i class="bi bi-people"></i> <span>Patients</span>
           </a>
           <a href="alerts_list.html" id="alertsLink">
-            <i class="bi bi-bell"></i> <span>Alerts</span>
+            <i class="bi bi-bell"></i> <span>alerts</span>
           </a>
           <a href="reports_generator.html" id="reportsLink">
             <i class="bi bi-bar-chart"></i> <span>Reports</span>
@@ -366,6 +366,40 @@
             <a class="btn btn-outline-primary" href="treatments_manage.html"><i class="bi bi-clipboard2-pulse me-2"></i> Treatments</a>
           </div>
         </div>
+
+        <!-- Upcoming Appointments -->
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h6 class="m-0">Upcoming Appointments</h6>
+    <a href="appointments/appointments.html" class="btn btn-sm btn-outline-primary">
+      View All
+    </a>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-container">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Reason</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsTable">
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              Loading appointments…
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
         
         <script>
           document.getElementById("redirectBtn").addEventListener("click", function(){ 
@@ -494,6 +528,58 @@ async function loadTrendData() {
     showError('Failed to load trend data');
   }
 }
+
+async function loadUpcomingAppointments() {
+  try {
+    const res = await fetch(`${API_BASE}/doctor/appointments/`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) throw new Error("Failed to load appointments");
+
+    const appointments = await res.json();
+    const table = document.getElementById("appointmentsTable");
+    table.innerHTML = "";
+
+    if (appointments.length === 0) {
+      table.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            No upcoming appointments
+          </td>
+        </tr>`;
+      return;
+    }
+
+    appointments.slice(0, 5).forEach(appt => {
+      table.innerHTML += `
+        <tr>
+          <td>${appt.patient_name}</td>
+          <td>${new Date(appt.date).toLocaleDateString()}</td>
+          <td>${appt.time}</td>
+          <td>${appt.reason || "-"}</td>
+          <td>
+            <span class="badge bg-${appt.status === "scheduled" ? "primary" : "secondary"}">
+              ${appt.status}
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("appointmentsTable").innerHTML = `
+      <tr>
+        <td colspan="5" class="text-danger text-center py-4">
+          Failed to load appointments
+        </td>
+      </tr>`;
+  }
+}
+
+
+
 
 function generateTrendData() {
   // Generate realistic weekly blood pressure data
@@ -923,6 +1009,28 @@ setInterval(loadTrendData, 5 * 60 * 1000);
     <script src="scripts/config.js"></script>
 
 <script type="module">
+async function loadAlertCount() {
+  try {
+    const res = await fetch(`${API_BASE}/notifications/`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch alerts");
+
+    const alerts = await res.json();
+
+    // If you want ALL alerts:
+    document.getElementById("criticalAlerts").innerText = alerts.length;
+
+    // If you want ONLY critical alerts, use this instead:
+    // const critical = alerts.filter(a => a.bp_systolic > 180 || a.bp_diastolic > 120);
+    // document.getElementById("criticalAlerts").innerText = critical.length;
+
+  } catch (err) {
+    console.error("Alert count error:", err);
+    document.getElementById("criticalAlerts").innerText = "—";
+  }
+}
 
   // Sidebar navigation
   document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
@@ -1031,10 +1139,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-
+  setInterval(loadAlertCount, 30000);
   loadDoctorProfile();
   loadPatients();
+  loadDoctorProfile();
+  loadPatients();
+  loadUpcomingAppointments();
+  loadAlertCount();
+
 </script>
 
 </body>

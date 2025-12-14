@@ -223,14 +223,16 @@
           Loading...
         </div>
       </div>
-      <a class="btn btn-elegant" href="patients.html">
-        <i class="fas fa-arrow-left me-2"></i>
-        Back to Patients
-      </a>
+      <div class="d-flex gap-2">
+        <a class="btn btn-elegant" id="scheduleAppointmentBtn" href="#">
+          <i class="fas fa-calendar-plus me-1"></i> Schedule Follow-Up
+        </a>
+        <a class="btn btn-elegant" href="patients.html">
+          <i class="fas fa-arrow-left me-2"></i>
+          Back to Patients
+        </a>
+      </div>
     </div>
-<a class="btn btn-elegant" href="appointments/appointment_create.html?id=${patientId}   ">
-  <i class="fas fa-calendar-plus me-1"></i> Schedule Follow-Up
-</a>
 
     <!-- Main Chart Card -->
     <div class="card fade-in">
@@ -315,9 +317,10 @@
   <script>
     // Authentication and setup
     const token = localStorage.getItem("doctorToken");
-    const patientId = new URLSearchParams(location.search).get("id");
+    const patientProfileId = new URLSearchParams(location.search).get("id"); // UserProfile ID
     const doctorName = localStorage.getItem("doctorName");
     const doctorSpecialty = localStorage.getItem("doctorSpecialty");
+    let patientUserId = null; // Will be set after loading patient profile
 
     // Redirect if no token or patient ID
     if (!token) {
@@ -325,7 +328,7 @@
       window.location.href = "doctors_login.html";
     }
 
-    if (!patientId) {
+    if (!patientProfileId) {
       alert("Missing patient ID. Redirecting...");
       window.location.href = "patients.html";
     }
@@ -373,20 +376,50 @@
       }
     }
 
+    // Load patient profile to get User ID
+    async function loadPatientProfile() {
+      try {
+        const url = API_BASE + "/userprofiles/" + patientProfileId + "/";
+        const res = await authFetch(url);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to load patient profile`);
+        }
+        
+        const profile = await res.json();
+        patientUserId = profile.user?.id || profile.user;
+        
+        if (!patientUserId) {
+          throw new Error("Could not find User ID in patient profile");
+        }
+        
+        // Now load BP trend with the User ID
+        await loadBPTrend();
+      } catch (error) {
+        console.error('Error loading patient profile:', error);
+        alert("Failed to load patient information. Redirecting...");
+        window.location.href = "patients.html";
+      }
+    }
+
     // Blood Pressure Chart
     let chart;
     async function loadBPTrend() {
+        if (!patientUserId) {
+          console.error("Patient User ID not available yet");
+          return;
+        }
+        
         const chartContainer = document.getElementById("bpChart").parentElement;
-        chartContainer.innerHTML = `
-          <div class="empty-state">
-            <div class="loading-spinner text-primary mx-auto mb-3"></div>
-            <h6 class="text-primary">Loading Blood Pressure Data</h6>
-            <p class="text-muted small">Please wait while we retrieve the latest readings...</p>
-          </div>
-        `;
+        chartContainer.innerHTML = 
+          '<div class="empty-state">' +
+            '<div class="loading-spinner text-primary mx-auto mb-3"></div>' +
+            '<h6 class="text-primary">Loading Blood Pressure Data</h6>' +
+            '<p class="text-muted small">Please wait while we retrieve the latest readings...</p>' +
+          '</div>';
 
         try {
-            const apiUrl = `${API_BASE}/doctor/vitals?patient_id=${patientId}`;
+            const apiUrl = API_BASE + "/doctor/vitals?patient_id=" + patientUserId;
             const res = await authFetch(apiUrl);
 
             const responseText = await res.text();
@@ -603,7 +636,14 @@
     // Initialize page
     document.addEventListener("DOMContentLoaded", async () => {
         try {
-            await loadBPTrend();
+            // Set appointment link (uses UserProfile ID)
+            const scheduleBtn = document.getElementById("scheduleAppointmentBtn");
+            if (scheduleBtn && patientProfileId) {
+                scheduleBtn.href = "appointments/appointment_create.html?id=" + patientProfileId;
+            }
+            
+            // Load patient profile first to get User ID, then load BP trend
+            await loadPatientProfile();
             document.getElementById("range").addEventListener("change", loadBPTrend);
         } catch (error) {
             console.error("Initialization error:", error);

@@ -11,7 +11,7 @@ from django.conf.urls.static import static
 from .views import DoctorAllPatientsVitalsView
 from .views import create_admin
 from .views import NotificationListView
-from .views import UserProfileListView
+from .views import UserProfileListView, UserProfileDetailView
 from .views import NotificationDetailView  
 from .views import PatientPrescriptionListView, PatientPrescriptionRetrieveUpdateView
 from .views import log_prescription_dose
@@ -42,6 +42,7 @@ path("doctor/treatments/<int:pk>", TreatmentDetailView.as_view(), name="treatmen
 path('doctor/vitals', views.DoctorVitalReadingListView.as_view(), name='doctor-vitals'),
 path('doctor/all-vitals', views.DoctorAllPatientsVitalsView.as_view(), name='doctor-all-vitals'),
 path("userprofiles", UserProfileListView.as_view(), name="userprofile-list"),
+path("userprofiles/<int:id>/", UserProfileDetailView.as_view(), name="userprofile-detail"),
 path('create-admin/', create_admin),
 path('notifications/', NotificationListView.as_view(), name='notifications'),
 path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),

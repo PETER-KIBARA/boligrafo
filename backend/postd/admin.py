@@ -8,6 +8,7 @@ from .models import Prescription
 from .models import Treatment
 from .models import Notification
 from .models import PrescriptionLog
+from .models import Appointment
 
 
 
@@ -132,7 +133,13 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ('title', 'message', 'doctor__user__username', 'patient__user__username')
     ordering = ('-created_at',)
 
-
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'patient', 'doctor', 'date', 'time', 'status', 'created_at')
+    list_filter = ('status', 'date', 'doctor')
+    search_fields = ('patient__user__first_name', 'patient__user__last_name', 
+                     'doctor__user__first_name', 'doctor__user__last_name', 'reason')
+    ordering = ('-date', '-time')
 
 
 

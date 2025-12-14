@@ -218,34 +218,11 @@
               <div class="form-text">Select an available time slot</div>
             </div>
             
-            <!-- Appointment Type -->
-            <div class="mb-4">
-              <label class="form-label fw-bold">Appointment Type <span class="text-danger">*</span></label>
-              <select id="appointmentType" class="form-select" required>
-                <option value="">Select type</option>
-                <option value="follow_up" selected>Follow-up Visit</option>
-                <option value="routine">Routine Checkup</option>
-                <option value="consultation">Consultation</option>
-                <option value="emergency">Emergency</option>
-                <option value="new_patient">New Patient</option>
-              </select>
-            </div>
-            
             <!-- Reason/Notes -->
             <div class="mb-4">
-              <label class="form-label fw-bold">Reason / Notes</label>
-              <textarea id="appointmentReason" class="form-control" rows="4" placeholder="Enter reason for appointment, symptoms, or any special notes...">Hypertension follow-up</textarea>
-            </div>
-            
-            <!-- Duration -->
-            <div class="mb-4">
-              <label class="form-label fw-bold">Duration</label>
-              <select id="appointmentDuration" class="form-select">
-                <option value="15">15 minutes</option>
-                <option value="30" selected>30 minutes</option>
-                <option value="45">45 minutes</option>
-                <option value="60">60 minutes</option>
-              </select>
+              <label class="form-label fw-bold">Reason / Notes <span class="text-danger">*</span></label>
+              <textarea id="appointmentReason" class="form-control" rows="4" placeholder="Enter reason for appointment, symptoms, or any special notes..." required>Hypertension follow-up</textarea>
+              <div class="form-text">Describe the purpose of this appointment</div>
             </div>
             
             <!-- Submit Button -->
@@ -370,8 +347,8 @@
     // ==============================
     async function loadPatientInfo() {
       try {
-        // Use string concatenation to avoid template literal issues
-        const url = API_BASE + "/list_patients/" + patientId + "/";
+        // Use the userprofiles endpoint to get patient by ID
+        const url = API_BASE + "/userprofiles/" + patientId + "/";
         console.log("Loading patient from:", url);
         
         const res = await authFetch(url);
@@ -383,26 +360,25 @@
         const patient = await res.json();
         console.log("Patient data:", patient);
         
-        // Display patient info
+        // Display patient info - handle nested user object
         const firstName = patient.user?.first_name || patient.first_name || "Unknown";
         const lastName = patient.user?.last_name || patient.last_name || "";
         const phone = patient.phone || "Not provided";
         const gender = patient.gender || "Not specified";
-        const dob = patient.dob || "Not provided";
+        const dob = patient.dob ? new Date(patient.dob).toLocaleDateString() : "Not provided";
         
-        document.getElementById('patientName').textContent = `${firstName} ${lastName}`;
+        document.getElementById('patientName').textContent = `${firstName} ${lastName}`.trim() || "Unknown Patient";
         document.getElementById('patientPhone').textContent = phone;
         document.getElementById('patientGender').textContent = gender;
         document.getElementById('patientDOB').textContent = dob;
         
       } catch (error) {
         console.error('Error loading patient:', error);
-        document.getElementById('patientInfo').innerHTML = `
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Failed to load patient information: ${error.message}
-          </div>
-        `;
+        document.getElementById('patientInfo').innerHTML = 
+          '<div class="alert alert-danger">' +
+          '<i class="fas fa-exclamation-triangle me-2"></i>' +
+          'Failed to load patient information: ' + error.message +
+          '</div>';
       }
     }
 
@@ -442,7 +418,8 @@
         const recentAppointments = appointments.slice(0, 5);
         
         // Display appointments
-        const historyHTML = recentAppointments.map(appointment => {
+        let historyHTML = '';
+        recentAppointments.forEach(appointment => {
           const date = new Date(appointment.date);
           const formattedDate = date.toLocaleDateString('en-US', {
             weekday: 'short',
@@ -454,40 +431,36 @@
           const time = appointment.time || "Unknown";
           const status = appointment.status || "scheduled";
           const reason = appointment.reason || "Not specified";
-          const type = appointment.type || "Follow-up";
           
           let statusClass = 'status-scheduled';
           if (status === 'completed') statusClass = 'status-completed';
           else if (status === 'cancelled') statusClass = 'status-cancelled';
-          else if (status === 'pending') statusClass = 'status-pending';
+          else if (status === 'missed') statusClass = 'status-cancelled';
           
-          return `
-            <div class="appointment-item mb-3 p-3 border rounded">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <strong>${formattedDate}</strong>
-                  <span class="ms-2 text-muted">${time}</span>
-                </div>
-                <span class="appointment-status ${statusClass}">
-                  ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </span>
-              </div>
-              <p class="mb-1"><strong>Type:</strong> ${type}</p>
-              <p class="mb-1"><strong>Reason:</strong> ${reason.substring(0, 50)}${reason.length > 50 ? '...' : ''}</p>
-            </div>
-          `;
-        }).join('');
+          historyHTML += 
+            '<div class="appointment-item mb-3 p-3 border rounded">' +
+              '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                '<div>' +
+                  '<strong>' + formattedDate + '</strong>' +
+                  '<span class="ms-2 text-muted">' + time + '</span>' +
+                '</div>' +
+                '<span class="appointment-status ' + statusClass + '">' +
+                  status.charAt(0).toUpperCase() + status.slice(1) +
+                '</span>' +
+              '</div>' +
+              '<p class="mb-1"><strong>Reason:</strong> ' + (reason.length > 50 ? reason.substring(0, 50) + '...' : reason) + '</p>' +
+            '</div>';
+        });
         
         document.getElementById('appointmentHistory').innerHTML = historyHTML;
         
       } catch (error) {
         console.error('Error loading appointment history:', error);
-        document.getElementById('appointmentHistory').innerHTML = `
-          <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Unable to load appointment history: ${error.message}
-          </div>
-        `;
+        document.getElementById('appointmentHistory').innerHTML = 
+          '<div class="alert alert-warning">' +
+          '<i class="fas fa-exclamation-triangle me-2"></i>' +
+          'Unable to load appointment history: ' + error.message +
+          '</div>';
       }
     }
 
@@ -542,26 +515,22 @@
       // Get form values
       const date = document.getElementById('appointmentDate').value;
       const time = document.getElementById('selectedTime').value;
-      const type = document.getElementById('appointmentType').value;
       const reason = document.getElementById('appointmentReason').value;
-      const duration = document.getElementById('appointmentDuration').value;
       
-      console.log("Form values:", { date, time, type, reason, duration, patientId });
+      console.log("Form values:", { date, time, reason, patientId });
       
       // Validation
-      if (!date || !time || !type) {
-        showMessage('Please fill in all required fields (Date, Time, and Type)', 'danger');
+      if (!date || !time || !reason || !reason.trim()) {
+        showMessage('Please fill in all required fields (Date, Time, and Reason)', 'danger');
         return;
       }
       
-      // Prepare data
+      // Prepare data - match the Appointment model fields
       const payload = {
         patient: parseInt(patientId),
         date: date,
         time: time,
-        type: type,
-        reason: reason,
-        duration: parseInt(duration),
+        reason: reason.trim() || "Hypertension follow-up",
         status: "scheduled"
       };
       

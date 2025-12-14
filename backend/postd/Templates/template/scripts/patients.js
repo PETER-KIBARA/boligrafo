@@ -41,8 +41,10 @@ async function loadPatients() {
       const last = p.last_name;    // Now comes directly from serializer
       const name = `${first || ""} ${last || ""}`.trim() || "-";
 
-      // Get the correct patient ID (user.id)
-      const patientId = p.patient_id;  // Use user_id if available, fallback to id
+      // Use UserProfile ID (p.id) for navigation - this is what appointments need
+      // The patient_id (p.patient_id) is the User ID, which is used for vitals
+      const userProfileId = p.id;  // UserProfile ID - used for appointments and profile
+      const userId = p.patient_id;  // User ID - used for vitals
 
       const lastReading =
         p.last_reading && p.last_reading.systolic
@@ -55,11 +57,11 @@ async function loadPatients() {
 
       return `<tr>
         <td>${name}</td>
-        <td>${patientId}</td>  <!-- Show correct patient ID -->
+        <td>${userProfileId}</td>  <!-- Show UserProfile ID -->
         <td>${p.phone || "-"}</td>
         <td>${lastReading}</td>
         <td class="text-end">
-          <a class="btn btn-sm btn-primary" href="patient_profile.html?id=${patientId}">View</a>  <!-- Use correct patient ID -->
+          <a class="btn btn-sm btn-primary" href="patient_profile.html?id=${userProfileId}">View</a>  <!-- Use UserProfile ID -->
         </td>
       </tr>`;
     })
