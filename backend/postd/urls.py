@@ -19,6 +19,7 @@ from .views import DoctorCreateAppointmentView
 from .views import DoctorUpcomingAppointmentsView
 from .views import PatientAppointmentListView
 from .views import PatientMyAppointmentsView
+from .views import PatientAISuggestionsView
 
   
 
@@ -51,7 +52,7 @@ path("appointments/create/", DoctorCreateAppointmentView.as_view()),
 path("appointments/my/", PatientMyAppointmentsView.as_view()),
 path("doctor/appointments/", DoctorUpcomingAppointmentsView.as_view()),
 path("patients/<int:id>/appointments/", PatientAppointmentListView.as_view()),
-
+path('generate_suggestions/<int:patient_id>/', PatientAISuggestionsView.as_view(), name='generate_suggestions'),
 
 ]
 
