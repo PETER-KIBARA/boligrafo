@@ -4,7 +4,7 @@ import 'package:myapp/models/medication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-    static const String baseUrl = "http://192.168.100.244:8000/api";
+    static const String baseUrl = "http://192.168.100.48:8000/api";
 
   // static const String baseUrl = "https://backend-ubq3.onrender.com/api";
 
