@@ -257,3 +257,56 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.patient.user.get_full_name()} - {self.date} {self.time}"
+
+
+class AISuggestionConfig(models.Model):
+    """
+    Singleton model to store configuration thresholds for AI Suggestions.
+    """
+    bp_systolic_threshold = models.IntegerField(default=140, help_text="Systolic BP threshold for warnings")
+    bp_diastolic_threshold = models.IntegerField(default=90, help_text="Diastolic BP threshold for warnings")
+    trend_slope_threshold = models.FloatField(default=0.5, help_text="Slope threshold for recognizing an increasing BP trend")
+    adherence_threshold = models.FloatField(default=0.8, help_text="Minimum adherence rate (0.0 - 1.0) before flagging issues")
+    
+    class Meta:
+        verbose_name = "AI Suggestion Configuration"
+        verbose_name_plural = "AI Suggestion Configuration"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and AISuggestionConfig.objects.exists():
+            # If you want to force singleton behavior aggressively:
+            raise Exception("There can be only one AISuggestionConfig instance")
+        return super(AISuggestionConfig, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "AI Suggestion Configuration"
+
+    @classmethod
+    def get_solitary(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class AISuggestionLog(models.Model):
+    """
+    Audit trail for AI suggestion requests.
+    """
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="ai_requests"
+    )
+    patient = models.ForeignKey(
+        "UserProfile",
+        on_delete=models.CASCADE,
+        related_name="ai_logs"
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+    suggestions_generated = models.JSONField(help_text="Snapshot of the suggestions returned")
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"AI Suggestion for {self.patient} by {self.requested_by} at {self.timestamp}"

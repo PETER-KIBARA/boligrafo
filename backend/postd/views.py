@@ -43,11 +43,6 @@ from rest_framework import serializers
 from .serializers import AppointmentSerializer
 from datetime import timedelta
 from django.utils import timezone
-from .ai.services.appointments import get_appointments
-from .ai.services.vitals import get_vitals
-from .ai.services.prescriptions import get_prescriptions
-from .ai.services.treatments import get_treatments
-from postd.ai.engine import generate_patient_suggestions
 from django.shortcuts import get_object_or_404
 
 @api_view(["POST"])
@@ -632,26 +627,3 @@ class DoctorUpcomingAppointmentsView(generics.ListAPIView):
             doctor=user.doctor_profile
         ).order_by("date", "time")
     
-class PatientAISuggestionsView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, patient_id):
-        patient = get_object_or_404(UserProfile, id=patient_id)
-
-        vitals = get_vitals(patient)
-        prescriptions = get_prescriptions(patient)
-        treatments = get_treatments(patient)
-        appointments = get_appointments(patient)
-
-        suggestions = generate_patient_suggestions(
-            patient,
-            vitals=vitals,
-            prescriptions=prescriptions,
-            treatments=treatments,
-            appointments=appointments
-        )
-
-        return JsonResponse({
-            "patient_id": patient.id,
-            "ai_suggestions": suggestions
-        })

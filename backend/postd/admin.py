@@ -142,6 +142,26 @@ class AppointmentAdmin(admin.ModelAdmin):
     ordering = ('-date', '-time')
 
 
+from .models import AISuggestionConfig, AISuggestionLog
+
+@admin.register(AISuggestionConfig)
+class AISuggestionConfigAdmin(admin.ModelAdmin):
+    list_display = ('id', 'bp_systolic_threshold', 'bp_diastolic_threshold', 'trend_slope_threshold', 'adherence_threshold')
+    
+    def has_add_permission(self, request):
+        # Only allow one instance if one already exists
+        if self.model.objects.exists():
+            return False
+        return super().has_add_permission(request)
+
+@admin.register(AISuggestionLog)
+class AISuggestionLogAdmin(admin.ModelAdmin):
+    list_display = ('patient', 'requested_by', 'timestamp')
+    list_filter = ('timestamp', 'requested_by')
+    search_fields = ('patient__user__username', 'patient__user__first_name', 'requested_by__username')
+    readonly_fields = ('timestamp', 'suggestions_generated')
+
+
 
 # Unregister the default User admin
 admin.site.unregister(User)
