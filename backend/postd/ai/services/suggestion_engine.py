@@ -87,6 +87,28 @@ class SuggestionEngine:
                 "confidence": 0.8
             })
 
+        # Rule R006: High BP Alert (Untreated of General)
+        last_sys = last.get("systolic") or 0
+        last_dia = last.get("diastolic") or 0
+        has_active_meds = any(m.get("active") for m in pres["medications"])
+
+        if last_sys >= 160 or last_dia >= 100:
+            suggestions.append({
+                "rule_id": "R006",
+                "message": f"Critical BP Reading ({last_sys}/{last_dia} mmHg). Immediate clinical attention recommended.",
+                "evidence": {"last_vitals": last},
+                "severity": "high",
+                "confidence": 0.95
+            })
+        elif (last_sys >= 140 or last_dia >= 90) and not has_active_meds:
+            suggestions.append({
+                "rule_id": "R006",
+                "message": f"High BP Reading ({last_sys}/{last_dia} mmHg) without active medication. Consider initiating antihypertensive therapy.",
+                "evidence": {"last_vitals": last},
+                "severity": "medium",
+                "confidence": 0.9
+            })
+
         # Always include a brief rationale summary
         for s in suggestions:
             if "rationale" not in s:

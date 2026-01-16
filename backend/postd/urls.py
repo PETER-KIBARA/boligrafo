@@ -51,7 +51,7 @@ path("appointments/my/", PatientMyAppointmentsView.as_view()),
 path("doctor/appointments/", DoctorUpcomingAppointmentsView.as_view()),
 path("patients/<int:id>/appointments/", PatientAppointmentListView.as_view()),
 # path('generate_suggestions/<int:patient_id>/', PatientAISuggestionsView.as_view(), name='generate_suggestions'),
-path("api/generate_suggestions/<int:patient_id>/", GenerateSuggestionsView.as_view(), name="generate_suggestions"),
+path("generate_suggestions/<int:patient_id>/", GenerateSuggestionsView.as_view(), name="generate_suggestions"),
 
 ]
 
