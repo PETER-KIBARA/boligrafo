@@ -1,98 +1,898 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Patient Reports - Boligrafo</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    body { background-color: #8fafdf; }
-    .card { border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #0f172a;
+      --accent: #3b82f6;
+      --accent-light: rgba(59, 130, 246, 0.1);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-body: #f8fafc;
+      --card-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-body);
+      min-height: 100vh;
+      color: var(--text-primary);
+      padding: 2rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header h1 i {
+      color: var(--accent);
+    }
+
+    .back-btn {
+      padding: 10px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 2rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    /* Filters Section */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-control {
+      padding: 0.875rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-control option {
+      background: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      padding: 0.875rem 2rem;
+      background: var(--primary);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .btn-primary:hover {
+      background: #334155;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .summary-card:hover::before {
+      opacity: 1;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .summary-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 16px;
+      background: var(--card-bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f8fafc;
+    }
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Export Button */
+    .export-section {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-export {
+      padding: 0.75rem 1.5rem;
+      background: var(--success);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-export:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Patient Details Accordion */
+    .patient-section {
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      transition: var(--transition);
+    }
+
+    .patient-section:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .patient-header {
+      padding: 1rem 1.5rem;
+      background: #f8fafc;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .patient-header:hover {
+      background: #f1f5f9;
+    }
+
+    .patient-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    .patient-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .patient-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .patient-content.active {
+      max-height: 2000px;
+    }
+
+    .data-section {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-item {
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 3px solid transparent;
+      transition: var(--transition);
+    }
+
+    .data-item:hover {
+      background: #f1f5f9;
+      border-left-color: var(--accent);
+    }
+
+    .data-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-item-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .data-item-date {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .data-item-details {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .filters-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .patient-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">Reports</h4>
-      <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+  <div class="container">
+    <div class="header">
+      <h1><i class="bi bi-pie-chart-fill"></i> Clinical Reports</h1>
+      <a href="dashboard.html" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+        <span>Back to Dashboard</span>
+      </a>
     </div>
-    <div class="card mb-3">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label">Patient</label>
-            <select class="form-select" id="repPatient"></select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">From</label>
-            <input type="date" class="form-control" id="repFrom">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">To</label>
-            <input type="date" class="form-control" id="repTo">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary w-100" id="runReport">Run</button>
-          </div>
+
+    <!-- Filters -->
+    <div class="card">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label for="patientSelect">Patient</label>
+          <select class="form-control" id="patientSelect">
+            <option value="">All Patients</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fromDate">From Date</label>
+          <input type="date" class="form-control" id="fromDate">
+        </div>
+        <div class="form-group">
+          <label for="toDate">To Date</label>
+          <input type="date" class="form-control" id="toDate">
+        </div>
+        <div class="form-group">
+          <label style="opacity: 0;">Action</label>
+          <button class="btn-primary" id="generateBtn">
+            <i class="bi bi-play-fill"></i>
+            <span>Generate Report</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-sm table-striped" id="repTable">
-            <thead>
-              <tr><th>Date</th><th>Patient</th><th>Systolic</th><th>Diastolic</th><th>Medication Taken</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+    <!-- Summary Cards -->
+    <div id="summarySection" style="display: none;">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Total Patients</div>
+          <div class="summary-value" id="totalPatients">0</div>
         </div>
-        <div class="d-flex justify-content-end">
-          <a class="btn btn-outline-secondary btn-sm" id="exportCsv" href="#">Export CSV</a>
+        <div class="summary-card">
+          <div class="summary-label">Vital Readings</div>
+          <div class="summary-value" id="totalVitals">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Prescriptions</div>
+          <div class="summary-value" id="totalPrescriptions">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Treatments</div>
+          <div class="summary-value" id="totalTreatments">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Appointments</div>
+          <div class="summary-value" id="totalAppointments">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Avg Systolic</div>
+          <div class="summary-value" id="avgSystolic">--</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Avg Diastolic</div>
+          <div class="summary-value" id="avgDiastolic">--</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Avg Heart Rate</div>
+          <div class="summary-value" id="avgHeartrate">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Content -->
+    <div class="glass-card">
+      <div id="loadingState" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Generating report...</p>
+      </div>
+
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <h3>No Report Generated</h3>
+        <p>Select filters and click "Generate Report" to view patient data</p>
+      </div>
+
+      <div id="reportContent" style="display: none;">
+        <div id="patientsContainer"></div>
+
+        <div class="export-section">
+          <button class="btn-export" id="exportBtn">
+            <i class="bi bi-download"></i>
+            <span>Export to CSV</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
-  <script src="scripts/config.js"></script>
 
+  <script src="scripts/config.js"></script>
   <script>
     const token = localStorage.getItem("doctorToken");
+    let currentReportData = null;
 
-    async function loadPatients(){
-      const res = await fetch(`${API_BASE}/doctor/patients`, { headers: { 'Authorization': `Token ${token}` } });
-      if(!res.ok) return;
-      const patients = await res.json();
-      const sel = document.getElementById('repPatient');
-      sel.innerHTML = '<option value="">All</option>' + patients.map(p=>`<option value="${p.id}">${p.user.first_name} ${p.user.last_name||''}</option>`).join('');
+    // Load patients on page load
+    async function loadPatients() {
+      try {
+        const res = await fetch(`${API_BASE}/doctor/patients`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to load patients');
+
+        const patients = await res.json();
+        const select = document.getElementById('patientSelect');
+
+        patients.forEach(patient => {
+          const option = document.createElement('option');
+          option.value = patient.id;
+          option.textContent = `${patient.user.first_name} ${patient.user.last_name || ''}`.trim();
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading patients:', error);
+      }
     }
 
-    async function runReport(){
+    // Generate report
+    async function generateReport() {
+      const patientId = document.getElementById('patientSelect').value;
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      // Build query params
       const params = new URLSearchParams();
-      const pid = document.getElementById('repPatient').value;
-      const from = document.getElementById('repFrom').value;
-      const to = document.getElementById('repTo').value;
-      if(pid) params.set('patient', pid);
-      if(from) params.set('from', from);
-      if(to) params.set('to', to);
-      const res = await fetch(`${API_BASE}/doctor/reports?` + params.toString(), { headers: { 'Authorization': `Token ${token}` } });
-      if(!res.ok) return;
-      const data = await res.json();
-      const tbody = document.querySelector('#repTable tbody');
-      tbody.innerHTML = data.map(r=>`<tr>
-        <td>${r.date}</td>
-        <td>${r.patient_name}</td>
-        <td>${r.systolic}</td>
-        <td>${r.diastolic}</td>
-        <td>${r.med_taken ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-      </tr>`).join('');
-      document.getElementById('exportCsv').href = `${API_BASE}/doctor/reports/export?` + params.toString();
+      if (patientId) params.set('patient_id', patientId);
+      if (fromDate) params.set('from_date', fromDate);
+      if (toDate) params.set('to_date', toDate);
+
+      // Show loading state
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('reportContent').style.display = 'none';
+      document.getElementById('summarySection').style.display = 'none';
+      document.getElementById('loadingState').style.display = 'block';
+
+      try {
+        const res = await fetch(`${API_BASE}/doctor/reports/?${params.toString()}`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to generate report');
+
+        const data = await res.json();
+        currentReportData = data;
+
+        // Update summary cards
+        document.getElementById('totalPatients').textContent = data.total_patients;
+        document.getElementById('totalVitals').textContent = data.total_vitals;
+        document.getElementById('totalPrescriptions').textContent = data.total_prescriptions;
+        document.getElementById('totalTreatments').textContent = data.total_treatments;
+        document.getElementById('totalAppointments').textContent = data.total_appointments;
+        document.getElementById('avgSystolic').textContent = data.avg_systolic || '--';
+        document.getElementById('avgDiastolic').textContent = data.avg_diastolic || '--';
+        document.getElementById('avgHeartrate').textContent = data.avg_heartrate || '--';
+
+        // Render patient data
+        renderPatients(data.patients);
+
+        // Show report
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('summarySection').style.display = 'block';
+        document.getElementById('reportContent').style.display = 'block';
+
+      } catch (error) {
+        console.error('Error generating report:', error);
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+        alert('Failed to generate report. Please try again.');
+      }
     }
 
-    document.getElementById('runReport').addEventListener('click', runReport);
+    // Render patient data
+    function renderPatients(patients) {
+      const container = document.getElementById('patientsContainer');
+      container.innerHTML = '';
+
+      if (patients.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No patient data found for the selected filters</p></div>';
+        return;
+      }
+
+      patients.forEach(patient => {
+        const section = document.createElement('div');
+        section.className = 'patient-section';
+
+        const header = document.createElement('div');
+        header.className = 'patient-header';
+        header.innerHTML = `
+          <div class="patient-name">${patient.patient_name}</div>
+          <div class="patient-stats">
+            <span><i class="bi bi-activity"></i> ${patient.total_vitals} vitals</span>
+            <span><i class="bi bi-capsule"></i> ${patient.total_prescriptions} prescriptions</span>
+            <span><i class="bi bi-clipboard2-pulse"></i> ${patient.total_treatments} treatments</span>
+            <span><i class="bi bi-calendar-check"></i> ${patient.total_appointments} appointments</span>
+          </div>
+        `;
+
+        const content = document.createElement('div');
+        content.className = 'patient-content';
+
+        let contentHTML = '';
+
+        // Vitals section
+        if (patient.vitals && patient.vitals.length > 0) {
+          contentHTML += `
+            <div class="data-section">
+              <div class="section-title">Vital Readings</div>
+              ${patient.vitals.map(vital => `
+                <div class="data-item">
+                  <div class="data-item-header">
+                    <div class="data-item-title">BP: ${vital.systolic}/${vital.diastolic} mmHg${vital.heartrate ? ` | HR: ${vital.heartrate} bpm` : ''}</div>
+                    <div class="data-item-date">${new Date(vital.created_at).toLocaleString()}</div>
+                  </div>
+                  ${vital.symptoms ? `<div class="data-item-details">Symptoms: ${vital.symptoms}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // Prescriptions section
+        if (patient.prescriptions && patient.prescriptions.length > 0) {
+          contentHTML += `
+            <div class="data-section">
+              <div class="section-title">Prescriptions</div>
+              ${patient.prescriptions.map(rx => `
+                <div class="data-item">
+                  <div class="data-item-header">
+                    <div class="data-item-title">${rx.medication} - ${rx.dosage}</div>
+                    <div class="data-item-date">${new Date(rx.created_at).toLocaleString()}</div>
+                  </div>
+                  <div class="data-item-details">
+                    Frequency: ${rx.frequency} | Duration: ${rx.duration_days} days
+                    ${rx.instructions ? `<br>Instructions: ${rx.instructions}` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // Treatments section
+        if (patient.treatments && patient.treatments.length > 0) {
+          contentHTML += `
+            <div class="data-section">
+              <div class="section-title">Treatments</div>
+              ${patient.treatments.map(treatment => `
+                <div class="data-item">
+                  <div class="data-item-header">
+                    <div class="data-item-title">${treatment.name} <span class="badge badge-info">${treatment.status}</span></div>
+                    <div class="data-item-date">${new Date(treatment.created_at).toLocaleString()}</div>
+                  </div>
+                  ${treatment.description ? `<div class="data-item-details">${treatment.description}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // Appointments section
+        if (patient.appointments && patient.appointments.length > 0) {
+          contentHTML += `
+            <div class="data-section">
+              <div class="section-title">Appointments</div>
+              ${patient.appointments.map(appt => `
+                <div class="data-item">
+                  <div class="data-item-header">
+                    <div class="data-item-title">${appt.date || 'TBD'} ${appt.time ? `at ${appt.time}` : ''} <span class="badge badge-${appt.status === 'completed' ? 'success' : 'warning'}">${appt.status}</span></div>
+                    <div class="data-item-date">${new Date(appt.created_at).toLocaleString()}</div>
+                  </div>
+                  <div class="data-item-details">Reason: ${appt.reason}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        content.innerHTML = contentHTML;
+
+        header.addEventListener('click', () => {
+          content.classList.toggle('active');
+        });
+
+        section.appendChild(header);
+        section.appendChild(content);
+        container.appendChild(section);
+      });
+    }
+
+    // Export to CSV with authentication
+    async function exportToCSV() {
+      const patientId = document.getElementById('patientSelect').value;
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      // Build query params
+      const params = new URLSearchParams();
+      if (patientId) params.set('patient_id', patientId);
+      if (fromDate) params.set('from_date', fromDate);
+      if (toDate) params.set('to_date', toDate);
+
+      try {
+        const res = await fetch(`${API_BASE}/doctor/reports/export/?${params.toString()}`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to export report');
+        }
+
+        // Get the blob from response
+        const blob = await res.blob();
+
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `patient_report_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+      } catch (error) {
+        console.error('Error exporting report:', error);
+        alert('Failed to export report. Please try again.');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('generateBtn').addEventListener('click', generateReport);
+    document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+
+    // Initialize
     loadPatients();
   </script>
 </body>
+
 </html>
-
-

@@ -654,3 +654,297 @@ class PopulationBPTrendsView(APIView):
         ]
 
         return JsonResponse(data, safe=False)
+
+
+class DoctorReportGeneratorView(APIView):
+    """
+    Generate comprehensive reports for doctor's patients
+    Query params: patient_id (optional), from_date (optional), to_date (optional)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Ensure only doctors can access
+        if not hasattr(request.user, "doctor_profile"):
+            return Response({"error": "Not authorized"}, status=403)
+
+        doctor = request.user.doctor_profile
+        
+        # Get query parameters
+        patient_id = request.query_params.get('patient_id')
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        # Get doctor's patients
+        patients_qs = UserProfile.objects.filter(doctor=doctor)
+        
+        # Filter by specific patient if provided
+        if patient_id:
+            patients_qs = patients_qs.filter(id=patient_id)
+
+        report_data = []
+        
+        for patient in patients_qs:
+            # Build filters for date range
+            date_filter = {}
+            if from_date:
+                date_filter['created_at__gte'] = from_date
+            if to_date:
+                date_filter['created_at__lte'] = from_date + ' 23:59:59' if to_date else to_date
+
+            # Get vitals
+            vitals_qs = VitalReading.objects.filter(patient=patient.user)
+            if date_filter:
+                vitals_qs = vitals_qs.filter(**date_filter)
+            vitals = vitals_qs.order_by('-created_at')
+
+            # Get prescriptions
+            prescriptions_qs = Prescription.objects.filter(patient=patient)
+            if date_filter:
+                prescriptions_qs = prescriptions_qs.filter(**date_filter)
+            prescriptions = prescriptions_qs.order_by('-created_at')
+
+            # Get treatments
+            treatments_qs = Treatment.objects.filter(patient=patient)
+            if date_filter:
+                treatments_qs = treatments_qs.filter(**date_filter)
+            treatments = treatments_qs.order_by('-created_at')
+
+            # Get appointments
+            appointments_qs = Appointment.objects.filter(patient=patient)
+            if from_date or to_date:
+                appt_date_filter = {}
+                if from_date:
+                    appt_date_filter['date__gte'] = from_date
+                if to_date:
+                    appt_date_filter['date__lte'] = to_date
+                appointments_qs = appointments_qs.filter(**appt_date_filter)
+            appointments = appointments_qs.order_by('-date')
+
+            # Calculate statistics
+            vitals_stats = vitals.aggregate(
+                avg_systolic=Avg('systolic'),
+                avg_diastolic=Avg('diastolic'),
+                avg_heartrate=Avg('heartrate')
+            )
+
+            patient_data = {
+                'patient_id': patient.id,
+                'patient_name': patient.user.get_full_name() or patient.user.username,
+                'patient_email': patient.user.email,
+                'patient_phone': patient.phone or '',
+                'total_vitals': vitals.count(),
+                'total_prescriptions': prescriptions.count(),
+                'total_treatments': treatments.count(),
+                'total_appointments': appointments.count(),
+                'avg_systolic': round(vitals_stats['avg_systolic'], 1) if vitals_stats['avg_systolic'] else None,
+                'avg_diastolic': round(vitals_stats['avg_diastolic'], 1) if vitals_stats['avg_diastolic'] else None,
+                'avg_heartrate': round(vitals_stats['avg_heartrate'], 1) if vitals_stats['avg_heartrate'] else None,
+                'vitals': [
+                    {
+                        'id': v.id,
+                        'systolic': v.systolic,
+                        'diastolic': v.diastolic,
+                        'heartrate': v.heartrate,
+                        'symptoms': v.symptoms,
+                        'diet': v.diet,
+                        'exercise': v.exercise,
+                        'created_at': v.created_at.isoformat()
+                    }
+                    for v in vitals
+                ],
+                'prescriptions': [
+                    {
+                        'id': p.id,
+                        'medication': p.medication,
+                        'dosage': p.dosage,
+                        'frequency': p.frequency,
+                        'duration_days': p.duration_days,
+                        'instructions': p.instructions,
+                        'doctor_name': p.doctor.get_full_name(),
+                        'created_at': p.created_at.isoformat()
+                    }
+                    for p in prescriptions
+                ],
+                'treatments': [
+                    {
+                        'id': t.id,
+                        'name': t.name,
+                        'description': t.description,
+                        'status': t.status,
+                        'doctor_name': t.doctor.get_full_name(),
+                        'created_at': t.created_at.isoformat(),
+                        'updated_at': t.updated_at.isoformat()
+                    }
+                    for t in treatments
+                ],
+                'appointments': [
+                    {
+                        'id': a.id,
+                        'date': a.date.isoformat() if a.date else None,
+                        'time': a.time.isoformat() if a.time else None,
+                        'reason': a.reason,
+                        'status': a.status,
+                        'doctor_name': a.doctor.full_name if a.doctor else '',
+                        'created_at': a.created_at.isoformat()
+                    }
+                    for a in appointments
+                ]
+            }
+            
+            report_data.append(patient_data)
+
+        # Calculate overall statistics
+        total_vitals = sum(p['total_vitals'] for p in report_data)
+        total_prescriptions = sum(p['total_prescriptions'] for p in report_data)
+        total_treatments = sum(p['total_treatments'] for p in report_data)
+        total_appointments = sum(p['total_appointments'] for p in report_data)
+        
+        # Calculate overall averages
+        all_systolic = [p['avg_systolic'] for p in report_data if p['avg_systolic']]
+        all_diastolic = [p['avg_diastolic'] for p in report_data if p['avg_diastolic']]
+        all_heartrate = [p['avg_heartrate'] for p in report_data if p['avg_heartrate']]
+
+        summary = {
+            'total_patients': len(report_data),
+            'total_vitals': total_vitals,
+            'total_prescriptions': total_prescriptions,
+            'total_treatments': total_treatments,
+            'total_appointments': total_appointments,
+            'avg_systolic': round(sum(all_systolic) / len(all_systolic), 1) if all_systolic else None,
+            'avg_diastolic': round(sum(all_diastolic) / len(all_diastolic), 1) if all_diastolic else None,
+            'avg_heartrate': round(sum(all_heartrate) / len(all_heartrate), 1) if all_heartrate else None,
+            'date_from': from_date,
+            'date_to': to_date,
+            'patients': report_data
+        }
+
+        return Response(summary)
+
+
+import csv
+from django.http import HttpResponse
+
+class DoctorReportExportView(APIView):
+    """
+    Export reports as CSV
+    Query params: patient_id (optional), from_date (optional), to_date (optional)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Ensure only doctors can access
+        if not hasattr(request.user, "doctor_profile"):
+            return Response({"error": "Not authorized"}, status=403)
+
+        doctor = request.user.doctor_profile
+        
+        # Get query parameters
+        patient_id = request.query_params.get('patient_id')
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        # Get doctor's patients
+        patients_qs = UserProfile.objects.filter(doctor=doctor)
+        
+        # Filter by specific patient if provided
+        if patient_id:
+            patients_qs = patients_qs.filter(id=patient_id)
+
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        filename = f'patient_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        
+        # Write header
+        writer.writerow([
+            'Patient ID', 'Patient Name', 'Patient Email', 'Patient Phone',
+            'Date', 'Type', 'Details', 'Systolic', 'Diastolic', 'Heartrate',
+            'Medication', 'Dosage', 'Frequency', 'Treatment', 'Status',
+            'Appointment Date', 'Appointment Time', 'Reason'
+        ])
+
+        for patient in patients_qs:
+            # Build filters for date range
+            date_filter = {}
+            if from_date:
+                date_filter['created_at__gte'] = from_date
+            if to_date:
+                date_filter['created_at__lte'] = to_date + ' 23:59:59' if to_date else to_date
+
+            patient_name = patient.user.get_full_name() or patient.user.username
+            patient_email = patient.user.email
+            patient_phone = patient.phone or ''
+
+            # Export vitals
+            vitals_qs = VitalReading.objects.filter(patient=patient.user)
+            if date_filter:
+                vitals_qs = vitals_qs.filter(**date_filter)
+            
+            for vital in vitals_qs.order_by('-created_at'):
+                writer.writerow([
+                    patient.id, patient_name, patient_email, patient_phone,
+                    vital.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'Vital Reading',
+                    f'Symptoms: {vital.symptoms or "None"}',
+                    vital.systolic, vital.diastolic, vital.heartrate or '',
+                    '', '', '', '', '', '', '', ''
+                ])
+
+            # Export prescriptions
+            prescriptions_qs = Prescription.objects.filter(patient=patient)
+            if date_filter:
+                prescriptions_qs = prescriptions_qs.filter(**date_filter)
+            
+            for prescription in prescriptions_qs.order_by('-created_at'):
+                writer.writerow([
+                    patient.id, patient_name, patient_email, patient_phone,
+                    prescription.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'Prescription',
+                    prescription.instructions or '',
+                    '', '', '',
+                    prescription.medication, prescription.dosage, prescription.frequency,
+                    '', '', '', '', ''
+                ])
+
+            # Export treatments
+            treatments_qs = Treatment.objects.filter(patient=patient)
+            if date_filter:
+                treatments_qs = treatments_qs.filter(**date_filter)
+            
+            for treatment in treatments_qs.order_by('-created_at'):
+                writer.writerow([
+                    patient.id, patient_name, patient_email, patient_phone,
+                    treatment.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'Treatment',
+                    treatment.description,
+                    '', '', '', '', '', '',
+                    treatment.name, treatment.status,
+                    '', '', ''
+                ])
+
+            # Export appointments
+            appointments_qs = Appointment.objects.filter(patient=patient)
+            if from_date or to_date:
+                appt_date_filter = {}
+                if from_date:
+                    appt_date_filter['date__gte'] = from_date
+                if to_date:
+                    appt_date_filter['date__lte'] = to_date
+                appointments_qs = appointments_qs.filter(**appt_date_filter)
+            
+            for appointment in appointments_qs.order_by('-date'):
+                writer.writerow([
+                    patient.id, patient_name, patient_email, patient_phone,
+                    appointment.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'Appointment',
+                    '',
+                    '', '', '', '', '', '', '', '',
+                    appointment.date.strftime('%Y-%m-%d') if appointment.date else '',
+                    appointment.time.strftime('%H:%M') if appointment.time else '',
+                    appointment.reason
+                ])
+
+        return response
