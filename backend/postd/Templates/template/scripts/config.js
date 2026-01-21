@@ -9,3 +9,11 @@ function getAuthHeaders() {
   };
 }
 
+// Helper function for authenticated fetch requests
+async function authFetch(url, options = {}) {
+  const defaultOptions = {
+    headers: getAuthHeaders(),
+    ...options
+  };
+  return fetch(url, defaultOptions);
+}

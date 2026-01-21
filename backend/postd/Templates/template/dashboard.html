@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,410 +10,629 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
     :root {
-      --primary: #2a5bd7;
-      --primary-light: #8fafdf;
-      --secondary: #4e73df;
-      --accent: #36b9cc;
-      --success: #1cc88a;
-      --info: #36b9cc;
-      --warning: #f6c23e;
-      --danger: #e74a3b;
-      --light: #f8f9fc;
-      --dark: #5a5c69;
-      --sidebar-width: 250px;
+      --primary: #0f172a;
+      --accent: #3b82f6;
+      --accent-light: rgba(59, 130, 246, 0.1);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-body: #f8fafc;
+      --sidebar-bg: #ffffff;
+      --card-bg: #ffffff;
+      --sidebar-width: 280px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
-    
+
+    html,
     body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f5f7fb;
-      color: #4a4a4a;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      color: #1e293b;
+      overflow-x: hidden;
+      max-width: 100vw;
     }
-    
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .outfit {
+      font-family: 'Outfit', sans-serif;
+    }
+
     /* Sidebar Styling */
     .sidebar {
       height: 100vh;
-      background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-      color: white;
+      background: var(--sidebar-bg);
+      border-right: 1px solid #e2e8f0;
       position: fixed;
       width: var(--sidebar-width);
       padding: 0;
-      box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
       z-index: 1000;
+      transition: var(--transition);
+      overflow-y: auto;
+      overflow-x: hidden;
     }
-    
+
     .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 32px 24px;
+      margin-bottom: 20px;
     }
-    
-    .sidebar-header h5 {
-      font-weight: 600;
-      margin: 0;
+
+    .brand-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--primary);
     }
-    
-    .sidebar-header h5 i {
-      background: rgba(255, 255, 255, 0.2);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+
+    .brand-logo i {
+      font-size: 28px;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 10px;
+      border-radius: 12px;
     }
-    
+
+    .brand-logo span {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
     .nav-container {
-      padding: 15px 10px;
+      padding: 0 16px 100px 16px;
+      overflow-y: auto;
     }
-    
+
+    .nav-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin: 24px 8px 12px;
+      letter-spacing: 0.05em;
+    }
+
     .sidebar a {
       display: flex;
       align-items: center;
-      padding: 12px 15px;
-      color: rgba(255, 255, 255, 0.9);
+      padding: 12px 16px;
+      color: #64748b;
       text-decoration: none;
-      border-radius: 8px;
-      margin: 6px 0;
-      transition: all 0.3s;
+      border-radius: 12px;
+      margin: 4px 0;
+      transition: var(--transition);
       gap: 12px;
       font-weight: 500;
     }
-    
-    .sidebar a:hover, .sidebar a.active {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      transform: translateX(5px);
-    }
-    
+
     .sidebar a i {
-      font-size: 18px;
-      width: 24px;
+      font-size: 20px;
+      transition: var(--transition);
     }
-    
+
+    .sidebar a:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+
+    .sidebar a.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+    }
+
+    .sidebar a.active i {
+      color: white;
+    }
+
+    .logout-section {
+      position: absolute;
+      bottom: 24px;
+      width: 100%;
+      padding: 0 16px;
+    }
+
     .logout-btn {
-      margin-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-      padding-top: 20px;
+      color: var(--danger) !important;
     }
-    
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.05) !important;
+    }
+
     /* Main Content */
     .main-content {
       margin-left: var(--sidebar-width);
-      padding: 20px 30px;
-      width: calc(100% - var(--sidebar-width));
+      padding: 40px;
+      transition: var(--transition);
+      max-width: calc(100vw - var(--sidebar-width));
+      overflow-x: hidden;
     }
-    
-    .section-header {
+
+    .dashboard-header {
+      margin-bottom: 40px;
+    }
+
+    .dashboard-header h1 {
+      font-weight: 700;
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .dashboard-header p {
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    /* Premium Card Design */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .stat-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .icon-patients {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+    }
+
+    .icon-alerts {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .icon-appointments {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
+
+    .stat-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    /* Action Grid */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .action-card {
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      background: white;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .action-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      transform: translateY(-4px);
+    }
+
+    .action-card i {
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .action-card span {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* Table Styling */
+    .table-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 24px;
+      border-bottom: 1px solid #e2e8f0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 25px;
     }
-    
-    .section-header h3 {
-      color: var(--dark);
-      font-weight: 600;
+
+    .table-header h5 {
       margin: 0;
+      font-weight: 600;
     }
-    
-    /* Card Styling */
-    .card {
-      border: none;
+
+    .btn-elegant {
+      padding: 10px 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s, box-shadow 0.3s;
-      overflow: hidden;
-    }
-    
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    
-    .card-header {
-      background-color: white;
-      border-bottom: 1px solid #eaecf4;
       font-weight: 600;
-      padding: 15px 20px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
-    
-    .stat-card {
-      text-align: center;
-      padding: 20px 15px;
-      height: 100%;
+
+    .btn-elegant-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
     }
-    
-    .stat-card h6 {
-      color: var(--dark);
-      font-size: 0.9rem;
-      margin-bottom: 10px;
+
+    .btn-elegant-primary:hover {
+      background: #334155;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
     }
-    
-    .stat-card h2 {
-      color: var(--primary);
-      font-weight: 700;
+
+    .custom-table {
+      width: 100%;
       margin: 0;
     }
-    
-    .critical-count {
-      color: var(--danger) !important;
-    }
-    
-    /* Button Styling */
-    .btn {
-      border-radius: 8px;
-      font-weight: 500;
-      padding: 8px 16px;
-    }
-    
-    .btn-primary {
-      background-color: var(--primary);
-      border-color: var(--primary);
-    }
-    
-    .btn-primary:hover {
-      background-color: #1a4bbd;
-      border-color: #1a4bbd;
-    }
-    
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.85rem;
-    }
-    
-    /* Quick Actions */
-    .quick-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 15px;
-    }
-    
-    /* Table Styling */
-    .table-container {
-      overflow-x: auto;
-    }
-    
-    table {
-      border-collapse: separate;
-      border-spacing: 0;
-      width: 100%;
-    }
-    
-    th {
-      background-color: #f8f9fc;
-      color: var(--dark);
+
+    .custom-table th {
+      background: #f8fafc;
+      padding: 16px 24px;
       font-weight: 600;
-      padding: 12px 15px;
+      color: #64748b;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    
-    td {
-      padding: 12px 15px;
+
+    .custom-table td {
+      padding: 20px 24px;
       vertical-align: middle;
-      border-top: 1px solid #eaecf4;
+      border-bottom: 1px solid #f1f5f9;
     }
-    
-    tr:hover td {
-      background-color: #f8f9fc;
+
+    .patient-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+      margin-right: 12px;
     }
-    
-    .badge {
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-weight: 500;
-    }
-    
-    /* Chart Container */
-    .chart-container {
-      height: 250px;
-      position: relative;
-    }
-    
-    /* Search Box */
-    .search-box {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    
-    .search-box i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #b7b9cc;
-    }
-    
-    .search-box input {
-      padding-left: 40px;
+
+    .status-badge {
+      padding: 6px 12px;
       border-radius: 8px;
-      border: 1px solid #e2e5ec;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
     }
-    
-    /* Alert Styling */
-    .alert {
-      border: none;
-      border-radius: 8px;
-      padding: 15px 20px;
+
+    .status-scheduled {
+      background: #dcfce7;
+      color: #166534;
     }
-    
+
+    .status-completed {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    /* Glassmorphism utility */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+    }
+
     /* Responsive Adjustments */
-    @media (max-width: 992px) {
-      .sidebar {
-        width: 70px;
-        overflow: hidden;
+    @media (max-width: 1200px) {
+      :root {
+        --sidebar-width: 88px;
       }
-      
-      .sidebar-header h5 span, .sidebar a span {
+
+      .sidebar-header h5 span,
+      .sidebar a span,
+      .nav-label {
         display: none;
       }
-      
+
       .sidebar-header {
-        padding: 20px 15px;
+        padding: 32px 16px;
       }
-      
-      .sidebar-header h5 i {
-        margin: 0;
+
+      .brand-logo {
+        justify-content: center;
       }
-      
-      .main-content {
-        margin-left: 70px;
-        width: calc(100% - 70px);
+
+      .sidebar a {
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .sidebar a i {
+        font-size: 24px;
       }
     }
-    
+
     @media (max-width: 768px) {
       .main-content {
-        padding: 15px;
+        padding: 24px;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="container-fluid p-0">
     <div class="row g-0">
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="sidebar-header">
-          <h5><i class="bi bi-heart-pulse"></i> <span>Doctor Dashboard</span></h5>
-        </div>
-        
-        <div class="nav-container">
-          <a href="patients.html" id="patientsLink" class="active">
-            <i class="bi bi-people"></i> <span>Patients</span>
+          <a href="#" class="brand-logo">
+            <i class="bi bi-heart-pulse-fill"></i>
+            <span>VitalsPro AI</span>
           </a>
+        </div>
+
+        <div class="nav-container">
+          <div class="nav-label">Main Menu</div>
+          <a href="#" id="patientsLink" class="active">
+            <i class="bi bi-grid-1x2-fill"></i> <span>Overview</span>
+          </a>
+          <a href="patients.html">
+            <i class="bi bi-people-fill"></i> <span>Patient Directory</span>
+          </a>
+
+          <div class="nav-label">Intelligence</div>
           <a href="alerts_list.html" id="alertsLink">
-            <i class="bi bi-bell"></i> <span>alerts</span>
+            <i class="bi bi-lightning-charge-fill"></i> <span>Critical Alerts</span>
           </a>
           <a href="reports_generator.html" id="reportsLink">
-            <i class="bi bi-bar-chart"></i> <span>Reports</span>
+            <i class="bi bi-pie-chart-fill"></i> <span>Clinical Reports</span>
           </a>
+
+          <div class="nav-label">Management</div>
           <a href="prescriptions.html" id="prescriptionsLink">
-            <i class="bi bi-capsule"></i> <span>Prescriptions</span>
+            <i class="bi bi-capsule-pill"></i> <span>Prescriptions</span>
           </a>
           <a href="treatments_manage.html" id="treatmentsLink">
-            <i class="bi bi-clipboard2-pulse"></i> <span>Treatments</span>
+            <i class="bi bi-clipboard2-pulse-fill"></i> <span>Treatments</span>
           </a>
           <a href="doctor_profile.html" id="profileLink">
-            <i class="bi bi-person"></i> <span>Profile</span>
+            <i class="bi bi-person-badge-fill"></i> <span>My Profile</span>
           </a>
-          
-          <div class="logout-btn">
-            <a href="#" onclick="logout()">
-              <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
-            </a>
-          </div>
+        </div>
+
+        <div class="logout-section">
+          <a href="#" class="logout-btn" onclick="logout()">
+            <i class="bi bi-box-arrow-right"></i> <span>Sign Out</span>
+          </a>
         </div>
       </div>
 
       <!-- Main Content -->
       <div class="main-content">
-        <div class="section-header">
-          <h3 id="sectionTitle">Dashboard Overview</h3>
-          <div class="d-flex align-items-center">
-            <span class="me-3 text-muted"><i class="bi bi-calendar me-1"></i> <span id="currentDate"></span></span>
+        <div class="dashboard-header d-flex justify-content-between align-items-end">
+          <div>
+            <h1 id="sectionTitle">Clinical Overview</h1>
+            <p><i class="bi bi-calendar3 me-2"></i> <span id="currentDate"></span></p>
+          </div>
+          <div class="pb-2">
+            <button class="btn-elegant btn-elegant-primary" id="redirectBtn">
+              <i class="bi bi-plus-lg"></i> Register New Patient
+            </button>
           </div>
         </div>
-        
-        <!-- Top Cards -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="card stat-card">
-              <h6><i class="bi bi-people me-2"></i> Total Patients</h6>
-              <h2 id="totalPatients">--</h2>
+
+        <!-- Top Stats -->
+        <div class="row g-4 mb-4">
+          <div class="col-xl-4 col-md-6">
+            <div class="card stat-card h-100">
+              <div class="stat-icon icon-patients">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <div>
+                <div class="stat-value" id="totalPatients">--</div>
+                <div class="stat-label">Registered Patients</div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card stat-card">
-              <h6><i class="bi bi-exclamation-triangle me-2"></i> Critical Alerts</h6>
-              <h2 id="criticalAlerts" class="critical-count">--</h2>
+          <div class="col-xl-4 col-md-6">
+            <div class="card stat-card h-100">
+              <div class="stat-icon icon-alerts">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div>
+                <div class="stat-value" id="criticalAlerts">--</div>
+                <div class="stat-label">Critical Alerts</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-md-6">
+            <div class="card stat-card h-100">
+              <div class="stat-icon icon-appointments">
+                <i class="bi bi-calendar-check-fill"></i>
+              </div>
+              <div>
+                <div class="stat-value" id="upcomingCount">--</div>
+                <div class="stat-label">Today's Appointments</div>
+              </div>
             </div>
           </div>
         </div>
-        
-        <!-- Quick Actions -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h6 class="m-0">Quick Actions</h6>
-          </div>
-          <div class="quick-actions">
-            <button class="btn btn-primary" id="redirectBtn"><i class="bi bi-person-plus me-2"></i> Register Patient</button>
-            <a class="btn btn-outline-primary" href="patients.html"><i class="bi bi-people me-2"></i> View Patients</a>
-            <a class="btn btn-outline-primary" href="alerts_list.html"><i class="bi bi-bell me-2"></i> Alerts</a>
-            <a class="btn btn-outline-primary" href="reports_generator.html"><i class="bi bi-bar-chart me-2"></i> Reports</a>
-            <a class="btn btn-outline-primary" href="prescriptions.html"><i class="bi bi-capsule me-2"></i> Prescriptions</a>
-            <a class="btn btn-outline-primary" href="treatments_manage.html"><i class="bi bi-clipboard2-pulse me-2"></i> Treatments</a>
+
+        <div class="row g-4 mb-5">
+          <!-- Quick Actions -->
+          <div class="col-lg-12">
+            <h5 class="mb-3 outfit fw-600">Quick Access</h5>
+            <div class="action-grid">
+              <a href="patients.html" class="action-card">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>View Patients</span>
+              </a>
+              <a href="alerts_list.html" class="action-card">
+                <i class="bi bi-bell-fill"></i>
+                <span>Manage Alerts</span>
+              </a>
+              <a href="reports_generator.html" class="action-card">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                <span>Generate Reports</span>
+              </a>
+              <a href="prescriptions.html" class="action-card">
+                <i class="bi bi-capsule"></i>
+                <span>Prescriptions</span>
+              </a>
+              <a href="treatments_manage.html" class="action-card">
+                <i class="bi bi-activity"></i>
+                <span>Treatments</span>
+              </a>
+              <a href="doctor_profile.html" class="action-card">
+                <i class="bi bi-gear-fill"></i>
+                <span>Settings</span>
+              </a>
+            </div>
           </div>
         </div>
 
         <!-- Upcoming Appointments -->
-<div class="card mb-4">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h6 class="m-0">Upcoming Appointments</h6>
-    <a href="appointments/appointments.html" class="btn btn-sm btn-outline-primary">
-      View All
-    </a>
-  </div>
+        <div class="card table-card mb-5">
+          <div class="table-header">
+            <h5 class="outfit fw-600">Upcoming Appointments</h5>
+            <a href="appointments/appointments.html" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+              See All Schedule
+            </a>
+          </div>
+          <div class="table-responsive">
+            <table class="table custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Date & Time</th>
+                  <th>Reason for Visit</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="appointmentsTable">
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-5">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Retrieving schedule...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-  <div class="card-body p-0">
-    <div class="table-container">
-      <table class="table mb-0">
-        <thead>
-          <tr>
-            <th>Patient</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Reason</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="appointmentsTable">
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">
-              Loading appointments…
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+        <!-- Charts Section -->
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="card p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="outfit fw-600 m-0">Population BP Trends</h5>
+                <div class="badge bg-light text-dark border p-2">Last 30 Days</div>
+              </div>
+              <div class="chart-container" style="height: 350px;">
+                <canvas id="bpChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card p-4 h-100 bg-primary text-white border-0 shadow-lg">
+              <h5 class="outfit fw-600 mb-4">Clinical Insights</h5>
+              <div id="medicalInsights" class="mb-4">
+                <!-- Insights will be injected here -->
+                <div class="d-flex align-items-center gap-3">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                  <span>Analyzing clinical data...</span>
+                </div>
+              </div>
+              <hr class="opacity-10">
+              <p class="small opacity-75">AI models are processing patient vitals to identify risk patterns.</p>
+            </div>
+          </div>
+        </div>
 
-        
+
         <script>
-          document.getElementById("redirectBtn").addEventListener("click", function(){ 
-            window.location.href = "patient_signup.html"; 
+          document.getElementById("redirectBtn").addEventListener("click", function () {
+            window.location.href = "patient_signup.html";
           });
-          
+
           // Set current date
           const now = new Date();
-          document.getElementById("currentDate").textContent = now.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          document.getElementById("currentDate").textContent = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
           });
         </script>
 
@@ -420,445 +640,460 @@
 
         <script>
 document.addEventListener("DOMContentLoaded", async () => {
-    const ctx = document.getElementById("bpChart").getContext("2d");
+  const canvas = document.getElementById("bpChart");
+  if (!canvas) return;
 
-    try {
-        const res = await authFetch(`${API_BASE}/vitals`);
-        const data = res.ok ? await res.json() : [];
+  const ctx = canvas.getContext("2d");
 
-        console.log("Vitals data:", data);
-
-        // Group by date
-        const grouped = {};
-        data.forEach(v => {
-            const date = v.created_at?.split("T")[0] || "Unknown";
-
-            if (!grouped[date]) {
-                grouped[date] = { sys: [], dia: [], heart: [] };
-            }
-
-            grouped[date].sys.push(v.systolic);
-            grouped[date].dia.push(v.diastolic);
-            grouped[date].heart.push(v.heart_rate);
-        });
-
-        const dates = Object.keys(grouped).sort();
-
-        const avgSys = dates.map(d =>
-            Math.round(grouped[d].sys.reduce((a, b) => a + b, 0) / grouped[d].sys.length)
-        );
-
-        const avgDia = dates.map(d =>
-            Math.round(grouped[d].dia.reduce((a, b) => a + b, 0) / grouped[d].dia.length)
-        );
-
-        const avgHeart = dates.map(d =>
-            Math.round(grouped[d].heart.reduce((a, b) => a + b, 0) / grouped[d].heart.length)
-        );
-
-        // Create chart
-        new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: dates,
-                datasets: [
-                    {
-                        label: "Avg Systolic",
-                        data: avgSys,
-                        borderColor: "#d9534f",
-                        tension: 0.3
-                    },
-                    {
-                        label: "Avg Diastolic",
-                        data: avgDia,
-                        borderColor: "#5bc0de",
-                        tension: 0.3
-                    },
-                    {
-                        label: "Avg Heart Rate",
-                        data: avgHeart,
-                        borderColor: "#5cb85c",
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        title: { display: true, text: "Value" }
-                    },
-                    x: {
-                        title: { display: true, text: "Date" }
-                    }
-                }
-            }
-        });
-
-    } catch (err) {
-        console.error("Chart load error:", err);
-        alert("Error loading patient readings.");
-    }
-});
-</script>
-
-<script>
-let trendChart = null;
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadTrendData();
-});
-
-async function loadTrendData() {
   try {
-    // Show loading state
-    showLoadingState();
-    
-    // In real implementation, you would fetch this from your API
-    // For demo, we'll generate realistic trend data
-    const trendData = generateTrendData();
-    
-    // Update the UI with the data
-    updateSummaryCards(trendData);
-    createTrendChart(trendData);
-    generateMedicalInsights(trendData);
-    
-  } catch (error) {
-    console.error('Error loading trend data:', error);
-    showError('Failed to load trend data');
-  }
-}
+    const res = await authFetch(`${API_BASE}/population/bp-trends/`);
+    if (!res.ok) throw new Error("Failed to load BP trends");
 
-async function loadUpcomingAppointments() {
-  try {
-    const res = await fetch(`${API_BASE}/doctor/appointments/`, {
-      headers: getAuthHeaders()
-    });
+    const data = await res.json();
 
-    if (!res.ok) throw new Error("Failed to load appointments");
-
-    const appointments = await res.json();
-    const table = document.getElementById("appointmentsTable");
-    table.innerHTML = "";
-
-    if (appointments.length === 0) {
-      table.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center text-muted py-4">
-            No upcoming appointments
-          </td>
-        </tr>`;
+    if (!data.length) {
+      ctx.font = "16px Inter";
+      ctx.fillText("No population data available", 50, 50);
       return;
     }
 
-    appointments.slice(0, 5).forEach(appt => {
-      table.innerHTML += `
+    const labels = data.map(d => d.date);
+    const systolic = data.map(d => d.systolic);
+    const diastolic = data.map(d => d.diastolic);
+    const heartrate = data.map(d => d.heartrate);
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Avg Systolic",
+            data: systolic,
+            borderColor: "#ef4444",
+            backgroundColor: "rgba(239,68,68,0.15)",
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: "Avg Diastolic",
+            data: diastolic,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.15)",
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: "Avg Heart Rate",
+            data: heartrate,
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16,185,129,0.15)",
+            tension: 0.4,
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top" },
+          tooltip: { mode: "index", intersect: false }
+        },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("BP Chart error:", err);
+  }
+});
+</script>
+
+        <script>
+          let trendChart = null;
+
+          document.addEventListener("DOMContentLoaded", async () => {
+            await loadTrendData();
+          });
+
+          async function loadTrendData() {
+            try {
+              // Show loading state
+              showLoadingState();
+
+              // In real implementation, you would fetch this from your API
+              // For demo, we'll generate realistic trend data
+              const trendData = generateTrendData();
+
+              // Update the UI with the data
+              updateSummaryCards(trendData);
+              createTrendChart(trendData);
+              generateMedicalInsights(trendData);
+
+            } catch (error) {
+              console.error('Error loading trend data:', error);
+              showError('Failed to load trend data');
+            }
+          }
+
+          async function loadUpcomingAppointments() {
+            try {
+              const res = await fetch(`${API_BASE}/doctor/appointments/`, {
+                headers: getAuthHeaders()
+              });
+
+              if (!res.ok) throw new Error("Failed to load appointments");
+
+              const appointments = await res.json();
+              const table = document.getElementById("appointmentsTable");
+              table.innerHTML = "";
+
+              // Calculate today's appointments
+              const today = new Date().toISOString().split('T')[0];
+              const todayAppointments = appointments.filter(appt => {
+                const apptDate = appt.date?.split('T')[0] || appt.date;
+                return apptDate === today && appt.status === 'scheduled';
+              });
+
+              // Update today's count stat card
+              const upcomingCountEl = document.getElementById("upcomingCount");
+              if (upcomingCountEl) {
+                upcomingCountEl.textContent = todayAppointments.length;
+              }
+
+              if (appointments.length === 0) {
+                table.innerHTML = `
         <tr>
-          <td>${appt.patient_name}</td>
-          <td>${new Date(appt.date).toLocaleDateString()}</td>
-          <td>${appt.time}</td>
-          <td>${appt.reason || "-"}</td>
+          <td colspan="4" class="text-center text-muted py-5">
+            <i class="bi bi-calendar-x me-2"></i>No upcoming appointments
+          </td>
+        </tr>`;
+                return;
+              }
+
+              appointments.slice(0, 5).forEach(appt => {
+                const dateTime = `${new Date(appt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${appt.time}`;
+                const statusClass = appt.status === "scheduled" ? "status-scheduled" : "status-completed";
+
+                table.innerHTML += `
+        <tr>
           <td>
-            <span class="badge bg-${appt.status === "scheduled" ? "primary" : "secondary"}">
+            <div class="d-flex align-items-center">
+              <div class="patient-avatar">${appt.patient_name.charAt(0).toUpperCase()}</div>
+              <strong>${appt.patient_name}</strong>
+            </div>
+          </td>
+          <td>${dateTime}</td>
+          <td>${appt.reason || "Follow-up"}</td>
+          <td>
+            <span class="status-badge ${statusClass}">
               ${appt.status}
             </span>
           </td>
         </tr>
       `;
-    });
+              });
 
-  } catch (err) {
-    console.error(err);
-    document.getElementById("appointmentsTable").innerHTML = `
+            } catch (err) {
+              console.error(err);
+              document.getElementById("appointmentsTable").innerHTML = `
       <tr>
-        <td colspan="5" class="text-danger text-center py-4">
-          Failed to load appointments
+        <td colspan="4" class="text-danger text-center py-5">
+          <i class="bi bi-exclamation-circle me-2"></i>Failed to load appointments
         </td>
       </tr>`;
-  }
-}
-
-
-
-
-function generateTrendData() {
-  // Generate realistic weekly blood pressure data
-  const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'];
-  
-  // Base values with realistic variations
-  const baseSystolic = 125;
-  const baseDiastolic = 82;
-  
-  const systolicData = weeks.map((week, index) => {
-    const variation = (Math.random() - 0.5) * 10; // ±5 mmHg variation
-    const trend = index * 1.5; // Slight upward trend
-    return Math.round(baseSystolic + variation + trend);
-  });
-  
-  const diastolicData = weeks.map((week, index) => {
-    const variation = (Math.random() - 0.5) * 8; // ±4 mmHg variation
-    const trend = index * 0.8; // Slight upward trend
-    return Math.round(baseDiastolic + variation + trend);
-  });
-  
-  // Calculate trends
-  const systolicTrend = calculateTrend(systolicData);
-  const diastolicTrend = calculateTrend(diastolicData);
-  
-  return {
-    weeks,
-    systolic: systolicData,
-    diastolic: diastolicData,
-    systolicTrend,
-    diastolicTrend,
-    patientCount: 24, // Example patient count
-    currentAvg: {
-      systolic: systolicData[systolicData.length - 1],
-      diastolic: diastolicData[diastolicData.length - 1]
-    }
-  };
-}
-
-function calculateTrend(data) {
-  if (data.length < 2) return 0;
-  
-  const first = data[0];
-  const last = data[data.length - 1];
-  const change = last - first;
-  
-  return change;
-}
-
-function updateSummaryCards(data) {
-  // Current Average
-  document.getElementById('currentAvg').textContent = 
-    `${data.currentAvg.systolic}/${data.currentAvg.diastolic}`;
-  
-  // Trend Indicator
-  const trendIndicator = document.getElementById('trendIndicator');
-  const trendText = document.getElementById('trendText');
-  const overallTrend = data.systolicTrend + data.diastolicTrend;
-  
-  if (overallTrend > 3) {
-    trendIndicator.innerHTML = '<i class="bi bi-arrow-up-circle text-danger"></i>';
-    trendText.textContent = 'Rising';
-    trendText.className = 'text-danger';
-  } else if (overallTrend < -3) {
-    trendIndicator.innerHTML = '<i class="bi bi-arrow-down-circle text-success"></i>';
-    trendText.textContent = 'Improving';
-    trendText.className = 'text-success';
-  } else {
-    trendIndicator.innerHTML = '<i class="bi bi-dash-circle text-secondary"></i>';
-    trendText.textContent = 'Stable';
-    trendText.className = 'text-secondary';
-  }
-  
-  // BP Category
-  const bpCategory = document.getElementById('bpCategory');
-  const category = getBPCategory(data.currentAvg.systolic, data.currentAvg.diastolic);
-  bpCategory.textContent = category.name;
-  bpCategory.className = `badge bg-${category.color}`;
-  
-  // Patient Count
-  document.getElementById('patientCount').textContent = data.patientCount;
-}
-
-function getBPCategory(systolic, diastolic) {
-  if (systolic >= 180 || diastolic >= 120) {
-    return { name: 'Crisis', color: 'danger' };
-  } else if (systolic >= 140 || diastolic >= 90) {
-    return { name: 'High Stage 2', color: 'warning' };
-  } else if (systolic >= 130 || diastolic >= 80) {
-    return { name: 'High Stage 1', color: 'info' };
-  } else if (systolic >= 120) {
-    return { name: 'Elevated', color: 'primary' };
-  } else {
-    return { name: 'Normal', color: 'success' };
-  }
-}
-
-function createTrendChart(data) {
-  const ctx = document.getElementById('bpTrendChart').getContext('2d');
-  
-  // Destroy existing chart
-  if (trendChart) {
-    trendChart.destroy();
-  }
-  
-  trendChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.weeks,
-      datasets: [
-        {
-          label: 'Systolic',
-          data: data.systolic,
-          borderColor: 'rgb(220, 53, 69)',
-          backgroundColor: 'rgba(220, 53, 69, 0.1)',
-          borderWidth: 3,
-          tension: 0.3,
-          fill: true
-        },
-        {
-          label: 'Diastolic',
-          data: data.diastolic,
-          borderColor: 'rgb(13, 110, 253)',
-          backgroundColor: 'rgba(13, 110, 253, 0.1)',
-          borderWidth: 3,
-          tension: 0.3,
-          fill: true
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${context.parsed.y} mmHg`;
-            }
-          }
-        },
-        annotation: {
-          annotations: {
-            // Add reference lines for normal ranges
-            systolicNormal: {
-              type: 'line',
-              yMin: 120,
-              yMax: 120,
-              borderColor: 'rgba(40, 167, 69, 0.5)',
-              borderWidth: 1,
-              borderDash: [5, 5],
-              label: {
-                display: true,
-                content: 'Normal Systolic',
-                position: 'end'
-              }
-            },
-            diastolicNormal: {
-              type: 'line',
-              yMin: 80,
-              yMax: 80,
-              borderColor: 'rgba(40, 167, 69, 0.5)',
-              borderWidth: 1,
-              borderDash: [5, 5],
-              label: {
-                display: true,
-                content: 'Normal Diastolic',
-                position: 'end'
+              // Set count to 0 on error
+              const upcomingCountEl = document.getElementById("upcomingCount");
+              if (upcomingCountEl) {
+                upcomingCountEl.textContent = "0";
               }
             }
           }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: false,
-          min: 60,
-          max: 180,
-          title: {
-            display: true,
-            text: 'Blood Pressure (mmHg)'
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.1)'
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Time Period'
-          },
-          grid: {
-            display: false
-          }
-        }
-      }
-    }
-  });
-}
 
-function generateMedicalInsights(data) {
-  const insightsDiv = document.getElementById('medicalInsights');
-  const actionItemsDiv = document.getElementById('actionItems');
-  
-  const currentSys = data.currentAvg.systolic;
-  const currentDia = data.currentAvg.diastolic;
-  const sysTrend = data.systolicTrend;
-  const diaTrend = data.diastolicTrend;
-  
-  let insights = [];
-  let actions = [];
-  
-  // Analyze current readings
-  if (currentSys >= 140 || currentDia >= 90) {
-    insights.push("⚠️ <strong>Elevated blood pressure</strong> detected across patient population");
-    actions.push({
-      icon: 'bi-prescription2',
-      title: 'Medication Review',
-      description: 'Consider antihypertensive medication adjustments',
-      urgency: 'high'
-    });
-  }
-  
-  if (currentSys >= 130 || currentDia >= 80) {
-    insights.push("📈 <strong>Stage 1 Hypertension</strong> levels observed");
-  }
-  
-  // Analyze trends
-  if (sysTrend > 5 || diaTrend > 3) {
-    insights.push("📊 <strong>Upward trend</strong> in blood pressure readings over past month");
-    actions.push({
-      icon: 'bi-clipboard-heart',
-      title: 'Lifestyle Counseling',
-      description: 'Reinforce diet, exercise, and stress management',
-      urgency: 'medium'
-    });
-  }
-  
-  if (sysTrend < -5 || diaTrend < -3) {
-    insights.push("✅ <strong>Improving trend</strong> - current interventions appear effective");
-  }
-  
-  // General insights based on patient count
-  if (data.patientCount > 20) {
-    insights.push("👥 Monitoring <strong>large patient cohort</strong> - consider population health strategies");
-    actions.push({
-      icon: 'bi-graph-up',
-      title: 'Population Analysis',
-      description: 'Review demographic patterns in hypertension',
-      urgency: 'low'
-    });
-  }
-  
-  // Default insight if no specific conditions
-  if (insights.length === 0) {
-    insights.push("✅ <strong>Stable readings</strong> - continue current monitoring protocol");
-    actions.push({
-      icon: 'bi-check-circle',
-      title: 'Routine Monitoring',
-      description: 'Continue regular blood pressure checks',
-      urgency: 'low'
-    });
-  }
-  
-  // Always include these standard actions
-  actions.push({
-    icon: 'bi-journal-text',
-    title: 'Document Trends',
-    description: 'Update patient records with current findings',
-    urgency: 'medium'
-  });
-  
-  // Update insights display
-  insightsDiv.innerHTML = `
+
+
+
+          function generateTrendData() {
+            // Generate realistic weekly blood pressure data
+            const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'];
+
+            // Base values with realistic variations
+            const baseSystolic = 125;
+            const baseDiastolic = 82;
+
+            const systolicData = weeks.map((week, index) => {
+              const variation = (Math.random() - 0.5) * 10; // ±5 mmHg variation
+              const trend = index * 1.5; // Slight upward trend
+              return Math.round(baseSystolic + variation + trend);
+            });
+
+            const diastolicData = weeks.map((week, index) => {
+              const variation = (Math.random() - 0.5) * 8; // ±4 mmHg variation
+              const trend = index * 0.8; // Slight upward trend
+              return Math.round(baseDiastolic + variation + trend);
+            });
+
+            // Calculate trends
+            const systolicTrend = calculateTrend(systolicData);
+            const diastolicTrend = calculateTrend(diastolicData);
+
+            return {
+              weeks,
+              systolic: systolicData,
+              diastolic: diastolicData,
+              systolicTrend,
+              diastolicTrend,
+              patientCount: 24, // Example patient count
+              currentAvg: {
+                systolic: systolicData[systolicData.length - 1],
+                diastolic: diastolicData[diastolicData.length - 1]
+              }
+            };
+          }
+
+          function calculateTrend(data) {
+            if (data.length < 2) return 0;
+
+            const first = data[0];
+            const last = data[data.length - 1];
+            const change = last - first;
+
+            return change;
+          }
+
+          function updateSummaryCards(data) {
+            // Current Average
+            document.getElementById('currentAvg').textContent =
+              `${data.currentAvg.systolic}/${data.currentAvg.diastolic}`;
+
+            // Trend Indicator
+            const trendIndicator = document.getElementById('trendIndicator');
+            const trendText = document.getElementById('trendText');
+            const overallTrend = data.systolicTrend + data.diastolicTrend;
+
+            if (overallTrend > 3) {
+              trendIndicator.innerHTML = '<i class="bi bi-arrow-up-circle text-danger"></i>';
+              trendText.textContent = 'Rising';
+              trendText.className = 'text-danger';
+            } else if (overallTrend < -3) {
+              trendIndicator.innerHTML = '<i class="bi bi-arrow-down-circle text-success"></i>';
+              trendText.textContent = 'Improving';
+              trendText.className = 'text-success';
+            } else {
+              trendIndicator.innerHTML = '<i class="bi bi-dash-circle text-secondary"></i>';
+              trendText.textContent = 'Stable';
+              trendText.className = 'text-secondary';
+            }
+
+            // BP Category
+            const bpCategory = document.getElementById('bpCategory');
+            const category = getBPCategory(data.currentAvg.systolic, data.currentAvg.diastolic);
+            bpCategory.textContent = category.name;
+            bpCategory.className = `badge bg-${category.color}`;
+
+            // Patient Count
+            document.getElementById('patientCount').textContent = data.patientCount;
+          }
+
+          function getBPCategory(systolic, diastolic) {
+            if (systolic >= 180 || diastolic >= 120) {
+              return { name: 'Crisis', color: 'danger' };
+            } else if (systolic >= 140 || diastolic >= 90) {
+              return { name: 'High Stage 2', color: 'warning' };
+            } else if (systolic >= 130 || diastolic >= 80) {
+              return { name: 'High Stage 1', color: 'info' };
+            } else if (systolic >= 120) {
+              return { name: 'Elevated', color: 'primary' };
+            } else {
+              return { name: 'Normal', color: 'success' };
+            }
+          }
+
+          function createTrendChart(data) {
+            const ctx = document.getElementById('bpTrendChart').getContext('2d');
+
+            // Destroy existing chart
+            if (trendChart) {
+              trendChart.destroy();
+            }
+
+            trendChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: data.weeks,
+                datasets: [
+                  {
+                    label: 'Systolic',
+                    data: data.systolic,
+                    borderColor: 'rgb(220, 53, 69)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                  },
+                  {
+                    label: 'Diastolic',
+                    data: data.diastolic,
+                    borderColor: 'rgb(13, 110, 253)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                      label: function (context) {
+                        return `${context.dataset.label}: ${context.parsed.y} mmHg`;
+                      }
+                    }
+                  },
+                  annotation: {
+                    annotations: {
+                      // Add reference lines for normal ranges
+                      systolicNormal: {
+                        type: 'line',
+                        yMin: 120,
+                        yMax: 120,
+                        borderColor: 'rgba(40, 167, 69, 0.5)',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        label: {
+                          display: true,
+                          content: 'Normal Systolic',
+                          position: 'end'
+                        }
+                      },
+                      diastolicNormal: {
+                        type: 'line',
+                        yMin: 80,
+                        yMax: 80,
+                        borderColor: 'rgba(40, 167, 69, 0.5)',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        label: {
+                          display: true,
+                          content: 'Normal Diastolic',
+                          position: 'end'
+                        }
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: false,
+                    min: 60,
+                    max: 180,
+                    title: {
+                      display: true,
+                      text: 'Blood Pressure (mmHg)'
+                    },
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                  },
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Time Period'
+                    },
+                    grid: {
+                      display: false
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          function generateMedicalInsights(data) {
+            const insightsDiv = document.getElementById('medicalInsights');
+            const actionItemsDiv = document.getElementById('actionItems');
+
+            const currentSys = data.currentAvg.systolic;
+            const currentDia = data.currentAvg.diastolic;
+            const sysTrend = data.systolicTrend;
+            const diaTrend = data.diastolicTrend;
+
+            let insights = [];
+            let actions = [];
+
+            // Analyze current readings
+            if (currentSys >= 140 || currentDia >= 90) {
+              insights.push("⚠️ <strong>Elevated blood pressure</strong> detected across patient population");
+              actions.push({
+                icon: 'bi-prescription2',
+                title: 'Medication Review',
+                description: 'Consider antihypertensive medication adjustments',
+                urgency: 'high'
+              });
+            }
+
+            if (currentSys >= 130 || currentDia >= 80) {
+              insights.push("📈 <strong>Stage 1 Hypertension</strong> levels observed");
+            }
+
+            // Analyze trends
+            if (sysTrend > 5 || diaTrend > 3) {
+              insights.push("📊 <strong>Upward trend</strong> in blood pressure readings over past month");
+              actions.push({
+                icon: 'bi-clipboard-heart',
+                title: 'Lifestyle Counseling',
+                description: 'Reinforce diet, exercise, and stress management',
+                urgency: 'medium'
+              });
+            }
+
+            if (sysTrend < -5 || diaTrend < -3) {
+              insights.push("✅ <strong>Improving trend</strong> - current interventions appear effective");
+            }
+
+            // General insights based on patient count
+            if (data.patientCount > 20) {
+              insights.push("👥 Monitoring <strong>large patient cohort</strong> - consider population health strategies");
+              actions.push({
+                icon: 'bi-graph-up',
+                title: 'Population Analysis',
+                description: 'Review demographic patterns in hypertension',
+                urgency: 'low'
+              });
+            }
+
+            // Default insight if no specific conditions
+            if (insights.length === 0) {
+              insights.push("✅ <strong>Stable readings</strong> - continue current monitoring protocol");
+              actions.push({
+                icon: 'bi-check-circle',
+                title: 'Routine Monitoring',
+                description: 'Continue regular blood pressure checks',
+                urgency: 'low'
+              });
+            }
+
+            // Always include these standard actions
+            actions.push({
+              icon: 'bi-journal-text',
+              title: 'Document Trends',
+              description: 'Update patient records with current findings',
+              urgency: 'medium'
+            });
+
+            // Update insights display
+            insightsDiv.innerHTML = `
     <div class="d-flex">
       <i class="bi bi-clipboard2-pulse me-2 mt-1"></i>
       <div>
@@ -867,9 +1102,9 @@ function generateMedicalInsights(data) {
       </div>
     </div>
   `;
-  
-  // Update action items
-  actionItemsDiv.innerHTML = actions.map(action => `
+
+            // Update action items
+            actionItemsDiv.innerHTML = actions.map(action => `
     <div class="col-md-6 col-lg-4 mb-3">
       <div class="card h-100 border-${action.urgency === 'high' ? 'danger' : action.urgency === 'medium' ? 'warning' : 'success'}">
         <div class="card-body">
@@ -882,10 +1117,10 @@ function generateMedicalInsights(data) {
       </div>
     </div>
   `).join('');
-}
+          }
 
-function showLoadingState() {
-  document.getElementById('medicalInsights').innerHTML = `
+          function showLoadingState() {
+            document.getElementById('medicalInsights').innerHTML = `
     <div class="d-flex">
       <i class="bi bi-hourglass-split me-2 mt-1"></i>
       <div>
@@ -894,20 +1129,20 @@ function showLoadingState() {
       </div>
     </div>
   `;
-}
+          }
 
-function showError(message) {
-  document.getElementById('medicalInsights').innerHTML = `
+          function showError(message) {
+            document.getElementById('medicalInsights').innerHTML = `
     <div class="alert alert-danger">
       <i class="bi bi-exclamation-triangle me-2"></i>
       ${message}
     </div>
   `;
-}
+          }
 
-// Refresh data every 5 minutes
-setInterval(loadTrendData, 5 * 60 * 1000);
-</script>
+          // Refresh data every 5 minutes
+          setInterval(loadTrendData, 5 * 60 * 1000);
+        </script>
 
 
 
@@ -923,7 +1158,7 @@ setInterval(loadTrendData, 5 * 60 * 1000);
                 <i class="bi bi-search"></i>
                 <input type="text" id="searchPatient" class="form-control" placeholder="Search patients...">
               </div>
-              
+
               <div class="table-container">
                 <table class="table">
                   <thead>
@@ -969,7 +1204,8 @@ setInterval(loadTrendData, 5 * 60 * 1000);
             <div class="card-body">
               <div class="row mb-4">
                 <div class="col-md-2">
-                  <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                  <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 80px; height: 80px;">
                     <i class="bi bi-person-fill text-white" style="font-size: 2rem;"></i>
                   </div>
                 </div>
@@ -978,7 +1214,7 @@ setInterval(loadTrendData, 5 * 60 * 1000);
                   <p class="text-muted mb-0" id="profileSpecialty">Cardiologist</p>
                 </div>
               </div>
-              
+
               <div class="row">
                 <div class="col-md-6">
                   <div class="mb-3">
@@ -993,7 +1229,7 @@ setInterval(loadTrendData, 5 * 60 * 1000);
                   </div>
                 </div>
               </div>
-              
+
               <button class="btn btn-primary mt-3"><i class="bi bi-pencil me-2"></i> Edit Profile</button>
             </div>
           </div>
@@ -1006,75 +1242,75 @@ setInterval(loadTrendData, 5 * 60 * 1000);
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Add this before your other scripts -->
 
-    <script src="scripts/config.js"></script>
+  <script src="scripts/config.js"></script>
 
-<script type="module">
-async function loadAlertCount() {
-  try {
-    const res = await fetch(`${API_BASE}/notifications/`, {
-      headers: getAuthHeaders()
-    });
+  <script type="module">
+    async function loadAlertCount() {
+      try {
+        const res = await fetch(`${API_BASE}/notifications/`, {
+          headers: getAuthHeaders()
+        });
 
-    if (!res.ok) throw new Error("Failed to fetch alerts");
+        if (!res.ok) throw new Error("Failed to fetch alerts");
 
-    const alerts = await res.json();
+        const alerts = await res.json();
 
-    // If you want ALL alerts:
-    document.getElementById("criticalAlerts").innerText = alerts.length;
+        // If you want ALL alerts:
+        document.getElementById("criticalAlerts").innerText = alerts.length;
 
-    // If you want ONLY critical alerts, use this instead:
-    // const critical = alerts.filter(a => a.bp_systolic > 180 || a.bp_diastolic > 120);
-    // document.getElementById("criticalAlerts").innerText = critical.length;
+        // If you want ONLY critical alerts, use this instead:
+        // const critical = alerts.filter(a => a.bp_systolic > 180 || a.bp_diastolic > 120);
+        // document.getElementById("criticalAlerts").innerText = critical.length;
 
-  } catch (err) {
-    console.error("Alert count error:", err);
-    document.getElementById("criticalAlerts").innerText = "—";
-  }
-}
+      } catch (err) {
+        console.error("Alert count error:", err);
+        document.getElementById("criticalAlerts").innerText = "—";
+      }
+    }
 
-  // Sidebar navigation
-  document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
-  document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
-  document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
-  document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
+    // Sidebar navigation
+    document.getElementById("patientsLink").addEventListener("click", () => showSection("patients"));
+    document.getElementById("alertsLink").addEventListener("click", () => showSection("alerts"));
+    document.getElementById("reportsLink").addEventListener("click", () => showSection("reports"));
+    document.getElementById("profileLink").addEventListener("click", () => showSection("profile"));
 
-  // Update active link
-  function setActiveLink(activeId) {
-    document.querySelectorAll('.sidebar a').forEach(link => link.classList.remove('active'));
-    document.getElementById(activeId).classList.add('active');
-  }
+    // Update active link
+    function setActiveLink(activeId) {
+      document.querySelectorAll('.sidebar a').forEach(link => link.classList.remove('active'));
+      document.getElementById(activeId).classList.add('active');
+    }
 
-  function showSection(section) {
-    ["patients", "alerts", "reports", "profile"].forEach(sec => {
-      document.getElementById(sec + "Section").classList.add("d-none");
-    });
-    document.getElementById(section + "Section").classList.remove("d-none");
-    document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-    setActiveLink(section + "Link");
-  }
+    function showSection(section) {
+      ["patients", "alerts", "reports", "profile"].forEach(sec => {
+        document.getElementById(sec + "Section").classList.add("d-none");
+      });
+      document.getElementById(section + "Section").classList.remove("d-none");
+      document.getElementById("sectionTitle").innerText = section.charAt(0).toUpperCase() + section.slice(1);
+      setActiveLink(section + "Link");
+    }
 
-  // Fetch doctor profile
-  async function loadDoctorProfile() {
-    const response = await fetch(`${API_BASE}/doctor/profile`, { headers: getAuthHeaders() });
-    if (!response.ok) return logout();
-    const doctor = await response.json();
-    document.getElementById("profileName").innerText = "Dr. " + doctor.full_name;
-    document.getElementById("profileEmail").innerText = doctor.email;
-    document.getElementById("profileSpecialty").innerText = doctor.specialty;
-  }
+    // Fetch doctor profile
+    async function loadDoctorProfile() {
+      const response = await fetch(`${API_BASE}/doctor/profile`, { headers: getAuthHeaders() });
+      if (!response.ok) return logout();
+      const doctor = await response.json();
+      document.getElementById("profileName").innerText = "Dr. " + doctor.full_name;
+      document.getElementById("profileEmail").innerText = doctor.email;
+      document.getElementById("profileSpecialty").innerText = doctor.specialty;
+    }
 
-  // Fetch patients
-  async function loadPatients() {
-    const response = await fetch(`${API_BASE}/doctor/patients`, { headers: getAuthHeaders() });
-    if (!response.ok) return;
-    const patients = await response.json();
-    document.getElementById("totalPatients").innerText = patients.length;
+    // Fetch patients
+    async function loadPatients() {
+      const response = await fetch(`${API_BASE}/doctor/patients`, { headers: getAuthHeaders() });
+      if (!response.ok) return;
+      const patients = await response.json();
+      document.getElementById("totalPatients").innerText = patients.length;
 
-    const tableBody = document.getElementById("patientsTable");
-    tableBody.innerHTML = "";
-    patients.forEach(patient => {
-      const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
-      const row = `
+      const tableBody = document.getElementById("patientsTable");
+      tableBody.innerHTML = "";
+      patients.forEach(patient => {
+        const fullName = `${patient.user.first_name} ${patient.user.last_name || ""}`;
+        const row = `
         <tr>
           <td>${fullName}</td>
           <td>${patient.id}</td>
@@ -1082,72 +1318,73 @@ async function loadAlertCount() {
           <td><span class="badge bg-success">Active</span></td>
           
         </tr>`;
-      tableBody.innerHTML += row;
-    });
-  }
-
-  // Fetch patient reports
-  async function viewPatientReports(patientId, patientName) {
-    const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, { headers: getAuthHeaders() });
-    if (!response.ok) return;
-    const data = await response.json();
-
-    const reportsContent = document.getElementById("reportsContent");
-    reportsContent.innerHTML = `<h5>Reports for ${patientName}</h5>`;
-    if (data.readings.length === 0) {
-      reportsContent.innerHTML += "<p>No readings for today.</p>";
-      return;
+        tableBody.innerHTML += row;
+      });
     }
 
-    const systolic = data.readings.map(r => r.systolic);
-    const diastolic = data.readings.map(r => r.diastolic);
+    // Fetch patient reports
+    async function viewPatientReports(patientId, patientName) {
+      const response = await fetch(`${API_BASE}/view_patient/${patientId}/daily-reports`, { headers: getAuthHeaders() });
+      if (!response.ok) return;
+      const data = await response.json();
 
-    new Chart(document.getElementById('bpChart').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: data.readings.map((r,i)=> `Reading ${i+1}`),
-        datasets: [
-          { label: 'Systolic', data: systolic, borderColor: '#2a5bd7', backgroundColor: 'rgba(42, 91, 215, 0.1)', tension: 0.3, fill: true },
-          { label: 'Diastolic', data: diastolic, borderColor: '#e74a3b', backgroundColor: 'rgba(231, 74, 59, 0.1)', tension: 0.3, fill: true }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
+      const reportsContent = document.getElementById("reportsContent");
+      reportsContent.innerHTML = `<h5>Reports for ${patientName}</h5>`;
+      if (data.readings.length === 0) {
+        reportsContent.innerHTML += "<p>No readings for today.</p>";
+        return;
+      }
+
+      const systolic = data.readings.map(r => r.systolic);
+      const diastolic = data.readings.map(r => r.diastolic);
+
+      new Chart(document.getElementById('bpChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: data.readings.map((r, i) => `Reading ${i + 1}`),
+          datasets: [
+            { label: 'Systolic', data: systolic, borderColor: '#2a5bd7', backgroundColor: 'rgba(42, 91, 215, 0.1)', tension: 0.3, fill: true },
+            { label: 'Diastolic', data: diastolic, borderColor: '#e74a3b', backgroundColor: 'rgba(231, 74, 59, 0.1)', tension: 0.3, fill: true }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      showSection("reports");
+    }
+
+
+    async function logout(e) {
+      e.preventDefault(); // stop <a> from navigating immediately
+      try {
+        const res = await fetch(`${API_BASE}/doctor/logout`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+        });
+        console.log("Logout response:", res.status);
+      } catch (err) {
+        console.error("Logout failed:", err);
+      }
+      localStorage.removeItem("doctorToken");
+      sessionStorage.clear();
+      window.location.href = "doctors_login.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("logoutBtn").addEventListener("click", logout);
     });
 
-    showSection("reports");
-  }
-  
 
-  async function logout(e) {
-  e.preventDefault(); // stop <a> from navigating immediately
-  try {
-    const res = await fetch(`${API_BASE}/doctor/logout`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-    });
-    console.log("Logout response:", res.status);
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
-  localStorage.removeItem("doctorToken");
-  sessionStorage.clear();
-  window.location.href = "doctors_login.html";
-}
+    setInterval(loadAlertCount, 30000);
+    loadDoctorProfile();
+    loadPatients();
+    loadDoctorProfile();
+    loadPatients();
+    loadUpcomingAppointments();
+    loadAlertCount();
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("logoutBtn").addEventListener("click", logout);
-});
-
-
-  setInterval(loadAlertCount, 30000);
-  loadDoctorProfile();
-  loadPatients();
-  loadDoctorProfile();
-  loadPatients();
-  loadUpcomingAppointments();
-  loadAlertCount();
-
-</script>
+  </script>
 
 </body>
+
 </html>

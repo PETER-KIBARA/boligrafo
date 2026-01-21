@@ -55,7 +55,17 @@ class GenerateSuggestionsView(APIView):
 
         # 5. Run Engine
         engine = SuggestionEngine(config=config)
-        suggestions = engine.evaluate(patient_data)
+        try:
+            suggestions = engine.evaluate(patient_data)
+        except Exception as e:
+            error_msg = str(e)
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            if "402" in error_msg or "Insufficient Balance" in error_msg:
+                status_code = status.HTTP_402_PAYMENT_REQUIRED
+            elif "429" in error_msg or "Quota" in error_msg:
+                status_code = status.HTTP_429_TOO_MANY_REQUESTS
+                
+            return Response({"detail": error_msg}, status=status_code)
 
         # 6. Audit Logging
         AISuggestionLog.objects.create(
@@ -70,3 +80,4 @@ class GenerateSuggestionsView(APIView):
             "config_used": config # Optional for debugging/transparency
         }
         return Response(response, status=status.HTTP_200_OK)
+        

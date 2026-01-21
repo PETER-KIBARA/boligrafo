@@ -17,3 +17,6 @@ psycopg2-binary
 dj-database-url
 Pillow
 django-apscheduler
+google-generativeai
+python-dotenv
+requests

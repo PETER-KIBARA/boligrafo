@@ -44,6 +44,7 @@ from .serializers import AppointmentSerializer
 from datetime import timedelta
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  
@@ -627,3 +628,29 @@ class DoctorUpcomingAppointmentsView(generics.ListAPIView):
             doctor=user.doctor_profile
         ).order_by("date", "time")
     
+class PopulationBPTrendsView(APIView):
+    permission_classes = []  # or IsAuthenticated
+
+    def get(self, request):
+        qs = (
+            VitalReading.objects
+            .values("created_at__date")
+            .annotate(
+                avg_systolic=Avg("systolic"),
+                avg_diastolic=Avg("diastolic"),
+                avg_heartrate=Avg("heartrate"),
+            )
+            .order_by("created_at__date")
+        )
+
+        data = [
+            {
+                "date": row["created_at__date"].isoformat(),
+                "systolic": round(row["avg_systolic"]),
+                "diastolic": round(row["avg_diastolic"]),
+                "heartrate": round(row["avg_heartrate"]) if row["avg_heartrate"] else None,
+            }
+            for row in qs
+        ]
+
+        return JsonResponse(data, safe=False)

@@ -216,7 +216,9 @@
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 991px) {
+
+      /* Adjusted for sidebar */
       .header {
         padding: 1rem;
         text-align: center;
@@ -229,6 +231,107 @@
 
       .chart-container {
         height: 300px;
+      }
+    }
+
+    /* AI Sidebar Styles */
+    .ai-sidebar {
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .ai-sidebar-header {
+      background: var(--gradient);
+      color: white;
+      padding: 1.25rem;
+      border-radius: 16px 16px 0 0;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ai-suggestion-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-suggestion-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .ai-suggestion-card.severity-high {
+      border-left: 4px solid var(--danger);
+    }
+
+    .ai-suggestion-card.severity-medium {
+      border-left: 4px solid var(--warning);
+    }
+
+    .ai-suggestion-card.severity-low {
+      border-left: 4px solid var(--success);
+    }
+
+    .severity-badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .severity-high .severity-badge {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .severity-medium .severity-badge {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .severity-low .severity-badge {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .thinking-dots:after {
+      content: ' .';
+      animation: dots 1.5s steps(5, end) infinite;
+    }
+
+    @keyframes dots {
+
+      0%,
+      20% {
+        content: ' .';
+      }
+
+      40% {
+        content: ' . .';
+      }
+
+      60% {
+        content: ' . . .';
+      }
+
+      80%,
+      100% {
+        content: '';
       }
     }
   </style>
@@ -250,8 +353,8 @@
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-elegant" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
-          onclick="openSuggestionsModal()">
-          <i class="fas fa-robot me-2"></i>AI Insights
+          onclick="triggerAIAnalysis()">
+          <i class="fas fa-sync-alt me-2"></i>Refresh AI
         </button>
         <a class="btn btn-elegant" id="scheduleAppointmentBtn" href="#">
           <i class="fas fa-calendar-plus me-1"></i> Schedule Follow-Up
@@ -263,104 +366,108 @@
       </div>
     </div>
 
-    <!-- Main Chart Card -->
-    <div class="card fade-in">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-          <i class="fas fa-chart-line me-2"></i>
-          Blood Pressure Trend Analysis
-        </div>
-        <select id="range" class="form-select form-select-sm">
-          <option value="7">Last 7 Days</option>
-          <option value="30" selected>Last 30 Days</option>
-          <option value="90">Last 90 Days</option>
-        </select>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="bpChart"></canvas>
-        </div>
+    <div class="row">
+      <!-- Left Column: Chart & Stats -->
+      <div class="col-lg-8">
+        <!-- Main Chart Card -->
+        <div class="card fade-in mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-chart-line me-2"></i>
+              Blood Pressure Trend Analysis
+            </div>
+            <select id="range" class="form-select form-select-sm" style="width: auto;">
+              <option value="7">Last 7 Days</option>
+              <option value="30" selected>Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="bpChart"></canvas>
+            </div>
 
-        <!-- Chart Legend -->
-        <div class="row mt-4 text-center">
-          <div class="col-md-6 mb-2">
-            <div class="d-inline-flex align-items-center">
-              <span class="status-indicator status-systolic"></span>
-              <strong class="text-primary me-2">Systolic</strong>
-              <small class="text-muted">(Upper reading)</small>
+            <!-- Chart Legend -->
+            <div class="row mt-4 text-center">
+              <div class="col-md-6 mb-2">
+                <div class="d-inline-flex align-items-center">
+                  <span class="status-indicator status-systolic"></span>
+                  <strong class="text-primary me-2">Systolic</strong>
+                  <small class="text-muted">(Upper)</small>
+                </div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <div class="d-inline-flex align-items-center">
+                  <span class="status-indicator status-diastolic"></span>
+                  <strong class="text-danger me-2">Diastolic</strong>
+                  <small class="text-muted">(Lower)</small>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6 mb-2">
-            <div class="d-inline-flex align-items-center">
-              <span class="status-indicator status-diastolic"></span>
-              <strong class="text-danger me-2">Diastolic</strong>
-              <small class="text-muted">(Lower reading)</small>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-3 col-6">
+            <div class="card text-center h-100 border-0 shadow-sm">
+              <div class="card-body py-3">
+                <i class="fas fa-ruler-combined text-primary mb-2"></i>
+                <h6 id="avgSystolic" class="fw-bold mb-0">--</h6>
+                <small class="text-muted">Avg Systolic</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="card text-center h-100 border-0 shadow-sm">
+              <div class="card-body py-3">
+                <i class="fas fa-ruler-vertical text-danger mb-2"></i>
+                <h6 id="avgDiastolic" class="fw-bold mb-0">--</h6>
+                <small class="text-muted">Avg Diastolic</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="card text-center h-100 border-0 shadow-sm">
+              <div class="card-body py-3">
+                <i class="fas fa-chart-bar text-warning mb-2"></i>
+                <h6 id="readingsCount" class="fw-bold mb-0">--</h6>
+                <small class="text-muted">Readings</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-6">
+            <div class="card text-center h-100 border-0 shadow-sm">
+              <div class="card-body py-3">
+                <i class="fas fa-calendar-check text-success mb-2"></i>
+                <h6 id="lastReading" class="fw-bold mb-0">--</h6>
+                <small class="text-muted">Last Entry</small>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Quick Stats (Optional - can be populated with data) -->
-    <div class="row mt-4">
-      <div class="col-md-3 col-6">
-        <div class="card text-center h-100">
-          <div class="card-body">
-            <i class="fas fa-ruler-combined text-primary mb-2" style="font-size: 1.5rem;"></i>
-            <h5 id="avgSystolic" class="card-title">--</h5>
-            <p class="card-text small text-muted">Avg Systolic</p>
+      <!-- Right Column: AI Sidebar -->
+      <div class="col-lg-4">
+        <div class="ai-sidebar fade-in">
+          <div class="ai-sidebar-header">
+            <span><i class="fas fa-brain me-2"></i>AI Clinical Intelligence</span>
+            <span class="badge bg-white text-primary rounded-pill small">Beta</span>
           </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="card text-center h-100">
-          <div class="card-body">
-            <i class="fas fa-ruler-vertical text-danger mb-2" style="font-size: 1.5rem;"></i>
-            <h5 id="avgDiastolic" class="card-title">--</h5>
-            <p class="card-text small text-muted">Avg Diastolic</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="card text-center h-100">
-          <div class="card-body">
-            <i class="fas fa-chart-bar text-warning mb-2" style="font-size: 1.5rem;"></i>
-            <h5 id="readingsCount" class="card-title">--</h5>
-            <p class="card-text small text-muted">Total Readings</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="card text-center h-100">
-          <div class="card-body">
-            <i class="fas fa-calendar-check text-success mb-2" style="font-size: 1.5rem;"></i>
-            <h5 id="lastReading" class="card-title">--</h5>
-            <p class="card-text small text-muted">Last Reading</p>
+          <div class="p-3" id="aiSidebarContent">
+            <div class="text-center py-5">
+              <div class="loading-spinner text-primary mb-3"></div>
+              <p class="text-muted small">Initializing AI Clinical Review...</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- AI Suggestions Modal -->
-  <div class="modal fade" id="aiSuggestionsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-        <div class="modal-header border-0 bg-light-subtle rounded-top-4">
-          <h5 class="modal-title fw-bold text-primary">
-            <i class="fas fa-robot me-2"></i>AI Clinical Insights
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4" id="aiSuggestionsBody">
-          <!-- Populated dynamically -->
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- AI Suggestions Modal (Kept for fallback/detail or removed if not needed) -->
+  <!-- We'll remove it for now as we have the sidebar -->
 
   <script src="scripts/config.js"></script>
   <script>
@@ -664,21 +771,18 @@
     }
 
     // AI Suggestions Logic
-    async function openSuggestionsModal() {
+    async function triggerAIAnalysis() {
       if (!patientUserId) {
-        alert("Patient data not loaded yet. Please wait.");
+        console.warn("Patient data not loaded yet.");
         return;
       }
 
-      const modal = new bootstrap.Modal(document.getElementById('aiSuggestionsModal'));
-      modal.show();
-
-      const body = document.getElementById('aiSuggestionsBody');
-      body.innerHTML = `
+      const sidebar = document.getElementById('aiSidebarContent');
+      sidebar.innerHTML = `
             <div class="text-center py-5">
-                <div class="loading-spinner text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
-                <h5 class="fw-bold text-muted">Analyzing Patient Profile...</h5>
-                <p class="text-muted small">Consulting AI knowledge base for clinical insights.</p>
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h6 class="fw-bold text-dark">AI is thinking<span class="thinking-dots"></span></h6>
+                <p class="text-muted small">Analyzing viltals, medications, and trends...</p>
             </div>
         `;
 
@@ -688,69 +792,78 @@
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || `HTTP ${res.status}`);
+          let errorMsg = errData.detail || `HTTP ${res.status}`;
+
+          if (res.status === 429) {
+            errorMsg = "API Quota Exceeded. Please try again soon.";
+          } else if (res.status === 402) {
+            errorMsg = "DeepSeek Insufficient Balance. Please top up your API account to resume analysis.";
+          }
+
+          throw new Error(errorMsg);
         }
 
         const data = await res.json();
-        renderSuggestions(data.ai_suggestions || []);
+        renderSidebarSuggestions(data.ai_suggestions || []);
 
       } catch (error) {
         console.error("AI Error:", error);
-        body.innerHTML = `
-                <div class="text-center py-5">
-                    <i class="fas fa-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="fw-bold text-danger">Analysis Failed</h5>
-                    <p class="text-muted">${error.message}</p>
-                    <button class="btn btn-outline-secondary mt-2" onclick="openSuggestionsModal()">Try Again</button>
+        sidebar.innerHTML = `
+                <div class="text-center py-4 px-2">
+                    <i class="fas fa-exclamation-triangle text-warning mb-2" style="font-size: 2rem;"></i>
+                    <h6 class="fw-bold text-dark">Analysis Unavailable</h6>
+                    <p class="text-muted small mb-3">${error.message}</p>
+                    <button class="btn btn-elegant btn-sm w-100" onclick="triggerAIAnalysis()">
+                      <i class="fas fa-redo me-1"></i>Try Again
+                    </button>
                 </div>
             `;
       }
     }
 
-    function renderSuggestions(suggestions) {
-      const body = document.getElementById('aiSuggestionsBody');
+    function renderSidebarSuggestions(suggestions) {
+      const sidebar = document.getElementById('aiSidebarContent');
 
       if (!suggestions || suggestions.length === 0) {
-        body.innerHTML = `
+        sidebar.innerHTML = `
                 <div class="text-center py-5">
-                    <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="fw-bold text-success">All Clear</h5>
-                    <p class="text-muted">No specific concerns identified based on current vitals and adherence history.</p>
+                    <i class="fas fa-check-circle text-success mb-3" style="font-size: 2.5rem;"></i>
+                    <h6 class="fw-bold">No Concerns Detected</h6>
+                    <p class="text-muted small">AI model found no immediate issues with the current patient profile.</p>
                 </div>
             `;
         return;
       }
 
-      let html = '<div class="d-flex flex-column gap-3">';
+      let html = '<div class="ai-suggestions-list">';
 
       suggestions.forEach(item => {
-        const severity = (item.severity || 'low').toUpperCase();
-
-        const severityClass = severity === 'HIGH' ? 'bg-danger-subtle text-danger border-danger' :
-          severity === 'MEDIUM' ? 'bg-warning-subtle text-warning-emphasis border-warning' :
-            'bg-info-subtle text-info-emphasis border-info';
-
-        const icon = severity === 'HIGH' ? 'fa-exclamation-triangle' :
-          severity === 'MEDIUM' ? 'fa-info-circle' : 'fa-lightbulb';
-
-        const msg = item.message || item.suggestion || 'No details available';
+        const severity = (item.severity || 'low').toLowerCase();
+        const icon = severity === 'high' ? 'fa-exclamation-triangle' :
+          severity === 'medium' ? 'fa-info-circle' : 'fa-lightbulb';
 
         html += `
-                <div class="p-3 rounded-3 border-start border-4 shadow-sm bg-white ${severityClass.split(' ').pop()}">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="badge ${severityClass} border px-2 py-1 rounded-pill fw-bold">
-                             <i class="fas ${icon} me-1"></i>${severity} PRIORITY
-                        </span>
-                        <small class="text-muted fw-bold">Confidence: ${(item.confidence * 100).toFixed(0)}%</small>
+                <div class="ai-suggestion-card severity-${severity} fade-in">
+                    <div class="severity-badge">${severity} Priority</div>
+                    <h6 class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">${item.message || item.suggestion}</h6>
+                    <p class="text-muted small mb-2" style="font-size: 0.85rem; line-height: 1.4;">
+                      ${item.rationale || 'Based on clinical trend analysis.'}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                          <i class="fas fa-shield-alt me-1"></i>Confidence: ${(item.confidence * 100).toFixed(0)}%
+                        </small>
                     </div>
-                    <h6 class="fw-bold mb-1">${msg}</h6>
-                    <p class="mb-0 text-muted small">${item.rationale || 'Based on recent trends and clinical guidelines.'}</p>
                 </div>
             `;
       });
 
-      html += '</div>';
-      body.innerHTML = html;
+      html += '</div>' +
+        '<p class="text-center text-muted mt-3 mb-0" style="font-size: 0.7rem;">' +
+        '<i class="fas fa-info-circle me-1"></i>AI-generated insights should be verified by a clinician.' +
+        '</p>';
+
+      sidebar.innerHTML = html;
     }
 
     // Update quick stats
@@ -783,6 +896,10 @@
 
         // Load patient profile first to get User ID, then load BP trend
         await loadPatientProfile();
+
+        // Auto-trigger AI analysis once patient ID is ready
+        triggerAIAnalysis();
+
         document.getElementById("range").addEventListener("change", loadBPTrend);
       } catch (error) {
         console.error("Initialization error:", error);
