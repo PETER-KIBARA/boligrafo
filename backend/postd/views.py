@@ -569,10 +569,14 @@ class NotificationListView(generics.ListAPIView):
 
         return Notification.objects.filter(query).order_by('-created_at')
 
-class NotificationDetailView(generics.RetrieveAPIView):
+class NotificationDetailView(generics.RetrieveUpdateAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def perform_update(self, serializer):
+        # Only allow updating is_read field
+        serializer.save()
 
 
 

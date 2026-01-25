@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../api/ai_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +16,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _rememberMe = false;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -29,17 +29,22 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response["error"] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response["message"])),
+            SnackBar(
+              content: Text(response["message"]),
+              backgroundColor: AppTheme.criticalRed,
+            ),
           );
         }
       } else {
         final patientName = authProvider.patientName ?? "Patient";
-
         AiService.generateAndSaveTips(patientName: patientName);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Login successful!")),
+            const SnackBar(
+              content: Text("Login successful!"),
+              backgroundColor: AppTheme.successGreen,
+            ),
           );
         }
       }
@@ -56,17 +61,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundGrey,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 48),
-              _buildLoginForm(),
-              const SizedBox(height: 32),
-              _buildSocialLogin(),
-            ],
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 48),
+                _buildLoginCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -77,171 +84,153 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Container(
-          width: 100,
-          height: 100,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
-            color: Colors.blue.shade100,
+            gradient: AppTheme.primaryGradient,
             shape: BoxShape.circle,
+            boxShadow: AppTheme.elevatedShadow,
           ),
           child: const Icon(
-            Icons.person,
+            Icons.favorite,
             size: 60,
-            color: Colors.blue,
+            color: Colors.white,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         Text(
-          'Welcome Back',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue.shade800,
-          ),
+          'Hypertension Care',
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                color: AppTheme.primaryBlue,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Sign in to continue your journey',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
-          ),
+          'Your Health, Our Priority',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
         ),
       ],
     );
   }
 
-  Widget _buildLoginForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              prefixIcon: const Icon(Icons.email_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
+  Widget _buildLoginCard() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppTheme.cardWhite,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Welcome Back',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center,
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            const SizedBox(height: 8),
+            Text(
+              'Sign in to continue',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email Address',
+                prefixIcon: Icon(Icons.email_outlined),
+                hintText: 'Enter your email',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your email';
+                }
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                    .hasMatch(value)) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                hintText: 'Enter your password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
                 ),
-                onPressed: () {
-                  setState(() => _obscurePassword = !_obscurePassword);
-                },
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your password';
+                }
+                if (value.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              if (value.length < 6) {
-                return 'Password must be at least 6 characters';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Checkbox(
-                    value: _rememberMe,
-                    onChanged: (value) {
-                      setState(() => _rememberMe = value!);
-                    },
-                  ),
-                  Text(
-                    'Remember me',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: Consumer<AuthProvider>(
+            const SizedBox(height: 32),
+            Consumer<AuthProvider>(
               builder: (context, authProvider, child) {
-                return ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                return SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: authProvider.isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppTheme.primaryBlue.withOpacity(0.6),
                     ),
-                    elevation: 2,
+                    child: authProvider.isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Text('Sign In'),
                   ),
-                  child: authProvider.isLoading
-                      ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        )
-                      : const Text(
-                          'Sign In',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                 );
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialLogin() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Divider(color: Colors.grey.shade300),
-            ),
-            Expanded(
-              child: Divider(color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.security, size: 16, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Secure Medical Portal',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 24),
-      ],
+      ),
     );
   }
 }

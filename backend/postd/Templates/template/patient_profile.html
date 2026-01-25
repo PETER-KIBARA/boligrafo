@@ -36,7 +36,6 @@
       max-width: 1200px;
     }
 
-    /* Header Styles */
     .header {
       background: white;
       border-radius: 16px;
@@ -81,7 +80,6 @@
       color: white;
     }
 
-    /* Card Styles */
     .card {
       border: none;
       border-radius: 16px;
@@ -109,7 +107,6 @@
       padding: 1.5rem;
     }
 
-    /* Chart Container */
     .chart-container {
       height: 400px;
       position: relative;
@@ -118,7 +115,6 @@
       padding: 1rem;
     }
 
-    /* Form Controls */
     .form-select {
       border-radius: 10px;
       border: 2px solid #e2e8f0;
@@ -133,7 +129,6 @@
       box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.1);
     }
 
-    /* Loading States */
     .loading-spinner {
       display: inline-block;
       width: 2rem;
@@ -168,7 +163,6 @@
       }
     }
 
-    /* Status Indicators */
     .status-indicator {
       width: 8px;
       height: 8px;
@@ -185,7 +179,6 @@
       background: var(--danger);
     }
 
-    /* Empty States */
     .empty-state {
       padding: 3rem 2rem;
       text-align: center;
@@ -198,7 +191,6 @@
       opacity: 0.7;
     }
 
-    /* Animations */
     .fade-in {
       animation: fadeIn 0.6s ease-out;
     }
@@ -215,10 +207,7 @@
       }
     }
 
-    /* Responsive */
     @media (max-width: 991px) {
-
-      /* Adjusted for sidebar */
       .header {
         padding: 1rem;
         text-align: center;
@@ -234,7 +223,6 @@
       }
     }
 
-    /* AI Sidebar Styles */
     .ai-sidebar {
       background: white;
       border-radius: 16px;
@@ -309,7 +297,7 @@
       color: #166534;
     }
 
-    .thinking-dots:after {
+    .thinking-dots::after {
       content: ' .';
       animation: dots 1.5s steps(5, end) infinite;
     }
@@ -342,40 +330,26 @@
     <!-- Header -->
     <div class="header d-flex flex-column flex-md-row justify-content-between align-items-center">
       <div class="text-center text-md-start mb-3 mb-md-0">
-        <h1>
-          <i class="fas fa-heartbeat me-2"></i>
-          Blood Pressure Monitor
-        </h1>
-        <div class="doctor-info" id="doctorInfo">
-          <i class="fas fa-user-md me-1"></i>
-          Loading...
-        </div>
+        <h1><i class="fas fa-heartbeat me-2"></i>Blood Pressure Monitor</h1>
+        <div class="doctor-info" id="doctorInfo"><i class="fas fa-user-md me-1"></i>Loading...</div>
       </div>
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 flex-wrap justify-content-center justify-content-md-end">
         <button class="btn btn-elegant" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
           onclick="triggerAIAnalysis()">
           <i class="fas fa-sync-alt me-2"></i>Refresh AI
         </button>
-        <a class="btn btn-elegant" id="scheduleAppointmentBtn" href="#">
-          <i class="fas fa-calendar-plus me-1"></i> Schedule Follow-Up
-        </a>
-        <a class="btn btn-elegant" href="patients.html">
-          <i class="fas fa-arrow-left me-2"></i>
-          Back to Patients
-        </a>
+        <a class="btn btn-elegant" id="scheduleAppointmentBtn" href="#"><i
+            class="fas fa-calendar-plus me-1"></i>Schedule Follow-Up</a>
+        <a class="btn btn-elegant" href="patients.html"><i class="fas fa-arrow-left me-2"></i>Back to Patients</a>
       </div>
     </div>
 
     <div class="row">
-      <!-- Left Column: Chart & Stats -->
+      <!-- Left Column -->
       <div class="col-lg-8">
-        <!-- Main Chart Card -->
         <div class="card fade-in mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-              <i class="fas fa-chart-line me-2"></i>
-              Blood Pressure Trend Analysis
-            </div>
+            <div><i class="fas fa-chart-line me-2"></i>Blood Pressure Trend Analysis</div>
             <select id="range" class="form-select form-select-sm" style="width: auto;">
               <option value="7">Last 7 Days</option>
               <option value="30" selected>Last 30 Days</option>
@@ -386,29 +360,24 @@
             <div class="chart-container">
               <canvas id="bpChart"></canvas>
             </div>
-
-            <!-- Chart Legend -->
             <div class="row mt-4 text-center">
               <div class="col-md-6 mb-2">
                 <div class="d-inline-flex align-items-center">
                   <span class="status-indicator status-systolic"></span>
-                  <strong class="text-primary me-2">Systolic</strong>
-                  <small class="text-muted">(Upper)</small>
+                  <strong class="text-primary me-2">Systolic</strong><small class="text-muted">(Upper)</small>
                 </div>
               </div>
               <div class="col-md-6 mb-2">
                 <div class="d-inline-flex align-items-center">
                   <span class="status-indicator status-diastolic"></span>
-                  <strong class="text-danger me-2">Diastolic</strong>
-                  <small class="text-muted">(Lower)</small>
+                  <strong class="text-danger me-2">Diastolic</strong><small class="text-muted">(Lower)</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4" id="quickStatsContainer">
           <div class="col-sm-3 col-6">
             <div class="card text-center h-100 border-0 shadow-sm">
               <div class="card-body py-3">
@@ -466,449 +435,180 @@
     </div>
   </div>
 
-  <!-- AI Suggestions Modal (Kept for fallback/detail or removed if not needed) -->
-  <!-- We'll remove it for now as we have the sidebar -->
-
   <script src="scripts/config.js"></script>
   <script>
-    // Authentication and setup
     const token = localStorage.getItem("doctorToken");
-    const patientProfileId = new URLSearchParams(location.search).get("id"); // UserProfile ID
+    const patientProfileId = new URLSearchParams(location.search).get("id");
     const doctorName = localStorage.getItem("doctorName");
     const doctorSpecialty = localStorage.getItem("doctorSpecialty");
-    let patientUserId = null; // Will be set after loading patient profile
+    let patientUserId = null;
+    let chart = null;
 
-    // Redirect if no token or patient ID
-    if (!token) {
-      alert("Please log in to access patient data.");
-      window.location.href = "doctors_login.html";
-    }
+    if (!token) window.location.href = "doctors_login.html";
+    if (!patientProfileId) window.location.href = "patients.html";
 
-    if (!patientProfileId) {
-      alert("Missing patient ID. Redirecting...");
-      window.location.href = "patients.html";
-    }
-
-    // Display doctor info
     if (doctorName) {
       document.getElementById("doctorInfo").innerHTML =
         `<i class="fas fa-user-md me-1"></i>Dr. ${doctorName}${doctorSpecialty ? ` • ${doctorSpecialty}` : ''}`;
     }
 
     function getAuthHeaders() {
-      if (!token) return { "Content-Type": "application/json" };
-
-      let cleanToken = token.trim();
-      if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) {
-        cleanToken = cleanToken.slice(1, -1);
-      }
-
-      return {
-        "Authorization": `Token ${cleanToken}`,
-        "Content-Type": "application/json"
-      };
+      let cleanToken = token?.trim().replace(/^"|"$/g, "");
+      return { "Authorization": `Token ${cleanToken}`, "Content-Type": "application/json" };
     }
 
     async function authFetch(url) {
       const headers = getAuthHeaders();
-
-      try {
-        const response = await fetch(url, { headers });
-
-        if (response.status === 401) {
-          localStorage.removeItem("doctorToken");
-          localStorage.removeItem("doctorName");
-          localStorage.removeItem("doctorEmail");
-          localStorage.removeItem("doctorSpecialty");
-          alert("Your session has expired. Please log in again.");
-          window.location.href = "login.html";
-          throw new Error("Authentication failed");
-        }
-
-        return response;
-      } catch (error) {
-        console.error("Fetch error:", error);
-        throw error;
+      const res = await fetch(url, { headers });
+      if (res.status === 401) {
+        localStorage.clear();
+        alert("Session expired.");
+        window.location.href = "login.html";
+        throw new Error("Unauthorized");
       }
+      return res;
     }
 
-    // Load patient profile to get User ID
     async function loadPatientProfile() {
       try {
-        const url = API_BASE + "/userprofiles/" + patientProfileId + "/";
-        const res = await authFetch(url);
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: Failed to load patient profile`);
-        }
-
+        const res = await authFetch(API_BASE + "/userprofiles/" + patientProfileId + "/");
         const profile = await res.json();
         patientUserId = profile.user?.id || profile.user;
-
-        if (!patientUserId) {
-          throw new Error("Could not find User ID in patient profile");
-        }
-
-        // Now load BP trend with the User ID
+        if (!patientUserId) throw new Error("Patient User ID not found");
         await loadBPTrend();
-      } catch (error) {
-        console.error('Error loading patient profile:', error);
-        alert("Failed to load patient information. Redirecting...");
+      } catch (err) {
+        alert("Failed to load patient info.");
+        console.error(err);
         window.location.href = "patients.html";
       }
     }
 
-    // Blood Pressure Chart
-    let chart;
     async function loadBPTrend() {
-      if (!patientUserId) {
-        console.error("Patient User ID not available yet");
-        return;
-      }
-
       const chartContainer = document.getElementById("bpChart").parentElement;
-      chartContainer.innerHTML =
-        '<div class="empty-state">' +
-        '<div class="loading-spinner text-primary mx-auto mb-3"></div>' +
-        '<h6 class="text-primary">Loading Blood Pressure Data</h6>' +
-        '<p class="text-muted small">Please wait while we retrieve the latest readings...</p>' +
-        '</div>';
-
+      chartContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="loading-spinner text-primary mx-auto mb-3"></div>
+          <h6 class="text-primary">Loading Blood Pressure Data</h6>
+          <p class="text-muted small">Please wait...</p>
+        </div>`;
       try {
-        const apiUrl = API_BASE + "/doctor/vitals?patient_id=" + patientUserId;
-        const res = await authFetch(apiUrl);
+        const res = await authFetch(API_BASE + `/doctor/vitals?patient_id=${patientUserId}`);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) throw new Error("No data found");
 
-        const responseText = await res.text();
-        let data;
-
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          throw new Error(`Invalid JSON response: ${responseText}`);
-        }
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${responseText}`);
-        }
-
-        if (!Array.isArray(data)) {
-          throw new Error("Expected array but got: " + typeof data);
-        }
-
-        if (data.length === 0) {
-          chartContainer.innerHTML = `
-                  <div class="empty-state">
-                    <i class="fas fa-chart-line text-muted"></i>
-                    <h6 class="text-muted">No Blood Pressure Data</h6>
-                    <p class="text-muted small mb-3">No vital readings found for this patient.</p>
-                    <button class="btn btn-elegant btn-sm" onclick="loadBPTrend()">
-                      <i class="fas fa-refresh me-1"></i>Try Again
-                    </button>
-                  </div>
-                `;
-          return;
-        }
-
-        // Process the data
         const range = parseInt(document.getElementById("range").value);
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - range);
 
-        const filtered = data.filter(v => {
-          if (!v.created_at) return false;
-          const recordDate = new Date(v.created_at);
-          return recordDate >= cutoff;
-        });
+        const filtered = data.filter(v => new Date(v.created_at) >= cutoff).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        if (filtered.length === 0) throw new Error(`No readings in last ${range} days`);
 
-        if (filtered.length === 0) {
-          chartContainer.innerHTML = `
-                  <div class="empty-state">
-                    <i class="fas fa-calendar-times text-muted"></i>
-                    <h6 class="text-muted">No Recent Data</h6>
-                    <p class="text-muted small mb-3">No blood pressure readings in the last ${range} days.</p>
-                    <button class="btn btn-elegant btn-sm" onclick="loadBPTrend()">
-                      <i class="fas fa-refresh me-1"></i>Show All Data
-                    </button>
-                  </div>
-                `;
-          return;
-        }
-
-        // Sort and prepare chart data
-        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-        const labels = filtered.map(v => {
-          const date = new Date(v.created_at);
-          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        });
-
-        const systolic = filtered.map(v => v.systolic);
-        const diastolic = filtered.map(v => v.diastolic);
-
-        // Update quick stats
         updateQuickStats(filtered);
 
-        // Create chart
         chartContainer.innerHTML = '<canvas id="bpChart"></canvas>';
         const ctx = document.getElementById("bpChart").getContext("2d");
 
         if (chart) chart.destroy();
-
         chart = new Chart(ctx, {
           type: "line",
           data: {
-            labels,
+            labels: filtered.map(v => new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
             datasets: [
               {
-                label: "Systolic Pressure",
-                data: systolic,
+                label: "Systolic",
+                data: filtered.map(v => v.systolic),
                 borderColor: "#2c5aa0",
-                backgroundColor: "rgba(44, 90, 160, 0.1)",
-                borderWidth: 3,
+                backgroundColor: "rgba(44,90,160,0.1)",
                 fill: true,
                 tension: 0.4,
                 pointBackgroundColor: "#2c5aa0",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
+                pointBorderColor: "#fff",
               },
               {
-                label: "Diastolic Pressure",
-                data: diastolic,
+                label: "Diastolic",
+                data: filtered.map(v => v.diastolic),
                 borderColor: "#dc3545",
-                backgroundColor: "rgba(220, 53, 69, 0.1)",
-                borderWidth: 3,
+                backgroundColor: "rgba(220,53,69,0.1)",
                 fill: true,
                 tension: 0.4,
                 pointBackgroundColor: "#dc3545",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
+                pointBorderColor: "#fff",
               }
-            ],
+            ]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                titleColor: '#1e293b',
-                bodyColor: '#475569',
-                borderColor: '#e2e8f0',
-                borderWidth: 1,
-                cornerRadius: 8,
-                padding: 12,
-                boxPadding: 6
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: false,
-                title: {
-                  display: true,
-                  text: 'Blood Pressure (mmHg)',
-                  color: '#64748b',
-                  font: {
-                    size: 12,
-                    weight: '600'
-                  }
-                },
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Date',
-                  color: '#64748b',
-                  font: {
-                    size: 12,
-                    weight: '600'
-                  }
-                },
-                grid: {
-                  display: false
-                }
-              }
-            },
-            interaction: {
-              mode: 'nearest',
-              axis: 'x',
-              intersect: false
-            },
-            animations: {
-              tension: {
-                duration: 1000,
-                easing: 'linear'
-              }
-            }
-          },
+          options: { responsive: true, maintainAspectRatio: false }
         });
 
-      } catch (error) {
-        console.error('Error loading BP trend:', error);
-        const chartContainer = document.getElementById("bpChart").parentElement;
+      } catch (err) {
         chartContainer.innerHTML = `
-              <div class="empty-state">
-                <i class="fas fa-exclamation-triangle text-warning"></i>
-                <h6 class="text-warning">Unable to Load Data</h6>
-                <p class="text-muted small mb-3">${error.message}</p>
-                <button class="btn btn-elegant btn-sm" onclick="loadBPTrend()">
-                  <i class="fas fa-refresh me-1"></i>Try Again
-                </button>
-              </div>
-            `;
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            <h6 class="text-warning">Unable to Load Data</h6>
+            <p class="text-muted small mb-3">${err.message}</p>
+            <button class="btn btn-elegant btn-sm" onclick="loadBPTrend()"><i class="fas fa-refresh me-1"></i>Try Again</button>
+          </div>`;
       }
     }
 
-    // AI Suggestions Logic
+    function updateQuickStats(data) {
+      if (!data || data.length === 0) return;
+      const systolic = data.map(d => d.systolic), diastolic = data.map(d => d.diastolic);
+      document.getElementById('avgSystolic').textContent = Math.round(systolic.reduce((a, b) => a + b, 0) / systolic.length) + " mmHg";
+      document.getElementById('avgDiastolic').textContent = Math.round(diastolic.reduce((a, b) => a + b, 0) / diastolic.length) + " mmHg";
+      document.getElementById('readingsCount').textContent = data.length;
+      document.getElementById('lastReading').textContent = new Date(data[data.length - 1].created_at).toLocaleDateString();
+    }
+
     async function triggerAIAnalysis() {
-      if (!patientUserId) {
-        console.warn("Patient data not loaded yet.");
-        return;
-      }
-
+      if (!patientUserId) return;
       const sidebar = document.getElementById('aiSidebarContent');
-      sidebar.innerHTML = `
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary mb-3" role="status"></div>
-                <h6 class="fw-bold text-dark">AI is thinking<span class="thinking-dots"></span></h6>
-                <p class="text-muted small">Analyzing viltals, medications, and trends...</p>
-            </div>
-        `;
-
+      sidebar.innerHTML = `<div class="text-center py-5">
+        <div class="spinner-border text-primary mb-3"></div>
+        <h6 class="fw-bold text-dark">AI is thinking<span class="thinking-dots"></span></h6>
+        <p class="text-muted small">Analyzing vitals, medications, and trends...</p>
+      </div>`;
       try {
-        const url = API_BASE + `/generate_suggestions/${patientUserId}/`;
-        const res = await authFetch(url);
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          let errorMsg = errData.detail || `HTTP ${res.status}`;
-
-          if (res.status === 429) {
-            errorMsg = "API Quota Exceeded. Please try again soon.";
-          } else if (res.status === 402) {
-            errorMsg = "DeepSeek Insufficient Balance. Please top up your API account to resume analysis.";
-          }
-
-          throw new Error(errorMsg);
-        }
-
+        const res = await authFetch(API_BASE + `/generate_suggestions/${patientUserId}/`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderSidebarSuggestions(data.ai_suggestions || []);
-
-      } catch (error) {
-        console.error("AI Error:", error);
-        sidebar.innerHTML = `
-                <div class="text-center py-4 px-2">
-                    <i class="fas fa-exclamation-triangle text-warning mb-2" style="font-size: 2rem;"></i>
-                    <h6 class="fw-bold text-dark">Analysis Unavailable</h6>
-                    <p class="text-muted small mb-3">${error.message}</p>
-                    <button class="btn btn-elegant btn-sm w-100" onclick="triggerAIAnalysis()">
-                      <i class="fas fa-redo me-1"></i>Try Again
-                    </button>
-                </div>
-            `;
+      } catch (err) {
+        sidebar.innerHTML = `<div class="text-center py-4 px-2">
+          <i class="fas fa-exclamation-triangle text-warning mb-2" style="font-size:2rem;"></i>
+          <h6 class="fw-bold text-dark">Analysis Unavailable</h6>
+          <p class="text-muted small mb-3">${err.message}</p>
+          <button class="btn btn-elegant btn-sm w-100" onclick="triggerAIAnalysis()"><i class="fas fa-redo me-1"></i>Try Again</button>
+        </div>`;
       }
     }
 
     function renderSidebarSuggestions(suggestions) {
       const sidebar = document.getElementById('aiSidebarContent');
-
       if (!suggestions || suggestions.length === 0) {
-        sidebar.innerHTML = `
-                <div class="text-center py-5">
-                    <i class="fas fa-check-circle text-success mb-3" style="font-size: 2.5rem;"></i>
-                    <h6 class="fw-bold">No Concerns Detected</h6>
-                    <p class="text-muted small">AI model found no immediate issues with the current patient profile.</p>
-                </div>
-            `;
+        sidebar.innerHTML = `<div class="text-center py-5">
+          <i class="fas fa-check-circle text-success mb-3" style="font-size:2.5rem;"></i>
+          <h6 class="fw-bold">No Concerns Detected</h6>
+          <p class="text-muted small">AI found no immediate issues.</p>
+        </div>`;
         return;
       }
-
-      let html = '<div class="ai-suggestions-list">';
-
-      suggestions.forEach(item => {
-        const severity = (item.severity || 'low').toLowerCase();
-        const icon = severity === 'high' ? 'fa-exclamation-triangle' :
-          severity === 'medium' ? 'fa-info-circle' : 'fa-lightbulb';
-
-        html += `
-                <div class="ai-suggestion-card severity-${severity} fade-in">
-                    <div class="severity-badge">${severity} Priority</div>
-                    <h6 class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">${item.message || item.suggestion}</h6>
-                    <p class="text-muted small mb-2" style="font-size: 0.85rem; line-height: 1.4;">
-                      ${item.rationale || 'Based on clinical trend analysis.'}
-                    </p>
-                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                        <small class="text-muted" style="font-size: 0.75rem;">
-                          <i class="fas fa-shield-alt me-1"></i>Confidence: ${(item.confidence * 100).toFixed(0)}%
-                        </small>
-                    </div>
-                </div>
-            `;
-      });
-
-      html += '</div>' +
-        '<p class="text-center text-muted mt-3 mb-0" style="font-size: 0.7rem;">' +
-        '<i class="fas fa-info-circle me-1"></i>AI-generated insights should be verified by a clinician.' +
-        '</p>';
-
-      sidebar.innerHTML = html;
+      sidebar.innerHTML = suggestions.map(item => {
+        const sev = (item.severity || 'low').toLowerCase();
+        return `<div class="ai-suggestion-card severity-${sev} fade-in">
+          <div class="severity-badge">${sev} Priority</div>
+          <h6 class="fw-bold text-dark mb-1">${item.message || item.suggestion}</h6>
+          <p class="text-muted small mb-2">${item.rationale || 'Based on clinical trend analysis.'}</p>
+          <small class="text-muted"><i class="fas fa-shield-alt me-1"></i>Confidence: ${(item.confidence * 100).toFixed(0)}%</small>
+        </div>`;
+      }).join('') + `<p class="text-center text-muted mt-3 mb-0" style="font-size:0.7rem;">
+      <i class="fas fa-info-circle me-1"></i>AI-generated insights should be verified by a clinician.</p>`;
     }
 
-    // Update quick stats
-    function updateQuickStats(data) {
-      if (data.length === 0) return;
-
-      const systolicReadings = data.map(v => v.systolic);
-      const diastolicReadings = data.map(v => v.diastolic);
-
-      const avgSystolic = Math.round(systolicReadings.reduce((a, b) => a + b, 0) / systolicReadings.length);
-      const avgDiastolic = Math.round(diastolicReadings.reduce((a, b) => a + b, 0) / diastolicReadings.length);
-
-      const lastReading = data[data.length - 1];
-      const lastReadingDate = new Date(lastReading.created_at).toLocaleDateString();
-
-      document.getElementById('avgSystolic').textContent = `${avgSystolic} mmHg`;
-      document.getElementById('avgDiastolic').textContent = `${avgDiastolic} mmHg`;
-      document.getElementById('readingsCount').textContent = data.length;
-      document.getElementById('lastReading').textContent = lastReadingDate;
-    }
-
-    // Initialize page
     document.addEventListener("DOMContentLoaded", async () => {
-      try {
-        // Set appointment link (uses UserProfile ID)
-        const scheduleBtn = document.getElementById("scheduleAppointmentBtn");
-        if (scheduleBtn && patientProfileId) {
-          scheduleBtn.href = "appointments/appointment_create.html?id=" + patientProfileId;
-        }
-
-        // Load patient profile first to get User ID, then load BP trend
-        await loadPatientProfile();
-
-        // Auto-trigger AI analysis once patient ID is ready
-        triggerAIAnalysis();
-
-        document.getElementById("range").addEventListener("change", loadBPTrend);
-      } catch (error) {
-        console.error("Initialization error:", error);
-      }
-    });
-
-    // Global error handler
-    window.addEventListener('error', function (e) {
-      console.error('Global error:', e.error);
+      document.getElementById("scheduleAppointmentBtn").href = "appointments/appointment_create.html?id=" + patientProfileId;
+      await loadPatientProfile();
+      triggerAIAnalysis();
+      document.getElementById("range").addEventListener("change", loadBPTrend);
     });
   </script>
 </body>

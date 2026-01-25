@@ -84,7 +84,8 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     
     _token = response["token"];
-    _patientName = response["name"] ?? "Patient";
+    // Extract name from nested user object or fallback to top-level name
+    _patientName = response["user"]?["name"] ?? response["name"] ?? "Patient";
     
     await prefs.setString("patientToken", _token!);
     await prefs.setString("patientName", _patientName!);

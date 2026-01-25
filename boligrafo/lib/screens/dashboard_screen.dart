@@ -8,6 +8,9 @@ import '../providers/auth_provider.dart';
 import '../providers/vitals_provider.dart';
 import '../providers/medication_provider.dart';
 import 'dart:async';
+import 'appointments_screen.dart';
+import 'ai_insights_screen.dart';
+import '../theme/app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -244,9 +247,9 @@ void dispose() {
           appBar: AppBar(
             title: Text(
                 '${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Dashboard"}'),
+            backgroundColor: AppTheme.cardWhite,
+            foregroundColor: AppTheme.textPrimary,
             elevation: 0,
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.blue[800],
             centerTitle: false,
           ),
           body: SingleChildScrollView(
@@ -257,16 +260,18 @@ void dispose() {
                 
             // Welcome Section
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(12),
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppTheme.cardShadow,
               ),
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Colors.blue[100],
-                    child: Icon(Icons.person, color: Colors.blue[800]),
+                    radius: 28,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    child: Icon(Icons.person, color: Colors.white, size: 32),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -275,20 +280,18 @@ void dispose() {
                       children: [
                         Text(
                           '${_getGreeting()}, ${authProvider.patientName?.isNotEmpty == true ? authProvider.patientName : "Patient"} ',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[900],
-                              ),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 7.0),
+                        const SizedBox(height: 6.0),
                         Text(
                           '$formattedDate | $formattedTime',
                           style: TextStyle(
-                            color: Colors.blue[700],
-                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -449,6 +452,105 @@ void dispose() {
               ),
             ),
 
+            const SizedBox(height: 24.0),
+            
+            // Quick Actions
+            Row(
+              children: [
+                Icon(Icons.touch_app, color: AppTheme.primaryBlue),
+                const SizedBox(width: 8),
+                Text(
+                  'Quick Actions',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AppointmentsScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppTheme.primaryLight, AppTheme.primaryBlue],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.calendar_today, color: Colors.white, size: 32),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Appointments',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AIInsightsScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.psychology, color: Colors.white, size: 32),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'AI Insights',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
             const SizedBox(height: 24.0),
             
             // Tips Section

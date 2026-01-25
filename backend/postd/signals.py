@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import VitalReading, Notification, UserProfile, Prescription
+from .models import VitalReading, Notification, UserProfile, Prescription, Appointment
 
 @receiver(post_save, sender=VitalReading)
 def create_bp_alert(sender, instance, created, **kwargs):
@@ -92,3 +92,70 @@ def check_bp_frequency(patient_profile, doctor_user):
             message=f"{patient_profile.user.first_name} has logged BP only {readings_today} time(s) today. Encourage twice daily logging.",
         )
         print(f"🕒 BP logging reminder sent for {patient_profile.user.email}")
+
+
+@receiver(post_save, sender=Prescription)
+def create_prescription_notification(sender, instance, created, **kwargs):
+    """
+    Create notification when a new prescription is created.
+    """
+    if not created:
+        return
+    
+    patient_profile = instance.patient
+    doctor_user = instance.doctor
+    
+    if not patient_profile or not doctor_user:
+        return
+    
+    # Notification for the patient
+    Notification.objects.create(
+        doctor=doctor_user,
+        patient=patient_profile,
+        notification_type="general",
+        title="New Prescription",
+        message=f"You have been prescribed {instance.medication} ({instance.dosage}). Take {instance.frequency} for {instance.duration_days} days.",
+    )
+    
+    print(f"✅ Prescription notification sent to {patient_profile.user.email}")
+
+
+@receiver(post_save, sender=Appointment)
+def create_appointment_notification(sender, instance, created, **kwargs):
+    """
+    Create notification when an appointment is created or updated.
+    """
+    patient_profile = instance.patient
+    doctor_profile = instance.doctor
+    
+    if not patient_profile:
+        return
+    
+    # Get the doctor's user for the notification
+    doctor_user = doctor_profile.user if doctor_profile else None
+    
+    if created:
+        # New appointment
+        message = f"New appointment scheduled for {instance.date} at {instance.time}. Reason: {instance.reason}"
+        title = "Appointment Scheduled"
+    else:
+        # Updated appointment
+        if instance.status == "cancelled":
+            message = f"Your appointment on {instance.date} at {instance.time} has been cancelled."
+            title = "Appointment Cancelled"
+        elif instance.status == "completed":
+            message = f"Your appointment on {instance.date} at {instance.time} has been marked as completed."
+            title = "Appointment Completed"
+        else:
+            message = f"Your appointment has been updated: {instance.date} at {instance.time}. Reason: {instance.reason}"
+            title = "Appointment Updated"
+    
+    Notification.objects.create(
+        doctor=doctor_user,
+        patient=patient_profile,
+        notification_type="general",
+        title=title,
+        message=message,
+    )
+    
+    print(f"✅ Appointment notification sent to {patient_profile.user.email}")

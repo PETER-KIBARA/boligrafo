@@ -30,6 +30,7 @@ SECRET_KEY = 'django-insecure-_b6_h&78gh1*szl0g_$v%gp7o2af!^81wd96yrf6p@y3!%d=dh
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
