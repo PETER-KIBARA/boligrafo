@@ -83,8 +83,6 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  NotificationPollingService? _pollingService;
-
   @override
   void initState() {
     super.initState();
@@ -95,22 +93,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   void _initializePolling() {
-    // Defer initialization to avoid setState during build
     Future.delayed(Duration.zero, () {
-      final authProvider = context.read<AuthProvider>();
-      if (authProvider.isLoggedIn && authProvider.token != null) {
-        _pollingService = NotificationPollingService(
-          apiBaseUrl: ApiService.baseUrl,
-          token: authProvider.token!,
-        );
-        _pollingService?.startPolling();
-      }
+      // FIX #1: Immediate sanity test notification
+      NotificationsService.showInstantNotification(
+        id: 999,
+        title: 'Test Notification',
+        body: 'notifications best.',
+      );
     });
   }
 
   @override
   void dispose() {
-    _pollingService?.stopPolling();
     super.dispose();
   }
 

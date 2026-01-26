@@ -236,6 +236,7 @@ class NotificationsService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
     
+    print('Notification scheduled for: $scheduledDate (requested $hour:$minute)');
     return scheduledDate;
   }
 
@@ -326,6 +327,7 @@ class NotificationsService {
         iOS: iosDetails,
       );
 
+      print('NotificationsService: Showing instant notification (ID: $id, Title: $title)');
       await _notificationsPlugin.show(
         id,
         title,

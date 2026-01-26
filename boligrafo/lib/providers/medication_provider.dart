@@ -50,13 +50,16 @@ class MedicationProvider extends ChangeNotifier {
         }
       }
 
+      print('MedicationProvider: Fetched ${fetched.length} medications. Data changed: $dataChanged');
       _medications = fetched;
       
       // Only reschedule notifications if the medication list or schedule changed
       if (dataChanged) {
+        print('MedicationProvider: Rescheduling notifications...');
         for (var med in _medications) {
           if (med.doses.isNotEmpty) {
             final timeLabels = med.doses.map((d) => d.timeLabel).toList();
+            print('MedicationProvider: Scheduling ${timeLabels.length} slots for ${med.name}');
             await NotificationsService.scheduleMedicationTimeSlots(
               baseId: med.id,
               timeLabels: timeLabels,

@@ -4,6 +4,10 @@ import 'dashboard_screen.dart';
 import 'log_vitals_screen.dart';
 import 'detailed_report_screen.dart';
 import 'emergency_guidance_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/notification_polling_service.dart';
+import '../api/api_service.dart';
 
 
 class MainScreen extends StatefulWidget {
@@ -15,13 +19,44 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-
   late final PageController _pageController;
+  NotificationPollingService? _pollingService;
+  bool _pollingStarted = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // Start polling after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startPolling();
+    });
+  }
+
+  void _startPolling() {
+    if (_pollingStarted) return;
+    
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isLoggedIn && authProvider.token != null) {
+      print('MainScreen: Starting notification polling...');
+      _pollingService = NotificationPollingService(
+        apiBaseUrl: ApiService.baseUrl,
+        token: authProvider.token!,
+      );
+      _pollingService?.startPolling();
+      _pollingStarted = true;
+    } else {
+      print('MainScreen: Polling NOT started (not logged in or no token)');
+    }
+  }
+
+  @override
+  void dispose() {
+    print('MainScreen: Stopping notification polling...');
+    _pollingService?.stopPolling();
+    _pageController.dispose();
+    super.dispose();
   }
 
   late final List<Widget> _screens = [

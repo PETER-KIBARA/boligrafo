@@ -62,9 +62,12 @@ class NotificationPollingService {
             .where((n) => n.id > lastNotificationId && !n.isRead)
             .toList();
 
+        print('Polling: Found ${notifications.length} notifications, ${newNotifications.length} are new.');
+
         if (newNotifications.isNotEmpty) {
           // Show local notifications for each new item
           for (var notification in newNotifications) {
+            print('Triggering system notification for ID: ${notification.id}');
             await _showLocalNotification(notification);
           }
 
