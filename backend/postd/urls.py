@@ -20,7 +20,7 @@ from .views import DoctorUpcomingAppointmentsView
 from .views import PatientAppointmentListView
 from .views import PatientMyAppointmentsView
 from postd.ai.views import GenerateSuggestionsView
-from .views import PopulationBPTrendsView
+from .views import PopulationBPTrendsView, PopulationInsightsView
 from .views import DoctorReportGeneratorView, DoctorReportExportView
 
 
@@ -57,6 +57,7 @@ path("patients/<int:id>/appointments/", PatientAppointmentListView.as_view()),
 # path('generate_suggestions/<int:patient_id>/', PatientAISuggestionsView.as_view(), name='generate_suggestions'),
 path("generate_suggestions/<int:patient_id>/", GenerateSuggestionsView.as_view(), name="generate_suggestions"),
 path("population/bp-trends/", PopulationBPTrendsView.as_view()),
+path("population/insights/", PopulationInsightsView.as_view(), name="population-insights"),
 path("doctor/reports/", DoctorReportGeneratorView.as_view(), name="doctor-reports"),
 path("doctor/reports/export/", DoctorReportExportView.as_view(), name="doctor-reports-export"),
 

@@ -660,6 +660,72 @@ class PopulationBPTrendsView(APIView):
         return JsonResponse(data, safe=False)
 
 
+from postd.ai.services.openrouter_service import OpenRouterService
+
+class PopulationInsightsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not hasattr(request.user, "doctor_profile"):
+            return Response({"error": "Only doctors can access population insights."}, status=403)
+
+        doctor = request.user.doctor_profile
+        patients = UserProfile.objects.filter(doctor=doctor)
+        patient_ids = patients.values_list('user_id', flat=True)
+
+        vitals_qs = VitalReading.objects.filter(patient_id__in=patient_ids)
+        
+        # Calculate stats
+        stats = vitals_qs.aggregate(
+            avg_systolic=Avg('systolic'),
+            avg_diastolic=Avg('diastolic'),
+            avg_heartrate=Avg('heartrate')
+        )
+
+        uncontrolled_count = vitals_qs.filter(
+            Q(systolic__gte=140) | Q(diastolic__gte=90)
+        ).values('patient_id').distinct().count()
+
+        # Get trends (last 7 days grouped by date)
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        trends_qs = (
+            vitals_qs.filter(created_at__gte=seven_days_ago)
+            .values("created_at__date")
+            .annotate(
+                avg_systolic=Avg("systolic"),
+                avg_diastolic=Avg("diastolic"),
+            )
+            .order_by("created_at__date")
+        )
+        
+        trends = [
+            {
+                "date": row["created_at__date"].isoformat(),
+                "systolic": round(row["avg_systolic"]),
+                "diastolic": round(row["avg_diastolic"]),
+            }
+            for row in trends_qs
+        ]
+
+        population_data = {
+            "total_patients": patients.count(),
+            "avg_systolic": round(stats['avg_systolic'], 1) if stats['avg_systolic'] else None,
+            "avg_diastolic": round(stats['avg_diastolic'], 1) if stats['avg_diastolic'] else None,
+            "avg_heartrate": round(stats['avg_heartrate'], 1) if stats['avg_heartrate'] else None,
+            "uncontrolled_count": uncontrolled_count,
+            "trends": trends
+        }
+
+        ai_service = OpenRouterService()
+        insights = ai_service.generate_population_insights(population_data)
+
+        return Response({
+            "summary": population_data,
+            "insights": insights.get("insights", []),
+            "actions": insights.get("actions", [])
+        })
+
+
 class DoctorReportGeneratorView(APIView):
     """
     Generate comprehensive reports for doctor's patients

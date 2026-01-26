@@ -46,6 +46,7 @@ class GenerateSuggestionsView(APIView):
 
         # 4. Load Configuration
         config_obj = AISuggestionConfig.get_solitary()
+        
         config = {
             "bp_systolic_threshold": config_obj.bp_systolic_threshold,
             "bp_diastolic_threshold": config_obj.bp_diastolic_threshold,
