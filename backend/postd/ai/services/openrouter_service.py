@@ -9,7 +9,7 @@ class OpenRouterService:
     def __init__(self):
         self.api_key = getattr(settings, 'OPENROUTER_API_KEY', None)
         self.base_url = "https://openrouter.ai/api/v1"
-        self.model = "liquid/lfm-2.5-1.2b-instruct:free"
+        self.model = "google/gemini-2.0-flash-exp:free"
         
         self.site_url = "https://boligrafo.app" # Optional: Site URL for OpenRouter rankings
         self.app_name = "Boligrafo" # Optional: App Name for OpenRouter rankings

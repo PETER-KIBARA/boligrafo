@@ -3,12 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+  int? _userId;
   String? _token;
   String? _patientName;
   bool _isLoading = false;
   bool _isLoggedIn = false;
 
   // Getters
+  int? get userId => _userId;
   String? get token => _token;
   String? get patientName => _patientName;
   bool get isLoading => _isLoading;
@@ -18,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> initializeAuth() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('userId');
       final token = prefs.getString('patientToken');
       final expiryString = prefs.getString('tokenExpiry');
       final name = prefs.getString('patientName');
@@ -28,6 +31,19 @@ class AuthProvider extends ChangeNotifier {
           _token = token;
           _patientName = name;
           _isLoggedIn = true;
+          
+          if (userId == null) {
+            // Recovery: Fetch user info if ID is missing from local storage
+            final userRes = await ApiService.getCurrentUser(token);
+            if (userRes["error"] != true) {
+              _userId = userRes["id"];
+              if (_userId != null) {
+                await prefs.setInt("userId", _userId!);
+              }
+            }
+          } else {
+            _userId = userId;
+          }
         } else {
           // Token expired → clear stored data
           await _clearStoredData();
@@ -83,10 +99,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _saveAuthData(Map<String, dynamic> response) async {
     final prefs = await SharedPreferences.getInstance();
     
+    _userId = response["user"]?["id"];
     _token = response["token"];
     // Extract name from nested user object or fallback to top-level name
     _patientName = response["user"]?["name"] ?? response["name"] ?? "Patient";
     
+    if (_userId != null) await prefs.setInt("userId", _userId!);
     await prefs.setString("patientToken", _token!);
     await prefs.setString("patientName", _patientName!);
     
@@ -100,10 +118,12 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _clearStoredData() async {
     final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userId');
     await prefs.remove('patientToken');
     await prefs.remove('tokenExpiry');
     await prefs.remove('patientName');
     
+    _userId = null;
     _token = null;
     _patientName = null;
     _isLoggedIn = false;

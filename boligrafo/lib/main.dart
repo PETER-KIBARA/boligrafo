@@ -11,6 +11,7 @@ import 'providers/notification_provider.dart';
 import 'providers/appointment_provider.dart';
 import 'services/notification_polling_service.dart';
 import 'theme/app_theme.dart';
+import 'api/api_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,25 +38,22 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => VitalsProvider()),
         ChangeNotifierProxyProvider<AuthProvider, MedicationProvider>(
-          create: (_) => MedicationProvider(apiBaseUrl: "http://192.168.100.93:8000/api", token: ""),
+          create: (_) => MedicationProvider(apiBaseUrl: ApiService.baseUrl, token: ""),
           update: (_, authProvider, previous) => MedicationProvider(
-            apiBaseUrl: "http://192.168.100.93:8000/api",
+            apiBaseUrl: ApiService.baseUrl,
             token: authProvider.token ?? "",
           ),
         ),
         ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
-          create: (_) => NotificationProvider(apiBaseUrl: "http://192.168.100.93:8000/api", token: ""),
+          create: (_) => NotificationProvider(apiBaseUrl: ApiService.baseUrl, token: ""),
           update: (_, authProvider, previous) => NotificationProvider(
-            apiBaseUrl: "http://192.168.100.93:8000/api",
+            apiBaseUrl: ApiService.baseUrl,
             token: authProvider.token ?? "",
           ),
         ),
         ChangeNotifierProxyProvider<AuthProvider, AppointmentProvider>(
-          create: (_) => AppointmentProvider(apiBaseUrl: "http://192.168.100.93:8000/api", token: ""),
-          update: (_, authProvider, previous) => AppointmentProvider(
-            apiBaseUrl: "http://192.168.100.93:8000/api",
-            token: authProvider.token ?? "",
-          ),
+          create: (_) => AppointmentProvider(apiBaseUrl: ApiService.baseUrl, token: ""),
+          update: (_, authProvider, previous) => previous!..update(ApiService.baseUrl, authProvider.token ?? ""),
         ),
       ],
       
@@ -102,7 +100,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.isLoggedIn && authProvider.token != null) {
         _pollingService = NotificationPollingService(
-          apiBaseUrl: "http://192.168.100.93:8000/api",
+          apiBaseUrl: ApiService.baseUrl,
           token: authProvider.token!,
         );
         _pollingService?.startPolling();

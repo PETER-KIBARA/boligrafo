@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api/api_service.dart';
 import '../models/appointment_model.dart';
 import '../models/notifications_service.dart';
 
 class AppointmentProvider with ChangeNotifier {
-  final String apiBaseUrl;
-  final String token;
+  String apiBaseUrl;
+  String token;
 
   List<AppointmentModel> _appointments = [];
   bool _isLoading = false;
@@ -15,6 +16,16 @@ class AppointmentProvider with ChangeNotifier {
     required this.apiBaseUrl,
     required this.token,
   });
+
+  void update(String newBaseUrl, String newToken) {
+    if (apiBaseUrl != newBaseUrl || token != newToken) {
+      apiBaseUrl = newBaseUrl;
+      token = newToken;
+      if (token.isNotEmpty) {
+        fetchAppointments();
+      }
+    }
+  }
 
   List<AppointmentModel> get appointments => _appointments;
   bool get isLoading => _isLoading;

@@ -45,6 +45,8 @@ from datetime import timedelta
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg
+from django.http import FileResponse
+from .pdf_report_service import ReportPDFService
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  
@@ -114,6 +116,23 @@ def apilogin(request):
         "email": user.email or "",
     }
 }, status=200)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """
+    Return basic info for the currently logged-in user.
+    """
+    user = request.user
+    role = "patient"
+    if hasattr(user, "doctor_profile"):
+        role = "doctor"
+    
+    return Response({
+        "id": user.id,
+        "name": user.get_full_name() or user.username,
+        "email": user.email,
+        "role": role,
+    })
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -755,113 +774,7 @@ class DoctorReportGeneratorView(APIView):
         report_data = []
         
         for patient in patients_qs:
-            # Build filters for date range
-            date_filter = {}
-            if from_date:
-                date_filter['created_at__gte'] = from_date
-            if to_date:
-                date_filter['created_at__lte'] = from_date + ' 23:59:59' if to_date else to_date
-
-            # Get vitals
-            vitals_qs = VitalReading.objects.filter(patient=patient.user)
-            if date_filter:
-                vitals_qs = vitals_qs.filter(**date_filter)
-            vitals = vitals_qs.order_by('-created_at')
-
-            # Get prescriptions
-            prescriptions_qs = Prescription.objects.filter(patient=patient)
-            if date_filter:
-                prescriptions_qs = prescriptions_qs.filter(**date_filter)
-            prescriptions = prescriptions_qs.order_by('-created_at')
-
-            # Get treatments
-            treatments_qs = Treatment.objects.filter(patient=patient)
-            if date_filter:
-                treatments_qs = treatments_qs.filter(**date_filter)
-            treatments = treatments_qs.order_by('-created_at')
-
-            # Get appointments
-            appointments_qs = Appointment.objects.filter(patient=patient)
-            if from_date or to_date:
-                appt_date_filter = {}
-                if from_date:
-                    appt_date_filter['date__gte'] = from_date
-                if to_date:
-                    appt_date_filter['date__lte'] = to_date
-                appointments_qs = appointments_qs.filter(**appt_date_filter)
-            appointments = appointments_qs.order_by('-date')
-
-            # Calculate statistics
-            vitals_stats = vitals.aggregate(
-                avg_systolic=Avg('systolic'),
-                avg_diastolic=Avg('diastolic'),
-                avg_heartrate=Avg('heartrate')
-            )
-
-            patient_data = {
-                'patient_id': patient.id,
-                'patient_name': patient.user.get_full_name() or patient.user.username,
-                'patient_email': patient.user.email,
-                'patient_phone': patient.phone or '',
-                'total_vitals': vitals.count(),
-                'total_prescriptions': prescriptions.count(),
-                'total_treatments': treatments.count(),
-                'total_appointments': appointments.count(),
-                'avg_systolic': round(vitals_stats['avg_systolic'], 1) if vitals_stats['avg_systolic'] else None,
-                'avg_diastolic': round(vitals_stats['avg_diastolic'], 1) if vitals_stats['avg_diastolic'] else None,
-                'avg_heartrate': round(vitals_stats['avg_heartrate'], 1) if vitals_stats['avg_heartrate'] else None,
-                'vitals': [
-                    {
-                        'id': v.id,
-                        'systolic': v.systolic,
-                        'diastolic': v.diastolic,
-                        'heartrate': v.heartrate,
-                        'symptoms': v.symptoms,
-                        'diet': v.diet,
-                        'exercise': v.exercise,
-                        'created_at': v.created_at.isoformat()
-                    }
-                    for v in vitals
-                ],
-                'prescriptions': [
-                    {
-                        'id': p.id,
-                        'medication': p.medication,
-                        'dosage': p.dosage,
-                        'frequency': p.frequency,
-                        'duration_days': p.duration_days,
-                        'instructions': p.instructions,
-                        'doctor_name': p.doctor.get_full_name(),
-                        'created_at': p.created_at.isoformat()
-                    }
-                    for p in prescriptions
-                ],
-                'treatments': [
-                    {
-                        'id': t.id,
-                        'name': t.name,
-                        'description': t.description,
-                        'status': t.status,
-                        'doctor_name': t.doctor.get_full_name(),
-                        'created_at': t.created_at.isoformat(),
-                        'updated_at': t.updated_at.isoformat()
-                    }
-                    for t in treatments
-                ],
-                'appointments': [
-                    {
-                        'id': a.id,
-                        'date': a.date.isoformat() if a.date else None,
-                        'time': a.time.isoformat() if a.time else None,
-                        'reason': a.reason,
-                        'status': a.status,
-                        'doctor_name': a.doctor.full_name if a.doctor else '',
-                        'created_at': a.created_at.isoformat()
-                    }
-                    for a in appointments
-                ]
-            }
-            
+            patient_data = get_report_data_for_patient(patient, from_date, to_date)
             report_data.append(patient_data)
 
         # Calculate overall statistics
@@ -1018,3 +931,151 @@ class DoctorReportExportView(APIView):
                 ])
 
         return response
+
+def get_report_data_for_patient(patient, from_date=None, to_date=None):
+    # Build filters for date range
+    date_filter = {}
+    if from_date:
+        date_filter['created_at__gte'] = from_date
+    if to_date:
+        date_filter['created_at__lte'] = to_date + ' 23:59:59'
+
+    # Get vitals
+    vitals_qs = VitalReading.objects.filter(patient=patient.user)
+    if date_filter:
+        vitals_qs = vitals_qs.filter(**date_filter)
+    vitals = vitals_qs.order_by('-created_at')
+
+    # Get prescriptions
+    prescriptions_qs = Prescription.objects.filter(patient=patient)
+    if date_filter:
+        prescriptions_qs = prescriptions_qs.filter(**date_filter)
+    prescriptions = prescriptions_qs.order_by('-created_at')
+
+    # Get treatments
+    treatments_qs = Treatment.objects.filter(patient=patient)
+    if date_filter:
+        treatments_qs = treatments_qs.filter(**date_filter)
+    treatments = treatments_qs.order_by('-created_at')
+
+    # Get appointments
+    appointments_qs = Appointment.objects.filter(patient=patient)
+    if from_date or to_date:
+        appt_date_filter = {}
+        if from_date:
+            appt_date_filter['date__gte'] = from_date
+        if to_date:
+            appt_date_filter['date__lte'] = to_date
+        appointments_qs = appointments_qs.filter(**appt_date_filter)
+    appointments = appointments_qs.order_by('-date')
+
+    # Calculate statistics
+    vitals_stats = vitals.aggregate(
+        avg_systolic=Avg('systolic'),
+        avg_diastolic=Avg('diastolic'),
+        avg_heartrate=Avg('heartrate')
+    )
+
+    return {
+        'patient_id': patient.id,
+        'patient_name': patient.user.get_full_name() or patient.user.username,
+        'patient_email': patient.user.email,
+        'patient_phone': patient.phone or '',
+        'total_vitals': vitals.count(),
+        'total_prescriptions': prescriptions.count(),
+        'total_treatments': treatments.count(),
+        'total_appointments': appointments.count(),
+        'avg_systolic': round(vitals_stats['avg_systolic'], 1) if vitals_stats['avg_systolic'] else None,
+        'avg_diastolic': round(vitals_stats['avg_diastolic'], 1) if vitals_stats['avg_diastolic'] else None,
+        'avg_heartrate': round(vitals_stats['avg_heartrate'], 1) if vitals_stats['avg_heartrate'] else None,
+        'vitals': [
+            {
+                'id': v.id,
+                'systolic': v.systolic,
+                'diastolic': v.diastolic,
+                'heartrate': v.heartrate,
+                'symptoms': v.symptoms,
+                'diet': v.diet,
+                'exercise': v.exercise,
+                'created_at': v.created_at.isoformat()
+            }
+            for v in vitals
+        ],
+        'prescriptions': [
+            {
+                'id': p.id,
+                'medication': p.medication,
+                'dosage': p.dosage,
+                'frequency': p.frequency,
+                'duration_days': p.duration_days,
+                'instructions': p.instructions,
+                'doctor_name': p.doctor.get_full_name() if hasattr(p.doctor, 'get_full_name') else 'N/A',
+                'created_at': p.created_at.isoformat()
+            }
+            for p in prescriptions
+        ],
+        'treatments': [
+            {
+                'id': t.id,
+                'name': t.name,
+                'description': t.description,
+                'status': t.status,
+                'doctor_name': t.doctor.get_full_name() if hasattr(t.doctor, 'get_full_name') else 'N/A',
+                'created_at': t.created_at.isoformat(),
+                'updated_at': t.updated_at.isoformat()
+            }
+            for t in treatments
+        ],
+        'appointments': [
+            {
+                'id': a.id,
+                'date': a.date.isoformat() if a.date else None,
+                'time': a.time.isoformat() if a.time else None,
+                'reason': a.reason,
+                'status': a.status,
+                'doctor_name': a.doctor.full_name if a.doctor else '',
+                'created_at': a.created_at.isoformat()
+            }
+            for a in appointments
+        ]
+    }
+
+
+class PatientReportPDFView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not hasattr(request.user, "profile"):
+            return Response({"error": "Profile not found"}, status=404)
+        
+        patient = request.user.profile
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        report_data = get_report_data_for_patient(patient, from_date, to_date)
+        pdf_buffer = ReportPDFService.generate_patient_report(report_data)
+        
+        filename = f"Report_{request.user.username}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        return FileResponse(pdf_buffer, as_attachment=True, filename=filename, content_type='application/pdf')
+
+
+class DoctorPatientReportPDFView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        if not hasattr(request.user, "doctor_profile"):
+            return Response({"error": "Not authorized"}, status=403)
+        
+        patient = get_object_or_404(UserProfile, id=patient_id)
+        # Ensure patient belongs to this doctor
+        if patient.doctor != request.user.doctor_profile and not request.user.is_staff:
+             return Response({"error": "You are not authorized to view this patient's report"}, status=403)
+
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        report_data = get_report_data_for_patient(patient, from_date, to_date)
+        pdf_buffer = ReportPDFService.generate_patient_report(report_data)
+        
+        filename = f"Report_{patient.user.username}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        return FileResponse(pdf_buffer, as_attachment=True, filename=filename, content_type='application/pdf')

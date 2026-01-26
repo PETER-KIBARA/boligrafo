@@ -35,10 +35,7 @@ class NotificationsService {
         _medicationChannelName,
         description: _medicationChannelDescription,
         importance: Importance.high,
-        // priority: Priority.high,
-        sound: const RawResourceAndroidNotificationSound('notification_sound'),
         enableVibration: true,
-        // vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
         showBadge: true,
         playSound: true,
       );
@@ -123,10 +120,8 @@ class NotificationsService {
         ledColor: Color(0xFF2196F3),
         ledOnMs: 1000,
         ledOffMs: 500,
-        sound: const RawResourceAndroidNotificationSound('notification_sound'),
         playSound: true,
         enableVibration: true,
-        // vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
         timeoutAfter: 3600000, // Auto-cancel after 1 hour
         styleInformation: BigTextStyleInformation(''),
       );
@@ -160,7 +155,6 @@ class NotificationsService {
         matchDateTimeComponents: DateTimeComponents.time,
       );
 
-      print('Scheduled daily reminder: $title at $hour:$minute (ID: $id)');
       return id;
     } catch (e) {
       print('Error scheduling reminder: $e');
@@ -168,49 +162,69 @@ class NotificationsService {
     }
   }
 
-  /// Schedule multiple time slots for a medication
-  /// Schedule multiple time slots for a medication
-static Future<List<int>> scheduleMedicationTimeSlots({
-  required int baseId,
-  required List<String> timeSlots,
-  required String medicationName,
-  required String dosage,
-}) async {
-  final List<int> scheduledIds = [];
-
-  for (int i = 0; i < timeSlots.length; i++) {
-    try {
-      final timeString = timeSlots[i];
-      final timeParts = timeString.split(':');
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
-
-      final timeLabel = _getTimeOfDayLabel(hour);
-      final notificationId = baseId * 100 + i; // Generate unique ID
-
-      await scheduleDailyReminder(
-        id: notificationId,
-        hour: hour,
-        minute: minute,
-        title: 'Medication Reminder - $timeLabel',
-        body: 'Time to take $medicationName${dosage.isNotEmpty ? ' ($dosage)' : ''}',
-        payload: jsonEncode({
-          'medicationId': baseId.toString(),
-          'timeSlotIndex': i,
-          'type': 'medication_reminder',
-        }),
-      );
-
-      scheduledIds.add(notificationId);
-    } catch (e) {
-      // Use the index to get the time string for error reporting
-      final errorTimeString = timeSlots[i];
-      print('Error scheduling time slot $errorTimeString: $e');
+  /// Map dose labels to actual times (approximate)
+  static String mapDoseLabelToTime(String label) {
+    switch (label.toLowerCase()) {
+      case 'morning':
+        return '08:00';
+      case 'noon':
+      case 'afternoon':
+        return '14:00';
+      case 'evening':
+        return '18:00';
+      case 'night':
+        return '22:00';
+      default:
+        // Default to daily at 9am if unknown
+        return '09:00';
     }
   }
 
-  return scheduledIds;
-}
+  /// Schedule multiple time slots for a medication
+  static Future<List<int>> scheduleMedicationTimeSlots({
+    required int baseId,
+    required List<String> timeLabels,
+    required String medicationName,
+    required String dosage,
+  }) async {
+    final List<int> scheduledIds = [];
+
+    // Clear existing notifications for this medication range (baseId * 100 to baseId * 100 + 10)
+    for (int i = 0; i < 10; i++) {
+      await cancelNotification(baseId * 100 + i);
+    }
+
+    for (int i = 0; i < timeLabels.length; i++) {
+      try {
+        final label = timeLabels[i];
+        final timeString = mapDoseLabelToTime(label);
+        final timeParts = timeString.split(':');
+        final hour = int.parse(timeParts[0]);
+        final minute = int.parse(timeParts[1]);
+
+        final notificationId = baseId * 100 + i; // Generate unique ID
+
+        await scheduleDailyReminder(
+          id: notificationId,
+          hour: hour,
+          minute: minute,
+          title: 'Medication Reminder - $label',
+          body: 'Time to take $medicationName${dosage.isNotEmpty ? ' ($dosage)' : ''}',
+          payload: jsonEncode({
+            'medicationId': baseId.toString(),
+            'timeSlotIndex': i,
+            'type': 'medication_reminder',
+          }),
+        );
+
+        scheduledIds.add(notificationId);
+      } catch (e) {
+        print('Error scheduling time slot ${timeLabels[i]}: $e');
+      }
+    }
+
+    return scheduledIds;
+  }
 
   /// Calculate the next occurrence of a specific time
   static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
@@ -237,7 +251,6 @@ static Future<List<int>> scheduleMedicationTimeSlots({
   static Future<void> cancelNotification(int id) async {
     try {
       await _notificationsPlugin.cancel(id);
-      print('Cancelled notification with ID: $id');
     } catch (e) {
       print('Error cancelling notification $id: $e');
     }
@@ -288,6 +301,7 @@ static Future<List<int>> scheduleMedicationTimeSlots({
 
   /// Show an immediate notification (for testing)
   static Future<void> showInstantNotification({
+    required int id,
     required String title,
     required String body,
     String? payload,
@@ -313,7 +327,7 @@ static Future<List<int>> scheduleMedicationTimeSlots({
       );
 
       await _notificationsPlugin.show(
-        0, // ID 0 for instant notifications
+        id,
         title,
         body,
         details,

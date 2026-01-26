@@ -20,9 +20,12 @@ class GenerateSuggestionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, patient_id, *args, **kwargs):
-        # 1. Permission Check: Only doctors/clinicians
-        if not hasattr(request.user, 'doctor_profile'):
-             return Response({"detail": "Only clinicians can access AI suggestions."}, status=status.HTTP_403_FORBIDDEN)
+        # 1. Permission Check: Allow doctors or the patient themselves
+        is_doctor = hasattr(request.user, 'doctor_profile')
+        is_self = request.user.id == int(patient_id)
+        
+        if not (is_doctor or is_self):
+             return Response({"detail": "You do not have permission to access these AI suggestions."}, status=status.HTTP_403_FORBIDDEN)
 
         # 2. Get Patient
         # patient_id here is likely the User ID based on original code usage "patient_id != 1", 

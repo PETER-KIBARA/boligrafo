@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_service.dart';
 import '../models/medication_service.dart';
+import '../models/notifications_service.dart';
 
 class MedicationProvider extends ChangeNotifier {
   late final MedicationService _medService;
@@ -36,7 +37,36 @@ class MedicationProvider extends ChangeNotifier {
       final List<MedicationScheduleItem> fetched =
           await ApiService.fetchPrescriptions(token);
 
+      // Check if data actually changed before rescheduling
+      bool dataChanged = _medications.length != fetched.length;
+      if (!dataChanged) {
+        for (int i = 0; i < fetched.length; i++) {
+          if (fetched[i].id != _medications[i].id || 
+              fetched[i].frequency != _medications[i].frequency ||
+              fetched[i].doses.length != _medications[i].doses.length) {
+            dataChanged = true;
+            break;
+          }
+        }
+      }
+
       _medications = fetched;
+      
+      // Only reschedule notifications if the medication list or schedule changed
+      if (dataChanged) {
+        for (var med in _medications) {
+          if (med.doses.isNotEmpty) {
+            final timeLabels = med.doses.map((d) => d.timeLabel).toList();
+            await NotificationsService.scheduleMedicationTimeSlots(
+              baseId: med.id,
+              timeLabels: timeLabels,
+              medicationName: med.name,
+              dosage: med.dosage,
+            );
+          }
+        }
+      }
+      
       notifyListeners();
     } catch (e, stack) {
       _error = e.toString();

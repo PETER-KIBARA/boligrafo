@@ -20,3 +20,4 @@ django-apscheduler
 google-generativeai
 python-dotenv
 requests
+reportlab

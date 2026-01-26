@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../api/api_service.dart';
+import '../providers/auth_provider.dart';
 
 class AIInsightsScreen extends StatefulWidget {
   const AIInsightsScreen({super.key});
@@ -28,10 +30,9 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final userId = prefs.getInt('user_id');
-      final apiUrl = prefs.getString('api_url') ?? 'http://10.0.2.2:8000';
+      final authProvider = context.read<AuthProvider>();
+      final token = authProvider.token;
+      final userId = authProvider.userId;
 
       if (token == null || userId == null) {
         setState(() {
@@ -41,24 +42,19 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> {
         return;
       }
 
-      final url = Uri.parse('$apiUrl/generate_suggestions/$userId/');
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await ApiService.fetchAISuggestions(
+        token: token,
+        userId: userId,
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (response["error"] != true) {
         setState(() {
-          _suggestions = List<Map<String, dynamic>>.from(data['ai_suggestions'] ?? []);
+          _suggestions = List<Map<String, dynamic>>.from(response['ai_suggestions'] ?? []);
           _isLoading = false;
         });
       } else {
         setState(() {
-          _error = 'Failed to load insights';
+          _error = response['message'] ?? 'Failed to load insights';
           _isLoading = false;
         });
       }

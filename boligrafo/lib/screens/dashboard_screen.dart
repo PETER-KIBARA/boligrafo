@@ -11,6 +11,9 @@ import 'dart:async';
 import 'appointments_screen.dart';
 import 'ai_insights_screen.dart';
 import '../theme/app_theme.dart';
+import '../providers/appointment_provider.dart';
+import '../providers/notification_provider.dart';
+import 'notifications_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -47,6 +50,8 @@ void dispose() {
       await Future.wait([
         vitalsProvider.fetchVitals(authProvider.token!),
         medicationProvider.loadMedications(),
+        context.read<AppointmentProvider>().fetchAppointments(),
+        context.read<NotificationProvider>().fetchNotifications(),
       ]);
     }
   }
@@ -251,6 +256,56 @@ void dispose() {
             foregroundColor: AppTheme.textPrimary,
             elevation: 0,
             centerTitle: false,
+            actions: [
+              Consumer<NotificationProvider>(
+                builder: (context, notificationProvider, child) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      if (notificationProvider.unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              notificationProvider.unreadCount > 9
+                                  ? '9+'
+                                  : notificationProvider.unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),

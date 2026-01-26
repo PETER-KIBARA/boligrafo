@@ -4,8 +4,21 @@ import '../providers/appointment_provider.dart';
 import '../models/appointment_model.dart';
 import 'package:intl/intl.dart';
 
-class AppointmentsScreen extends StatelessWidget {
+class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
+
+  @override
+  State<AppointmentsScreen> createState() => _AppointmentsScreenState();
+}
+
+class _AppointmentsScreenState extends State<AppointmentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AppointmentProvider>(context, listen: false).fetchAppointments();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +36,7 @@ class AppointmentsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Consumer<AppointmentProvider>(
             builder: (context, provider, _) {
-              if (provider.isLoading) {
+              if (provider.isLoading && provider.appointments.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
 

@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:myapp/models/medication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class ApiService {
-    static const String baseUrl = "http://192.168.100.154:8000/api";
-
-  // static const String baseUrl = "https://backend-ubq3.onrender.com/api";
+  static const String baseUrl = "http://192.168.100.159:8000/api";
 
   //  Patient login
   static Future<Map<String, dynamic>> login({
@@ -192,6 +193,84 @@ static Future<void> logDoseTaken({
 
 
 
+  /// Get current user info using the token
+  static Future<Map<String, dynamic>> getCurrentUser(String token) async {
+    final url = Uri.parse("$baseUrl/user/me");
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {"error": true, "message": "Failed to fetch user: ${response.body}"};
+      }
+    } catch (e) {
+      return {"error": true, "message": "Something went wrong: $e"};
+    }
+  }
+
+  /// Fetch AI suggestions for a specific patient
+  static Future<Map<String, dynamic>> fetchAISuggestions({
+    required String token,
+    required int userId,
+  }) async {
+    final url = Uri.parse("$baseUrl/generate_suggestions/$userId/");
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {"error": true, "message": "Failed to fetch AI suggestions: ${response.body}"};
+      }
+    } catch (e) {
+      return {"error": true, "message": "Something went wrong fetching suggestions: $e"};
+    }
+  }
+
+  /// Download and save patient report PDF
+  static Future<String?> downloadReportPdf({
+    required String token,
+  }) async {
+    final dio = Dio();
+    final url = "$baseUrl/reports/pdf/";
+    
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = "${directory.path}/medical_report_${DateTime.now().millisecondsSinceEpoch}.pdf";
+
+      final response = await dio.download(
+        url,
+        filePath,
+        options: Options(
+          headers: {
+            "Authorization": "Token $token",
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return filePath;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print("Error downloading PDF: $e");
+      return null;
+    }
+  }
 }
 
 

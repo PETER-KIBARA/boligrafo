@@ -21,13 +21,14 @@ from .views import PatientAppointmentListView
 from .views import PatientMyAppointmentsView
 from postd.ai.views import GenerateSuggestionsView
 from .views import PopulationBPTrendsView, PopulationInsightsView
-from .views import DoctorReportGeneratorView, DoctorReportExportView
+from .views import DoctorReportGeneratorView, DoctorReportExportView, PatientReportPDFView, DoctorPatientReportPDFView
 
 
 
 
 urlpatterns = [
 path('apilogin', views.apilogin, name="apilogin"),
+path("user/me", views.current_user, name="current_user"),
 path("doctor/login", views.doctor_login, name="doctor_login"),
 path("doctor/patients", views.doctor_patients),
 path("doctor/profile", views.doctor_profile),
@@ -60,6 +61,8 @@ path("population/bp-trends/", PopulationBPTrendsView.as_view()),
 path("population/insights/", PopulationInsightsView.as_view(), name="population-insights"),
 path("doctor/reports/", DoctorReportGeneratorView.as_view(), name="doctor-reports"),
 path("doctor/reports/export/", DoctorReportExportView.as_view(), name="doctor-reports-export"),
+path("reports/pdf/", PatientReportPDFView.as_view(), name="patient-report-pdf"),
+path("doctor/reports/pdf/<int:patient_id>/", DoctorPatientReportPDFView.as_view(), name="doctor-patient-report-pdf"),
 
 ]
 

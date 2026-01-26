@@ -18,6 +18,8 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   google_generative_ai: ^0.4.6
   provider: ^6.1.2
+  path_provider: ^2.1.5
+  dio: ^5.9.0
     
 
   
@@ -28,6 +30,7 @@ dependencies:
   firebase_core: ^4.1.0
   firebase_auth: ^6.0.2
   flutter_launcher_icons: ^0.14.4
+  open_filex: ^4.7.0
 
 
 dev_dependencies:

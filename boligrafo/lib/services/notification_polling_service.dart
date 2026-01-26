@@ -7,7 +7,7 @@ import '../models/notifications_service.dart';
 
 class NotificationPollingService {
   static const String _lastNotificationIdKey = 'last_notification_id';
-  static const Duration _pollingInterval = Duration(minutes: 5);
+  static const Duration _pollingInterval = Duration(minutes: 1);
   
   final String apiBaseUrl;
   final String token;
@@ -81,6 +81,7 @@ class NotificationPollingService {
   /// Show a local status bar notification
   Future<void> _showLocalNotification(NotificationModel notification) async {
     await NotificationsService.showInstantNotification(
+      id: notification.id,
       title: notification.title,
       body: notification.message,
       payload: jsonEncode({
