@@ -125,6 +125,7 @@ class PatientSerializer(serializers.ModelSerializer):
 class PrescriptionSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
+    doses_taken_today = serializers.SerializerMethodField()
 
     class Meta:
         model = Prescription
@@ -140,7 +141,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "duration_days",
             "instructions",
             "created_at",
-        #    "doses_taken_today",
+            "doses_taken_today",
         ]
         read_only_fields = ["id", "doctor", "doctor_name", "created_at"]
 
@@ -158,6 +159,21 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         if hasattr(obj.doctor, "first_name") and hasattr(obj.doctor, "last_name"):
             return f"{obj.doctor.first_name} {obj.doctor.last_name}".strip()
         return f"Doctor {obj.doctor.id}"
+    
+    def get_doses_taken_today(self, obj):
+        """
+        Returns a list of dose labels that have been taken today.
+        Example: ["morning", "evening"]
+        """
+        from django.utils import timezone
+        from datetime import datetime, time
+        
+        today = timezone.localdate()
+        start_of_day = datetime.combine(today, time.min, tzinfo=timezone.get_current_timezone())
+        end_of_day = datetime.combine(today, time.max, tzinfo=timezone.get_current_timezone())
+        
+        logs_today = obj.logs.filter(taken_at__range=(start_of_day, end_of_day))
+        return [log.dose_label for log in logs_today]
 
 
 class TreatmentSerializer(serializers.ModelSerializer):
