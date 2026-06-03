@@ -151,9 +151,22 @@ import dj_database_url
 import os
 
 if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
-    }
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(conn_max_age=600)
+        }
+    except Exception:
+        # Fallback if DATABASE_URL parsing fails
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'postd_management',      
+                'USER': 'setro',        
+                'PASSWORD': 'KILO', 
+                'HOST': 'db',      
+                'PORT': '5432',
+            }
+        }
 else:
     DATABASES = {
         'default': {
