@@ -161,9 +161,9 @@ if os.environ.get('DATABASE_URL'):
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'postgres',
-                'USER': 'postgres',
+                'USER': 'postgres.ropxeolufmylzhqeoqrk',
                 'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-                'HOST': 'db.ropxeolufmylzhqeoqrk.supabase.co',
+                'HOST': 'aws-1-eu-central-1.pooler.supabase.com',
                 'PORT': '5432',
             }
         }
@@ -172,9 +172,9 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'postgres',
-            'USER': 'postgres',
+            'USER': 'postgres.ropxeolufmylzhqeoqrk',
             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': 'db.ropxeolufmylzhqeoqrk.supabase.co',
+            'HOST': 'aws-1-eu-central-1.pooler.supabase.com',
             'PORT': '5432',
         }
     }
