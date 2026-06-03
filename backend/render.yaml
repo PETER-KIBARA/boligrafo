@@ -11,3 +11,5 @@ services:
         value: "False"
       - key: PYTHON_VERSION
         value: "3.13.4"
+      - key: DB_PASSWORD
+        sync: false

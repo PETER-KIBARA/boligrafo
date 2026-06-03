@@ -160,10 +160,10 @@ if os.environ.get('DATABASE_URL'):
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': 'postd_management',      
-                'USER': 'setro',        
-                'PASSWORD': 'KILO', 
-                'HOST': 'db',      
+                'NAME': 'postgres',
+                'USER': 'postgres',
+                'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+                'HOST': 'db.ropxeolufmylzhqeoqrk.supabase.co',
                 'PORT': '5432',
             }
         }
@@ -171,10 +171,10 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postd_management',      
-            'USER': 'setro',        
-            'PASSWORD': 'KILO', 
-            'HOST': 'db',      
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': 'db.ropxeolufmylzhqeoqrk.supabase.co',
             'PORT': '5432',
         }
     }
