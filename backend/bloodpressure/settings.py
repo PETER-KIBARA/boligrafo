@@ -35,7 +35,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "https://backend-ubq3.onrender.com",  
+    "backend-ubq3.onrender.com",  
 ]
 
 
