@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.100.159:8000/api";
+  static const String baseUrl = "https://backend-ubq3.onrender.com/api";
 
   //  Patient login
   static Future<Map<String, dynamic>> login({
