@@ -13,4 +13,4 @@ class PostdConfig(AppConfig):
             from . import scheduler  # this actually defines it
             scheduler.start()
         except Exception as e:
-            print(f"⚠️ Scheduler failed to start: {e}")
+            print(f"Scheduler failed to start: {e}")
